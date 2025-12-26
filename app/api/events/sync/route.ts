@@ -109,8 +109,10 @@ export async function POST(request: NextRequest) {
             // Create new event
             await prisma.event.create({
               data: {
+                id: crypto.randomUUID(),
                 ...eventData,
                 eventType: 'meeting',
+                updatedAt: new Date(),
               },
             })
             created++

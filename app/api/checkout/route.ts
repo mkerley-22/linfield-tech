@@ -115,12 +115,14 @@ export async function POST(request: NextRequest) {
     // Create checkout
     const checkout = await prisma.checkout.create({
       data: {
+        id: crypto.randomUUID(),
         inventoryId,
         checkedOutBy,
         fromDate: from,
         dueDate: to, // Store to date as dueDate for backward compatibility
         notes,
         status: 'checked_out',
+        updatedAt: new Date(),
       },
       include: {
         InventoryItem: {

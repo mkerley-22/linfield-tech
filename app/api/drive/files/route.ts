@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     // Create new link
     const driveFile = await prisma.driveFile.create({
       data: {
+        id: crypto.randomUUID(),
         driveFileId: file.id,
         fileName: file.name,
         mimeType: file.mimeType || 'application/octet-stream',
