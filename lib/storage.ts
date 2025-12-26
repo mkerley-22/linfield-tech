@@ -34,7 +34,9 @@ export async function uploadFile(
       })
     } else {
       // Convert Buffer to Uint8Array for Blob
-      const uint8Array = new Uint8Array(file)
+      // Buffer.buffer is ArrayBufferLike, need to convert properly
+      const buffer = file instanceof Buffer ? file : Buffer.from(file)
+      const uint8Array = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
       blob = await put(`${folder}/${fileName}`, new Blob([uint8Array]), {
         access: 'public',
         addRandomSuffix: false,
