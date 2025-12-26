@@ -57,6 +57,7 @@ export async function POST(
         },
       },
       create: {
+        id: crypto.randomUUID(),
         eventId: params.id,
         inventoryId,
         quantity: quantity || 1,

@@ -50,15 +50,18 @@ export async function POST(request: NextRequest) {
     const folder = await prisma.driveFolder.upsert({
       where: { categoryId },
       create: {
+        id: crypto.randomUUID(),
         driveFolderId: driveFolder.id,
         name: driveFolder.name || name,
         categoryId,
         autoSync: autoSync || false,
+        updatedAt: new Date(),
       },
       update: {
         driveFolderId: driveFolder.id,
         name: driveFolder.name || name,
         autoSync: autoSync !== undefined ? autoSync : undefined,
+        updatedAt: new Date(),
       },
     })
     
