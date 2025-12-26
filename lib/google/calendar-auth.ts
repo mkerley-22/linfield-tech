@@ -56,6 +56,7 @@ export async function getOrRefreshCalendarToken() {
         data: {
           accessToken: credentials.access_token!,
           tokenExpiry: credentials.expiry_date ? new Date(credentials.expiry_date) : new Date(Date.now() + 3600000),
+          updatedAt: new Date(),
         },
       })
 

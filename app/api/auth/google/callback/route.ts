@@ -27,17 +27,20 @@ export async function GET(request: NextRequest) {
     await prisma.googleAuth.upsert({
       where: { userId: 'default' },
       create: {
+        id: crypto.randomUUID(),
         userId: 'default',
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || null,
         tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : new Date(Date.now() + 3600000),
         scope: Array.isArray(tokens.scope) ? tokens.scope.join(',') : tokens.scope || '',
+        updatedAt: new Date(),
       },
       update: {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token || null,
         tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : new Date(Date.now() + 3600000),
         scope: Array.isArray(tokens.scope) ? tokens.scope.join(',') : tokens.scope || '',
+        updatedAt: new Date(),
       },
     })
     
