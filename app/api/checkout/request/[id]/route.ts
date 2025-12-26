@@ -149,6 +149,7 @@ export async function PUT(
     if (message && message.trim()) {
       await prisma.checkoutRequestMessage.create({
         data: {
+          id: crypto.randomUUID(),
           checkoutRequestId: resolvedParams.id,
           senderType: 'admin',
           senderName: user.name || user.email || 'Admin',
