@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     for (const calendar of calendars) {
       try {
         const googleEvents = await listCalendarEvents(
-          calendar.id,
+          calendar.id || 'primary',
           startDate,
           endDate,
           accessToken
