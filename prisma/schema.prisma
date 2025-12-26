@@ -1,0 +1,352 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Attachment {
+  id         String   @id
+  pageId     String
+  fileName   String
+  filePath   String
+  fileType   String
+  mimeType   String
+  fileSize   Int
+  uploadedAt DateTime @default(now())
+  Page       Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+}
+
+model Category {
+  id          String       @id
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  color       String?      @default("#2563eb")
+  icon        String?
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  DriveFile   DriveFile[]
+  DriveFolder DriveFolder?
+  Event       Event[]
+  Page        Page[]
+
+  @@index([name])
+  @@index([slug])
+}
+
+model Checkout {
+  id            String        @id
+  inventoryId   String
+  checkedOutBy  String
+  userId        String?
+  checkedOutAt  DateTime      @default(now())
+  dueDate       DateTime?
+  returnedAt    DateTime?
+  status        String        @default("checked_out")
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  fromDate      DateTime?
+  User          User?         @relation(fields: [userId], references: [id])
+  InventoryItem InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@index([fromDate])
+  @@index([checkedOutAt])
+  @@index([status])
+  @@index([userId])
+  @@index([checkedOutBy])
+  @@index([inventoryId])
+}
+
+model CheckoutRequest {
+  id                     String                   @id
+  requesterName          String
+  requesterEmail         String
+  requesterPhone         String?
+  items                  String
+  purpose                String?
+  status                 String                   @default("unseen")
+  approvedBy             String?
+  approvedAt             DateTime?
+  readyForPickup         Boolean                  @default(false)
+  pickupDate             DateTime?
+  pickupTime             String?
+  pickupLocation         String?
+  pickedUp               Boolean                  @default(false)
+  pickedUpAt             DateTime?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime
+  CheckoutRequestMessage CheckoutRequestMessage[]
+
+  @@index([createdAt])
+  @@index([requesterEmail])
+  @@index([status])
+}
+
+model CheckoutRequestMessage {
+  id                String          @id
+  checkoutRequestId String
+  senderType        String
+  senderName        String
+  senderEmail       String?
+  message           String
+  createdAt         DateTime        @default(now())
+  CheckoutRequest   CheckoutRequest @relation(fields: [checkoutRequestId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([checkoutRequestId])
+}
+
+model DriveFile {
+  id             String    @id
+  driveFileId    String    @unique
+  fileName       String
+  mimeType       String
+  fileSize       Int?
+  webViewLink    String
+  webContentLink String?
+  thumbnailLink  String?
+  modifiedTime   DateTime
+  createdTime    DateTime
+  pageId         String?
+  categoryId     String?
+  syncedAt       DateTime  @default(now())
+  lastChecked    DateTime  @default(now())
+  Category       Category? @relation(fields: [categoryId], references: [id])
+  Page           Page?     @relation(fields: [pageId], references: [id])
+
+  @@index([driveFileId])
+  @@index([categoryId])
+  @@index([pageId])
+}
+
+model DriveFolder {
+  id            String    @id
+  driveFolderId String    @unique
+  name          String
+  categoryId    String?   @unique
+  autoSync      Boolean   @default(false)
+  lastSynced    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  Category      Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+}
+
+model Event {
+  id             String           @id
+  title          String
+  description    String?
+  startTime      DateTime
+  endTime        DateTime
+  location       String?
+  calendarId     String?
+  calendarName   String?
+  eventType      String           @default("meeting")
+  categoryId     String?
+  pageId         String?          @unique
+  recurrenceRule String?
+  attendees      String?
+  isRecurring    Boolean          @default(false)
+  isAllDay       Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  setupTime      DateTime?
+  equipment      String?
+  schoolLevel    String?
+  Page           Page?            @relation(fields: [pageId], references: [id])
+  Category       Category?        @relation(fields: [categoryId], references: [id])
+  EventInventory EventInventory[]
+
+  @@index([pageId])
+  @@index([calendarId])
+  @@index([categoryId])
+  @@index([startTime])
+}
+
+model EventInventory {
+  id            String        @id
+  eventId       String
+  inventoryId   String
+  quantity      Int           @default(1)
+  createdAt     DateTime      @default(now())
+  InventoryItem InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  Event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, inventoryId])
+  @@index([inventoryId])
+  @@index([eventId])
+}
+
+model GoogleAuth {
+  id           String   @id
+  userId       String   @unique
+  accessToken  String
+  refreshToken String?
+  tokenExpiry  DateTime
+  scope        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([userId])
+}
+
+model InventoryDocument {
+  id            String        @id
+  inventoryId   String
+  fileName      String
+  filePath      String
+  fileType      String
+  mimeType      String
+  fileSize      Int
+  uploadedAt    DateTime      @default(now())
+  InventoryItem InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId])
+}
+
+model InventoryItem {
+  id                 String              @id @default(cuid())
+  name               String
+  description        String?
+  quantity           Int                 @default(1)
+  manufacturer       String?
+  model              String?
+  serialNumbers      String?
+  location           String?
+  lastUsedAt         DateTime?
+  lastUsedBy         String?
+  imageUrl           String?
+  documentationLinks String?
+  checkoutEnabled    Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  Checkout           Checkout[]
+  EventInventory     EventInventory[]
+  InventoryDocument  InventoryDocument[]
+  InventoryItemTag   InventoryItemTag[]
+
+  @@index([lastUsedAt])
+  @@index([name])
+}
+
+model InventoryItemTag {
+  id            String        @id @default(cuid())
+  inventoryId   String
+  tagId         String
+  InventoryTag  InventoryTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  InventoryItem InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, tagId])
+  @@index([tagId])
+  @@index([inventoryId])
+}
+
+model InventoryTag {
+  id               String             @id @default(cuid())
+  name             String             @unique
+  color            String?            @default("#2563eb")
+  createdAt        DateTime           @default(now())
+  InventoryItemTag InventoryItemTag[]
+
+  @@index([name])
+}
+
+model Page {
+  id          String       @id
+  title       String
+  slug        String       @unique
+  content     String       @default("")
+  description String?
+  parentId    String?
+  categoryId  String?
+  headerImage String?      // URL or path to header image (250px height x 1200px width)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  order       Int          @default(0)
+  isPublished Boolean      @default(true)
+  Attachment  Attachment[]
+  DriveFile   DriveFile[]
+  Event       Event?
+  Category    Category?    @relation(fields: [categoryId], references: [id])
+  Page        Page?        @relation("PageToPage", fields: [parentId], references: [id], onDelete: Cascade)
+  other_Page  Page[]       @relation("PageToPage")
+  PageTag     PageTag[]
+
+  @@index([categoryId])
+  @@index([parentId])
+  @@index([slug])
+}
+
+model PageTag {
+  id     String @id
+  pageId String
+  tagId  String
+  Tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  Page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, tagId])
+  @@index([tagId])
+  @@index([pageId])
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([token])
+  @@index([userId])
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String?   @default("#2563eb")
+  createdAt DateTime  @default(now())
+  PageTag   PageTag[]
+
+  @@index([name])
+}
+
+model User {
+  id        String     @id
+  email     String     @unique
+  name      String
+  picture   String?
+  googleId  String?    @unique
+  role      String     @default("user")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  Checkout  Checkout[]
+  Session   Session[]
+
+  @@index([googleId])
+  @@index([email])
+}
+
+model PublicSiteSettings {
+  id              String   @id @default("default")
+  siteTitle       String   @default("Help Center")
+  siteDescription String?  @default("Find answers to common questions")
+  homepagePageId  String?
+  enabled         Boolean  @default(false)
+  searchEnabled   Boolean  @default(true)
+  navigationJson  String?  // JSON array of category IDs for navigation
+  themeJson       String?  // JSON object with theme settings (colors, fonts, spacing)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([id])
+}
