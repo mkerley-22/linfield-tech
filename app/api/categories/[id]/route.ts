@@ -10,7 +10,7 @@ export async function GET(
     const category = await prisma.category.findUnique({
       where: { id: params.id },
       include: {
-        pages: {
+        Page: {
           where: { isPublished: true },
           orderBy: { order: 'asc' },
         },
