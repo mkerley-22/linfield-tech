@@ -517,7 +517,7 @@ function ThemePreview({ theme, previewMode }: { theme: ThemeSettings; previewMod
             color: theme.colors.text,
           }}
         >
-          What's Inside?
+          What&apos;s Inside?
         </h2>
         <p style={{ color: theme.colors.textSecondary, marginBottom: '2rem' }}>
           Browse our knowledge base to find helpful articles and guides.
