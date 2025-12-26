@@ -22,12 +22,14 @@ export async function POST(
     // Create page for event
     const page = await prisma.page.create({
       data: {
+        id: crypto.randomUUID(),
         title: event.title,
         slug: slugify(event.title),
         description: event.description || `Event on ${event.startTime.toLocaleDateString()}`,
         content: `# ${event.title}\n\n${event.description || ''}\n\n**Date:** ${event.startTime.toLocaleString()}\n**Location:** ${event.location || 'TBD'}\n\n## Event Details\n\n- **Start:** ${event.startTime.toLocaleString()}\n- **End:** ${event.endTime.toLocaleString()}\n${event.location ? `- **Location:** ${event.location}` : ''}\n\n## Notes\n\n_Add event notes and documentation here._`,
         categoryId: event.categoryId,
         isPublished: true,
+        updatedAt: new Date(),
       },
     })
     
