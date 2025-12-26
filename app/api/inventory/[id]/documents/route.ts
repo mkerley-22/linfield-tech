@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { uploadFile } from '@/lib/storage'
-
-function getFileType(fileName: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image'
-  if (['mp4', 'mov', 'avi', 'webm'].includes(ext || '')) return 'video'
-  if (['pdf', 'doc', 'docx'].includes(ext || '')) return 'document'
-  if (['pdf'].includes(ext || '')) return 'manual'
-  return 'document'
-}
+import { getFileType } from '@/lib/utils'
 
 export async function POST(
   request: NextRequest,
@@ -35,7 +27,7 @@ export async function POST(
         inventoryId: params.id,
         fileName: file.name,
         filePath: uploadResult.path,
-        fileType: getFileType(file.name),
+        fileType: getFileType(file.type),
         mimeType: file.type,
         fileSize: file.size,
       },
@@ -49,14 +41,5 @@ export async function POST(
       { status: 500 }
     )
   }
-}
-
-function getFileType(fileName: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image'
-  if (['mp4', 'mov', 'avi', 'webm'].includes(ext || '')) return 'video'
-  if (['pdf', 'doc', 'docx'].includes(ext || '')) return 'document'
-  if (['pdf'].includes(ext || '')) return 'manual'
-  return 'document'
 }
 
