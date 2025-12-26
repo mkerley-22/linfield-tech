@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const checkouts = await prisma.checkout.findMany({
       where,
       include: {
-        inventory: {
+        InventoryItem: {
           include: {
             tags: {
               include: {
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
         status: 'checked_out',
       },
       include: {
-        inventory: {
+        InventoryItem: {
           include: {
             tags: {
               include: {
