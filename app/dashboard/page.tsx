@@ -236,8 +236,8 @@ export default async function DashboardPage() {
                     <span
                       className="px-2 py-1 text-xs rounded-full font-medium"
                       style={{
-                        backgroundColor: `${page.Category.color}20`,
-                        color: page.Category.color,
+                        backgroundColor: `${page.Category.color || '#2563eb'}20`,
+                        color: page.Category.color || '#2563eb',
                       }}
                     >
                       {page.Category.name}
