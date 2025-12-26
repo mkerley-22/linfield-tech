@@ -390,7 +390,7 @@ export default function InventoryPage() {
                     className="bg-white rounded-lg border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all relative flex flex-col"
                   >
                     {/* Menu Button - Outside Link */}
-                    <div className="absolute top-4 right-4 z-10" ref={(el) => (menuRefs.current[item.id] = el)}>
+                    <div className="absolute top-4 right-4 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
                       <button
                         onClick={(e) => handleMenuClick(e, item.id)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -541,7 +541,7 @@ export default function InventoryPage() {
                         </div>
                       </Link>
                       {/* Menu Button */}
-                      <div className="absolute top-4 right-4 z-10" ref={(el) => (menuRefs.current[item.id] = el)}>
+                      <div className="absolute top-4 right-4 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
                         <button
                           onClick={(e) => handleMenuClick(e, item.id)}
                           className="p-1 hover:bg-gray-200 rounded transition-colors opacity-0 group-hover:opacity-100"
