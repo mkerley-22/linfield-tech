@@ -26,26 +26,19 @@ export async function uploadFile(
   if (USE_VERCEL_BLOB) {
     // Use Vercel Blob Storage
     // Vercel Blob accepts File, Blob, or ReadableStream
+    let blob
     if (file instanceof File) {
-      const blob = await put(`${folder}/${fileName}`, file, {
+      blob = await put(`${folder}/${fileName}`, file, {
         access: 'public',
         addRandomSuffix: false,
       })
-      return {
-        url: blob.url,
-        path: blob.url,
-      }
     } else {
       // Convert Buffer to Uint8Array for Blob
       const uint8Array = new Uint8Array(file)
-      const blob = await put(`${folder}/${fileName}`, new Blob([uint8Array]), {
+      blob = await put(`${folder}/${fileName}`, new Blob([uint8Array]), {
         access: 'public',
         addRandomSuffix: false,
       })
-      return {
-        url: blob.url,
-        path: blob.url,
-      }
     }
     
     return {
