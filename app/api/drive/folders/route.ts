@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
     if (categoryId) {
       const folder = await prisma.driveFolder.findUnique({
         where: { categoryId },
-        include: { category: true },
+        include: { Category: true },
       })
       return NextResponse.json(folder)
     }
     
     const folders = await prisma.driveFolder.findMany({
-      include: { category: true },
+      include: { Category: true },
     })
     return NextResponse.json({ folders })
   } catch (error: any) {

@@ -10,14 +10,14 @@ export async function GET(
     const page = await prisma.page.findUnique({
       where: { id: params.id },
       include: {
-        children: {
+        other_Page: {
           where: { isPublished: true },
           orderBy: { order: 'asc' },
         },
-        attachments: true,
-        tags: {
+        Attachment: true,
+        PageTag: {
           include: {
-            tag: true,
+            Tag: true,
           },
         },
       },
