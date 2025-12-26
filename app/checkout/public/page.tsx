@@ -181,7 +181,7 @@ export default function PublicCheckoutPage() {
 
   const handleContinueToReview = () => {
     // Validate all selected items have valid quantities
-    for (const [itemId, item] of selectedItems.entries()) {
+    for (const [itemId, item] of Array.from(selectedItems.entries())) {
       if (item.quantity < 1) {
         const itemName = items.find(i => i.id === itemId)?.name || 'item'
         alert(`Quantity must be at least 1 for ${itemName}`)
