@@ -102,7 +102,10 @@ export async function POST(request: NextRequest) {
             // Update existing event
             await prisma.event.update({
               where: { id: existing.id },
-              data: eventData,
+              data: {
+                ...eventData,
+                updatedAt: new Date(),
+              },
             })
             updated++
           } else {
