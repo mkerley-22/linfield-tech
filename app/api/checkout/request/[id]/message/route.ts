@@ -36,6 +36,7 @@ export async function POST(
 
     const newMessage = await prisma.checkoutRequestMessage.create({
       data: {
+        id: crypto.randomUUID(),
         checkoutRequestId: params.id,
         senderType: 'admin',
         senderName: user.name || user.email || 'Admin',
