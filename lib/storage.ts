@@ -26,9 +26,9 @@ export async function uploadFile(
   if (USE_VERCEL_BLOB) {
     // Use Vercel Blob Storage
     // Vercel Blob accepts File, Blob, or ReadableStream
-    let blob
+    let blobResult
     if (file instanceof File) {
-      blob = await put(`${folder}/${fileName}`, file, {
+      blobResult = await put(`${folder}/${fileName}`, file, {
         access: 'public',
         addRandomSuffix: false,
       })
@@ -39,15 +39,15 @@ export async function uploadFile(
       const arrayBuffer = new ArrayBuffer(buffer.length)
       const view = new Uint8Array(arrayBuffer)
       view.set(buffer)
-      blob = await put(`${folder}/${fileName}`, new Blob([view]), {
+      blobResult = await put(`${folder}/${fileName}`, new Blob([view]), {
         access: 'public',
         addRandomSuffix: false,
       })
     }
     
     return {
-      url: blob.url,
-      path: blob.url, // Store full URL for Vercel Blob
+      url: blobResult.url,
+      path: blobResult.url, // Store full URL for Vercel Blob
     }
   } else {
     // Use local file system (development)
