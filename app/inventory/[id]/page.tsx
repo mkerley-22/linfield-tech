@@ -15,7 +15,7 @@ interface InventoryItem {
   quantity: number
   manufacturer?: string
   model?: string
-  serialNumber?: string
+  serialNumbers?: string | null
   location?: string
   lastUsedAt?: string
   lastUsedBy?: string
