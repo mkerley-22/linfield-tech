@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
       include: {
         InventoryItem: {
           include: {
-            tags: {
+            InventoryItemTag: {
               include: {
-                tag: true,
+                InventoryTag: true,
               },
             },
           },
@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
       include: {
         InventoryItem: {
           include: {
-            tags: {
+            InventoryItemTag: {
               include: {
-                tag: true,
+                InventoryTag: true,
               },
             },
           },
