@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const item = await prisma.inventoryItem.findUnique({
       where: { id: inventoryId },
       include: {
-        checkouts: {
+        Checkout: {
           where: {
             status: 'checked_out',
           },
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const checkedOutCount = item.checkouts.length
+    const checkedOutCount = item.Checkout.length
     if (checkedOutCount >= item.quantity) {
       return NextResponse.json(
         { error: 'All items are currently checked out' },
