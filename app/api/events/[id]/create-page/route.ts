@@ -34,7 +34,10 @@ export async function POST(
     // Link event to page
     await prisma.event.update({
       where: { id: params.id },
-      data: { pageId: page.id },
+      data: { 
+        pageId: page.id,
+        updatedAt: new Date(),
+      },
     })
     
     return NextResponse.json({ page, event: { ...event, pageId: page.id } })

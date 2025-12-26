@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         
         const event = await prisma.event.create({
           data: {
+            id: crypto.randomUUID(),
             title: googleEvent.summary,
             description: googleEvent.description || null,
             startTime: new Date(start),
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
             attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map(a => a.email)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
+            updatedAt: new Date(),
           },
         })
         importedEvents.push(event)

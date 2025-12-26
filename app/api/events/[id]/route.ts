@@ -76,6 +76,7 @@ export async function PUT(
       isRecurring: isRecurring !== undefined ? isRecurring : undefined,
       recurrenceRule: recurrenceRule !== undefined ? recurrenceRule : undefined,
       equipment: equipment !== undefined ? equipment : undefined,
+      updatedAt: new Date(),
     }
 
     // If updating "this and following events" and event is part of a recurring series
