@@ -35,10 +35,11 @@ export async function uploadFile(
     } else {
       // Convert Buffer to ArrayBuffer, then to Uint8Array for Blob
       const buffer = file instanceof Buffer ? file : Buffer.from(file)
-      // Create a new ArrayBuffer from the Buffer to avoid ArrayBufferLike issues
-      const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
-      const uint8Array = new Uint8Array(arrayBuffer)
-      blob = await put(`${folder}/${fileName}`, new Blob([uint8Array]), {
+      // Create a new ArrayBuffer by copying the buffer data
+      const arrayBuffer = new ArrayBuffer(buffer.length)
+      const view = new Uint8Array(arrayBuffer)
+      view.set(buffer)
+      blob = await put(`${folder}/${fileName}`, new Blob([view]), {
         access: 'public',
         addRandomSuffix: false,
       })
