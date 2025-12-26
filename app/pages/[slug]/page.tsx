@@ -115,8 +115,8 @@ export default async function PageView({ params }: { params: { slug: string } })
                   href={`/categories/${page.Category.slug}`}
                   className="px-3 py-1 text-sm rounded-full font-medium hover:opacity-80 transition-opacity"
                   style={{
-                    backgroundColor: `${page.Category.color}20`,
-                    color: page.Category.color,
+                    backgroundColor: `${page.Category.color || '#2563eb'}20`,
+                    color: page.Category.color || '#2563eb',
                   }}
                 >
                   {page.Category.name}
