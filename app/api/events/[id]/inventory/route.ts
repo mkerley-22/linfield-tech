@@ -11,7 +11,7 @@ export async function GET(
         eventId: params.id,
       },
       include: {
-        inventory: {
+        InventoryItem: {
           select: {
             id: true,
             name: true,
@@ -66,11 +66,11 @@ export async function POST(
         quantity: quantity || 1,
       },
       include: {
-        inventory: {
+        InventoryItem: {
           include: {
-            tags: {
+            InventoryItemTag: {
               include: {
-                tag: true,
+                InventoryTag: true,
               },
             },
           },
