@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Sidebar from '@/components/Sidebar'
 import SectionEditor from '@/components/SectionEditor'
 
 // Section model has been removed - use Category instead
