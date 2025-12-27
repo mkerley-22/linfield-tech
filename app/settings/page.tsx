@@ -54,30 +54,40 @@ export default function SettingsPage() {
     }
 
     checkAuth()
-
-    // Check actual connection status from API (not localStorage)
-    checkIntegrationStatus()
-
-    // Load AI preference from localStorage (this is just a UI toggle, not a connection)
-    const aiPref = typeof window !== 'undefined' ? localStorage.getItem('integration_ai_enabled') : null
-    setAiEnabled(aiPref === 'true')
-
-    // Load public site settings
-    if (activeTab === 'public-site') {
-      loadPublicSiteSettings()
-    }
   }, [router, activeTab])
 
+  // Check integration status after user is loaded
+  useEffect(() => {
+    if (user && !isLoading) {
+      checkIntegrationStatus()
+
+      // Load AI preference from localStorage (this is just a UI toggle, not a connection)
+      const aiPref = typeof window !== 'undefined' ? localStorage.getItem('integration_ai_enabled') : null
+      setAiEnabled(aiPref === 'true')
+
+      // Load public site settings
+      if (activeTab === 'public-site') {
+        loadPublicSiteSettings()
+      }
+    }
+  }, [user, isLoading, activeTab])
+
   const checkIntegrationStatus = async () => {
+    // Only check if user is loaded
+    if (!user) return
+
     // Check Google Drive connection status
     try {
       const response = await fetch('/api/auth/google/status')
       if (response.ok) {
         const data = await response.json()
         setGoogleEnabled(data.connected || false)
+      } else {
+        setGoogleEnabled(false)
       }
     } catch (error) {
       console.error('Failed to check Google status:', error)
+      setGoogleEnabled(false)
     }
 
     // Check Google Calendar connection status
@@ -86,9 +96,12 @@ export default function SettingsPage() {
       if (response.ok) {
         const data = await response.json()
         setCalendarEnabled(data.connected || false)
+      } else {
+        setCalendarEnabled(false)
       }
     } catch (error) {
       console.error('Failed to check Calendar status:', error)
+      setCalendarEnabled(false)
     }
   }
 

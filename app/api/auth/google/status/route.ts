@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getUser } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if user is authenticated
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { connected: false, hasToken: false },
+        { status: 200 }
+      )
+    }
+
     // Check if there's a GoogleAuth record
     const auth = await prisma.googleAuth.findUnique({
       where: { userId: 'default' },
@@ -14,10 +24,11 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Check Google status error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to check status' },
-      { status: 500 }
-    )
+    // Return safe default instead of error to prevent render failures
+    return NextResponse.json({
+      connected: false,
+      hasToken: false,
+    })
   }
 }
 
