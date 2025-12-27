@@ -167,10 +167,12 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
       })
 
       if (response.ok) {
+        const data = await response.json()
         // Force reload the item to update checkout history and availability
         await loadItem(params.id)
         // Dispatch event to refresh inventory list page
         window.dispatchEvent(new CustomEvent('inventoryUpdated'))
+        alert('Item marked as returned successfully!')
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'Failed to return item')
@@ -240,8 +242,23 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
     )
   }
 
+  // Calculate available quantity - only count checkouts with 'checked_out' status
+  // 'returned' status should not count against availability
   const checkedOut = (item.checkouts || []).filter((c) => c.status === 'checked_out').length
-  const available = item.quantity - checkedOut
+  const available = Math.max(0, item.quantity - checkedOut)
+  
+  // Debug logging to help troubleshoot
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Item availability calculation:', {
+      itemName: item.name,
+      quantity: item.quantity,
+      totalCheckouts: item.checkouts?.length || 0,
+      checkedOutCount: checkedOut,
+      returnedCount: (item.checkouts || []).filter((c) => c.status === 'returned').length,
+      available,
+      checkouts: item.checkouts?.map(c => ({ id: c.id, status: c.status, checkedOutBy: c.checkedOutBy }))
+    })
+  }
   const upcomingEvents = (item.eventItems || [])
     .filter((ei) => new Date(ei.event.startTime) >= new Date())
     .sort((a, b) => new Date(a.event.startTime).getTime() - new Date(b.event.startTime).getTime())
