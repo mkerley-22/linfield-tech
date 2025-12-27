@@ -229,18 +229,19 @@ export default function CheckoutPage() {
             // Handle both boolean true and truthy values
             const isReady = Boolean(r.readyForPickup)
             const matches = r.status === 'approved' && isReady && !r.pickedUp
-            // Debug logging in development
-            if (process.env.NODE_ENV === 'development' && r.readyForPickup) {
-              console.log('Ready for Pickup filter check:', {
-                id: r.id,
-                status: r.status,
-                readyForPickup: r.readyForPickup,
-                pickedUp: r.pickedUp,
-                matches
-              })
-            }
+            // Debug logging
+            console.log('Ready for Pickup filter check:', {
+              id: r.id,
+              requesterName: r.requesterName,
+              status: r.status,
+              readyForPickup: r.readyForPickup,
+              readyForPickupType: typeof r.readyForPickup,
+              pickedUp: r.pickedUp,
+              matches
+            })
             return matches
           })
+          console.log('Ready for Pickup - Total requests:', allRequestsData.length, 'Filtered:', filteredRequests.length)
         } else if (activeTab === 'pickedup') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')
