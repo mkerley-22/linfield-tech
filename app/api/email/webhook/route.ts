@@ -58,20 +58,51 @@ export async function POST(request: NextRequest) {
     const textStr = typeof text === 'string' ? text : (text?.toString() || '')
     const htmlStr = typeof html === 'string' ? html : (html?.toString() || '')
     let messageContent = textStr || ''
+    
     if (!messageContent && htmlStr) {
-      // Simple HTML to text conversion (remove tags)
-      messageContent = htmlStr.replace(/<[^>]*>/g, '').trim()
+      // Simple HTML to text conversion (remove tags but preserve line breaks)
+      messageContent = htmlStr
+        .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
+        .replace(/<\/p>/gi, '\n\n') // Convert </p> to double newlines
+        .replace(/<[^>]*>/g, '') // Remove all other HTML tags
+        .replace(/&nbsp;/g, ' ') // Convert &nbsp; to spaces
+        .replace(/&amp;/g, '&') // Convert &amp; to &
+        .replace(/&lt;/g, '<') // Convert &lt; to <
+        .replace(/&gt;/g, '>') // Convert &gt; to >
+        .replace(/&quot;/g, '"') // Convert &quot; to "
+        .trim()
     }
 
     // Remove email signature/quoted text (common patterns)
-    messageContent = messageContent
-      .split(/On .* wrote:/i)[0] // Remove "On [date] [person] wrote:"
-      .split(/From:.*/i)[0] // Remove "From: ..."
-      .split(/Sent:.*/i)[0] // Remove "Sent: ..."
-      .trim()
+    // But be less aggressive - only remove if we have enough content
+    if (messageContent.length > 50) {
+      // Only clean up if we have substantial content
+      messageContent = messageContent
+        .split(/On .* wrote:/i)[0] // Remove "On [date] [person] wrote:"
+        .split(/-----Original Message-----/i)[0] // Remove "-----Original Message-----"
+        .split(/From:.*/i)[0] // Remove "From: ..."
+        .split(/Sent:.*/i)[0] // Remove "Sent: ..."
+        .split(/Date:.*/i)[0] // Remove "Date: ..."
+        .split(/Subject:.*/i)[0] // Remove "Subject: ..."
+        .split(/To:.*/i)[0] // Remove "To: ..."
+        .replace(/^>+\s*/gm, '') // Remove quote markers (lines starting with >)
+        .trim()
+    }
+
+    // Log the extracted content for debugging
+    console.log('Extracted message content:', {
+      originalTextLength: textStr.length,
+      originalHtmlLength: htmlStr.length,
+      extractedLength: messageContent.length,
+      preview: messageContent.substring(0, 100),
+    })
 
     if (!messageContent || messageContent.length < 3) {
-      console.log('Message content too short or empty')
+      console.log('Message content too short or empty after extraction:', {
+        textStr: textStr.substring(0, 200),
+        htmlStr: htmlStr.substring(0, 200),
+        messageContent,
+      })
       return NextResponse.json({ received: true, error: 'Message too short' })
     }
 
