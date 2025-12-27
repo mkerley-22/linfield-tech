@@ -22,8 +22,6 @@ export default function SettingsPage() {
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [googleEnabled, setGoogleEnabled] = useState(false)
-  const [calendarEnabled, setCalendarEnabled] = useState(false)
   const [aiEnabled, setAiEnabled] = useState(false)
 
   useEffect(() => {
@@ -56,12 +54,9 @@ export default function SettingsPage() {
     checkAuth()
   }, [router, activeTab])
 
-  // Check integration status after user is loaded
+  // Load settings after user is loaded
   useEffect(() => {
     if (user && !isLoading) {
-      // Always check integration status when user loads or tab changes
-      checkIntegrationStatus()
-
       // Load AI preference from localStorage (this is just a UI toggle, not a connection)
       const aiPref = typeof window !== 'undefined' ? localStorage.getItem('integration_ai_enabled') : null
       setAiEnabled(aiPref === 'true')
@@ -72,54 +67,6 @@ export default function SettingsPage() {
       }
     }
   }, [user, isLoading, activeTab])
-
-  // Also check integration status when switching to integrations tab
-  useEffect(() => {
-    if (user && !isLoading && activeTab === 'integrations') {
-      checkIntegrationStatus()
-    }
-  }, [activeTab, user, isLoading])
-
-  const checkIntegrationStatus = async () => {
-    // Only check if user is loaded
-    if (!user) return
-
-    // Check Google Drive connection status
-    try {
-      const response = await fetch('/api/auth/google/status', {
-        cache: 'no-store', // Always fetch fresh status
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setGoogleEnabled(data.connected || false)
-      } else {
-        // If status check fails, default to showing the UI (let GoogleAuth component handle it)
-        setGoogleEnabled(true)
-      }
-    } catch (error) {
-      console.error('Failed to check Google status:', error)
-      // On error, show the UI so user can see connection status
-      setGoogleEnabled(true)
-    }
-
-    // Check Google Calendar connection status
-    try {
-      const response = await fetch('/api/auth/google/calendar/status', {
-        cache: 'no-store', // Always fetch fresh status
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setCalendarEnabled(data.connected || false)
-      } else {
-        // If status check fails, default to showing the UI
-        setCalendarEnabled(true)
-      }
-    } catch (error) {
-      console.error('Failed to check Calendar status:', error)
-      // On error, show the UI so user can see connection status
-      setCalendarEnabled(true)
-    }
-  }
 
   const loadPublicSiteSettings = async () => {
     setLoadingSettings(true)
