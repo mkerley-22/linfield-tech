@@ -8,7 +8,19 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const resolvedParams = await Promise.resolve(params)
+    
+    // Update messagesLastViewedAt when admin views the request
+    await prisma.checkoutRequest.update({
+      where: { id: resolvedParams.id },
+      data: { messagesLastViewedAt: new Date() },
+    })
+    
     const checkoutRequest = await prisma.checkoutRequest.findUnique({
       where: { id: resolvedParams.id },
       include: {

@@ -80,6 +80,7 @@ model CheckoutRequest {
   pickupLocation         String?
   pickedUp               Boolean                  @default(false)
   pickedUpAt             DateTime?
+  messagesLastViewedAt   DateTime?                // Track when admin last viewed messages
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime
   CheckoutRequestMessage CheckoutRequestMessage[]

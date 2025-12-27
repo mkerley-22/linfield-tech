@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     // A request has unread messages if:
     // 1. It has at least one message from requester (senderType === 'requester')
     // 2. The latest message is from requester (not admin)
+    // 3. The latest message is newer than when admin last viewed messages
     const allRequests = await prisma.checkoutRequest.findMany({
       include: {
         CheckoutRequestMessage: {
@@ -34,8 +35,16 @@ export async function GET(request: NextRequest) {
         return false
       }
       const latestMessage = req.CheckoutRequestMessage[0]
-      // Unread if latest message is from requester
-      return latestMessage.senderType === 'requester'
+      // Unread if latest message is from requester AND it's newer than last viewed time
+      if (latestMessage.senderType !== 'requester') {
+        return false
+      }
+      // If messagesLastViewedAt is null, there are unread messages
+      if (!req.messagesLastViewedAt) {
+        return true
+      }
+      // Check if latest message is newer than last viewed time
+      return new Date(latestMessage.createdAt) > new Date(req.messagesLastViewedAt)
     })
 
     const unreadMessageCount = requestsWithUnreadMessages.length

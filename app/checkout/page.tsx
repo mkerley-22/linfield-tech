@@ -49,6 +49,7 @@ interface CheckoutRequest {
     message: string
     createdAt: string
   }>
+  messagesLastViewedAt?: string
   checkouts?: Array<{
     id: string
     status: string
@@ -234,6 +235,29 @@ export default function CheckoutPage() {
         }
         
         setRequests(filteredRequests)
+        
+        // Calculate unread message counts for each request
+        // A request has unread messages if the latest message is from requester
+        // AND it's newer than when admin last viewed messages
+        const unreadCounts = new Map<string, number>()
+        allRequestsData.forEach((req: CheckoutRequest) => {
+          if (req.messages && req.messages.length > 0) {
+            const latestMessage = req.messages[0] // Already sorted desc
+            if (latestMessage.senderType === 'requester') {
+              // Check if latest message is newer than last viewed time
+              const lastViewedAt = req.messagesLastViewedAt ? new Date(req.messagesLastViewedAt) : null
+              if (!lastViewedAt || new Date(latestMessage.createdAt) > lastViewedAt) {
+                // Count requester messages after the last viewed time
+                const unreadCount = req.messages.filter((m: any) => 
+                  m.senderType === 'requester' && 
+                  (!lastViewedAt || new Date(m.createdAt) > lastViewedAt)
+                ).length
+                unreadCounts.set(req.id, unreadCount)
+              }
+            }
+          }
+        })
+        setUnreadMessageCounts(unreadCounts)
       } else if (response.status === 401) {
         // If unauthorized, try to re-authenticate
         setIsAuthenticated(false)
@@ -252,6 +276,10 @@ export default function CheckoutPage() {
       if (response.ok) {
         const data = await response.json()
         setSelectedRequest(data.request)
+        
+        // Refresh requests list to update notification counts
+        // (viewing the request marks messages as read)
+        loadRequests()
         
         // Fetch item names
         const items = parsedItems(data.request.items)
