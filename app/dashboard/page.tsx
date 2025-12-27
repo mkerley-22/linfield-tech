@@ -29,80 +29,95 @@ async function getPages() {
 }
 
 async function getCategories() {
-  const categories = await prisma.category.findMany({
-    include: {
-      Page: {
-        where: { isPublished: true, parentId: null },
-        orderBy: { order: 'asc' },
+  try {
+    const categories = await prisma.category.findMany({
+      include: {
+        Page: {
+          where: { isPublished: true, parentId: null },
+          orderBy: { order: 'asc' },
+        },
       },
-    },
-    orderBy: { order: 'asc' },
-  })
-  return categories
+      orderBy: { order: 'asc' },
+    })
+    return categories
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return []
+  }
 }
 
 async function getNotifications() {
-  // Only show notifications for requests that are still in "New Requests" status
-  // (unseen or seen). Once they move to approved, denied, or any other status,
-  // they should disappear from notifications.
-  const unseenCheckoutRequests = await prisma.checkoutRequest.findMany({
-    where: {
-      status: {
-        in: ['unseen', 'seen'],
-      },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: 5,
-    select: {
-      id: true,
-      requesterName: true,
-      requesterEmail: true,
-      createdAt: true,
-      items: true,
-    },
-  })
-
-  // Count requests with unread messages from requester
-  const allRequests = await prisma.checkoutRequest.findMany({
-    include: {
-      CheckoutRequestMessage: {
-        orderBy: {
-          createdAt: 'desc',
+  try {
+    // Only show notifications for requests that are still in "New Requests" status
+    // (unseen or seen). Once they move to approved, denied, or any other status,
+    // they should disappear from notifications.
+    const unseenCheckoutRequests = await prisma.checkoutRequest.findMany({
+      where: {
+        status: {
+          in: ['unseen', 'seen'],
         },
-        take: 1,
       },
-    },
-  })
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 5,
+      select: {
+        id: true,
+        requesterName: true,
+        requesterEmail: true,
+        createdAt: true,
+        items: true,
+      },
+    })
 
-  const requestsWithUnreadMessages = allRequests.filter(req => {
-    if (!req.CheckoutRequestMessage || req.CheckoutRequestMessage.length === 0) {
-      return false
-    }
-    const latestMessage = req.CheckoutRequestMessage[0]
-    if (latestMessage.senderType !== 'requester') {
-      return false
-    }
-    if (!req.messagesLastViewedAt) {
-      return true
-    }
-    return new Date(latestMessage.createdAt) > new Date(req.messagesLastViewedAt)
-  })
+    // Count requests with unread messages from requester
+    const allRequests = await prisma.checkoutRequest.findMany({
+      include: {
+        CheckoutRequestMessage: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    })
 
-  const unreadMessageCount = requestsWithUnreadMessages.length
+    const requestsWithUnreadMessages = allRequests.filter(req => {
+      if (!req.CheckoutRequestMessage || req.CheckoutRequestMessage.length === 0) {
+        return false
+      }
+      const latestMessage = req.CheckoutRequestMessage[0]
+      if (latestMessage.senderType !== 'requester') {
+        return false
+      }
+      if (!req.messagesLastViewedAt) {
+        return true
+      }
+      return new Date(latestMessage.createdAt) > new Date(req.messagesLastViewedAt)
+    })
 
-  return {
-    unseenCount: unseenCheckoutRequests.length,
-    unreadMessageCount,
-    recentRequests: unseenCheckoutRequests,
+    const unreadMessageCount = requestsWithUnreadMessages.length
+
+    return {
+      unseenCount: unseenCheckoutRequests.length,
+      unreadMessageCount,
+      recentRequests: unseenCheckoutRequests,
+    }
+  } catch (error) {
+    console.error('Error fetching notifications:', error)
+    return {
+      unseenCount: 0,
+      unreadMessageCount: 0,
+      recentRequests: [],
+    }
   }
 }
 
 export default async function DashboardPage() {
-  const pages = await getPages()
-  const categories = await getCategories()
-  const notifications = await getNotifications()
+  try {
+    const pages = await getPages()
+    const categories = await getCategories()
+    const notifications = await getNotifications()
 
   return (
     <div className="flex h-screen bg-gray-50">
