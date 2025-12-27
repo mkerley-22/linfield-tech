@@ -3,6 +3,8 @@ import Sidebar from '@/components/Sidebar'
 import CategoryEditor from '@/components/CategoryEditor'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 async function getCategory(slug: string) {
   const category = await prisma.category.findUnique({
     where: { slug },

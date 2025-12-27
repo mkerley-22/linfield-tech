@@ -2,6 +2,8 @@ import Sidebar from '@/components/Sidebar'
 import PageEditor from '@/components/PageEditor'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 async function getCategory(categoryId: string) {
   try {
     const category = await prisma.category.findUnique({

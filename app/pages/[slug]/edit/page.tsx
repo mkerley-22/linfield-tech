@@ -3,6 +3,8 @@ import Sidebar from '@/components/Sidebar'
 import PageEditor from '@/components/PageEditor'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 async function getPage(slug: string) {
   const page = await prisma.page.findUnique({
     where: { slug },

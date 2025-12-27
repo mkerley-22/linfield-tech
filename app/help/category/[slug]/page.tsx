@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Search, FileText, Folder } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 async function getPublicSiteSettings() {
   const settings = await prisma.publicSiteSettings.findUnique({
     where: { id: 'default' },
