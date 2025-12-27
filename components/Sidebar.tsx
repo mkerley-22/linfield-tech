@@ -30,8 +30,27 @@ export default function Sidebar() {
     }
 
     fetchNotifications()
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000)
+    
+    // Refresh every 10 seconds for more responsive notifications
+    // Poll more frequently (5 seconds) when page is visible, less frequently (30 seconds) when hidden
+    let interval: NodeJS.Timeout
+    const setupInterval = () => {
+      if (interval) clearInterval(interval)
+      const isVisible = !document.hidden
+      interval = setInterval(fetchNotifications, isVisible ? 5000 : 30000)
+    }
+    
+    setupInterval()
+    
+    // Update interval when page visibility changes
+    const handleVisibilityChange = () => {
+      setupInterval()
+      // Also fetch immediately when page becomes visible
+      if (!document.hidden) {
+        fetchNotifications()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     
     // Listen for status updates from checkout page
     const handleStatusUpdate = () => {
@@ -39,9 +58,19 @@ export default function Sidebar() {
     }
     window.addEventListener('checkoutStatusUpdated', handleStatusUpdate)
     
+    // Listen for new checkout requests
+    const handleNewRequest = () => {
+      fetchNotifications()
+    }
+    window.addEventListener('checkoutRequestCreated', handleNewRequest)
+    window.addEventListener('checkoutRequestUpdated', handleNewRequest)
+    
     return () => {
       clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('checkoutStatusUpdated', handleStatusUpdate)
+      window.removeEventListener('checkoutRequestCreated', handleNewRequest)
+      window.removeEventListener('checkoutRequestUpdated', handleNewRequest)
     }
   }, [])
 

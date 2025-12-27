@@ -193,6 +193,8 @@ export default function CheckoutPage() {
   }
 
   const loadRequests = async () => {
+    // Dispatch event to notify sidebar of request updates
+    window.dispatchEvent(new CustomEvent('checkoutRequestUpdated'))
     setIsLoading(true)
     try {
       // Always fetch all requests to calculate counts for all tabs
