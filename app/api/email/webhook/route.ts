@@ -27,14 +27,27 @@ export async function POST(request: NextRequest) {
     const replyTo = headers?.['reply-to'] || headers?.['Reply-To'] || to
     const replyToStr = typeof replyTo === 'string' ? replyTo : (replyTo?.email || replyTo?.toString() || '')
     if (replyToStr) {
-      const match = replyToStr.match(/checkout-([a-f0-9-]+)@/)
+      // Extract short ID from reply-to: reply-{8chars}@tech.linfieldtechhub.com
+      const match = replyToStr.match(/reply-([a-f0-9]{8})@/)
       if (match) {
-        requestId = match[1]
+        const shortId = match[1]
+        // Find the checkout request that starts with this short ID
+        // Since UUIDs are random, first 8 chars should be unique enough
+        const checkoutRequest = await prisma.checkoutRequest.findFirst({
+          where: {
+            id: {
+              startsWith: shortId,
+            },
+          },
+        })
+        if (checkoutRequest) {
+          requestId = checkoutRequest.id
+        }
       }
     }
 
     // Request ID should be extracted from reply-to email address
-    // Format: checkout-{requestId}@tech.linfieldtechhub.com
+    // Format: reply-{8chars}@tech.linfieldtechhub.com (using first 8 chars of UUID)
     // We no longer include request ID in subject line for user-friendliness
 
     if (!requestId) {

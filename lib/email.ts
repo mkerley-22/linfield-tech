@@ -265,7 +265,9 @@ export async function sendCheckoutRequestMessage(
   message: string
 ): Promise<boolean> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-  const replyToEmail = `checkout-${requestId}@tech.linfieldtechhub.com`
+  // Use first 8 characters of UUID for a shorter, friendlier reply-to address
+  const shortId = requestId.substring(0, 8)
+  const replyToEmail = `reply-${shortId}@tech.linfieldtechhub.com`
   const subject = `New Message on Your Equipment Checkout Request`
   const html = `
     <!DOCTYPE html>
