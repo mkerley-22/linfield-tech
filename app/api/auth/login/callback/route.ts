@@ -67,16 +67,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=no_user_info', request.url))
     }
     
-    // Check if this is the initial admin user
-    const isAdminEmail = userInfo.email?.toLowerCase() === 'mkerley@linfield.com'
+    // At this point, we know userInfo.email and userInfo.name are not null/undefined
+    const userEmail = userInfo.email
+    const userName = userInfo.name
     
-    console.log('User email:', userInfo.email, 'Is admin email:', isAdminEmail)
+    // Check if this is the initial admin user
+    const isAdminEmail = userEmail.toLowerCase() === 'mkerley@linfield.com'
+    
+    console.log('User email:', userEmail, 'Is admin email:', isAdminEmail)
     
     // Check if user already exists
     const existingUser = await withRetry(
       () =>
         prisma.user.findUnique({
-          where: { email: userInfo.email! },
+          where: { email: userEmail },
         }),
       3,
       1000
@@ -92,7 +96,7 @@ export async function GET(request: NextRequest) {
         updatedAt: Date
         role?: string
       } = {
-        name: userInfo.name!,
+        name: userName,
         picture: userInfo.picture || null,
         googleId: userInfo.id || null,
         updatedAt: new Date(),
@@ -101,13 +105,13 @@ export async function GET(request: NextRequest) {
       // ALWAYS ensure mkerley@linfield.com has admin role (force it)
       if (isAdminEmail) {
         updateData.role = 'admin'
-        console.log('Setting admin role for:', userInfo.email)
+        console.log('Setting admin role for:', userEmail)
       }
       
       user = await withRetry(
         () =>
           prisma.user.update({
-            where: { email: userInfo.email! },
+            where: { email: userEmail },
             data: updateData,
           }),
         3,
@@ -116,7 +120,7 @@ export async function GET(request: NextRequest) {
       
       // Double-check: if it's admin email but role isn't admin, force update
       if (isAdminEmail && user.role !== 'admin') {
-        console.log('Force updating role to admin for:', userInfo.email)
+        console.log('Force updating role to admin for:', userEmail)
         user = await withRetry(
           () =>
             prisma.user.update({
@@ -134,8 +138,8 @@ export async function GET(request: NextRequest) {
           prisma.user.create({
             data: {
               id: crypto.randomUUID(),
-              email: userInfo.email!,
-              name: userInfo.name!,
+              email: userEmail,
+              name: userName,
               picture: userInfo.picture || null,
               googleId: userInfo.id || null,
               role: isAdminEmail ? 'admin' : 'viewer', // Set admin for mkerley@linfield.com, default to viewer for others
