@@ -123,7 +123,59 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
       if (response.ok) {
         const data = await response.json()
-        router.push(`/inventory/${data.item.id}`)
+        const savedItemId = data.item.id
+
+        // Upload pending image if exists
+        if (pendingImageFile) {
+          try {
+            const imageFormData = new FormData()
+            imageFormData.append('image', pendingImageFile)
+            const imageResponse = await fetch(`/api/inventory/${savedItemId}/upload-image`, {
+              method: 'POST',
+              body: imageFormData,
+            })
+            if (imageResponse.ok) {
+              const imageData = await imageResponse.json()
+              setImageUrl(imageData.imageUrl)
+              setPendingImageFile(null)
+              if (pendingImagePreview) {
+                URL.revokeObjectURL(pendingImagePreview)
+                setPendingImagePreview('')
+              }
+            }
+          } catch (error) {
+            console.error('Failed to upload pending image:', error)
+          }
+        }
+
+        // Upload pending documents if any
+        if (pendingDocuments.length > 0) {
+          try {
+            for (const docFile of pendingDocuments) {
+              const docFormData = new FormData()
+              docFormData.append('file', docFile)
+              const docResponse = await fetch(`/api/inventory/${savedItemId}/documents`, {
+                method: 'POST',
+                body: docFormData,
+              })
+              if (docResponse.ok) {
+                const docData = await docResponse.json()
+                setDocuments([...documents, docData.document])
+              }
+            }
+            setPendingDocuments([])
+          } catch (error) {
+            console.error('Failed to upload pending documents:', error)
+          }
+        }
+
+        if (itemId) {
+          alert('Inventory item updated successfully!')
+          router.refresh()
+        } else {
+          alert('Inventory item created successfully!')
+          router.push(`/inventory/${savedItemId}/edit`)
+        }
       } else {
         const error = await response.json()
         alert(error.error || 'Failed to save')
