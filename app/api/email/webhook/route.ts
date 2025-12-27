@@ -96,16 +96,18 @@ export async function POST(request: NextRequest) {
     // Remove email signature/quoted text (common patterns)
     // Be aggressive - remove all quoted/reply content to get only the actual reply
     if (messageContent && messageContent.length > 0) {
-      // First, try to find where the actual reply ends and quoted content begins
       // Common patterns that indicate the start of quoted content
+      // These patterns match various email client reply formats
       const quoteStartPatterns = [
-        /On .* wrote:/i,
+        /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+.*?\d{1,2}[\s,]+.*?\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?wrote:/is, // "On Fri, Dec 26, 2025 at 9:55 PM ... wrote:"
+        /On\s+.*?\d{1,2}\/\d{1,2}\/\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?wrote:/is, // "On 12/26/2025 at 9:55 PM ... wrote:"
+        /On\s+.*?wrote:/i, // Generic "On ... wrote:"
         /-----Original Message-----/i,
-        /From:.*@/i,
+        /From:.*?@/i,
         /Sent:.*/i,
         /Date:.*/i,
         /Subject:.*/i,
-        /To:.*@/i,
+        /To:.*?@/i,
         /<support@tech\.linfieldtechhub\.com>/i,
         /New Message on Your Equipment Checkout Request/i,
         /Hello .*?,\s*You have received/i,
@@ -115,6 +117,9 @@ export async function POST(request: NextRequest) {
         /This is an automated/i,
         /Please do not reply/i,
         /^[-=]{3,}$/m, // Separator lines
+        /^>+\s*New Message/i, // Quoted "New Message"
+        /^>+\s*Hello/i, // Quoted "Hello"
+        /^>+\s*From:/i, // Quoted "From:"
       ]
       
       // Find the earliest occurrence of any quote pattern
@@ -123,6 +128,19 @@ export async function POST(request: NextRequest) {
         const match = messageContent.match(pattern)
         if (match && match.index !== undefined && match.index < earliestQuoteIndex) {
           earliestQuoteIndex = match.index
+        }
+      }
+      
+      // Also check for patterns that might be in the middle (like email addresses in angle brackets)
+      const emailPattern = /<[^>]+@[^>]+>/g
+      const emailMatches = messageContent.matchAll(emailPattern)
+      for (const match of emailMatches) {
+        // If we find an email address and it's followed by "wrote:" or similar, that's likely the start of quoted content
+        const afterEmail = messageContent.substring(match.index! + match[0].length)
+        if (/wrote:|said:|writes:/i.test(afterEmail.substring(0, 50))) {
+          if (match.index! < earliestQuoteIndex) {
+            earliestQuoteIndex = match.index!
+          }
         }
       }
       

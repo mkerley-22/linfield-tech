@@ -126,6 +126,35 @@ export default function CheckoutPage() {
   }, [])
 
   useEffect(() => {
+    // Listen for message updates
+    const handleMessageUpdate = () => {
+      if (selectedRequest) {
+        loadRequestDetail(selectedRequest.id)
+      }
+      loadRequests()
+    }
+    
+    window.addEventListener('checkoutRequestUpdated', handleMessageUpdate)
+    window.addEventListener('checkoutStatusUpdated', handleMessageUpdate)
+    
+    // Auto-refresh messages every 10 seconds
+    const interval = setInterval(() => {
+      if (isAuthenticated && selectedRequest) {
+        loadRequestDetail(selectedRequest.id)
+      }
+      if (isAuthenticated) {
+        loadRequests()
+      }
+    }, 10000)
+    
+    return () => {
+      window.removeEventListener('checkoutRequestUpdated', handleMessageUpdate)
+      window.removeEventListener('checkoutStatusUpdated', handleMessageUpdate)
+      clearInterval(interval)
+    }
+  }, [isAuthenticated, selectedRequest])
+
+  useEffect(() => {
     // Only load data if authenticated
     if (isAuthenticated) {
       loadRequests()
@@ -706,8 +735,13 @@ export default function CheckoutPage() {
                               </p>
                             )}
                             {request.messages && request.messages.length > 0 && (
-                              <p>
+                              <p className="flex items-center gap-2">
                                 <strong>Messages:</strong> {request.messages.length}
+                                {(unreadMessageCounts.get(request.id) || 0) > 0 && (
+                                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                                    {unreadMessageCounts.get(request.id)}
+                                  </span>
+                                )}
                               </p>
                             )}
                           </div>
