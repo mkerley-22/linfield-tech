@@ -135,7 +135,10 @@ export async function POST(request: NextRequest) {
           const resend = new Resend(process.env.RESEND_API_KEY)
           
           // Use Resend SDK to fetch email content
-          const emailData = await resend.emails.receiving.get(data.email_id)
+          const emailResponse = await resend.emails.receiving.get(data.email_id)
+          
+          // Resend API may return { data: { text, html, ... } } or direct object
+          const emailData = emailResponse?.data || emailResponse
           
           if (emailData) {
             console.log('Fetched email from Resend API:', {
