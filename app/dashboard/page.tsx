@@ -7,6 +7,8 @@ import NewDropdown from '@/components/NewDropdown'
 import { Button } from '@/components/ui/Button'
 import { format } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
+
 async function getPages() {
   const pages = await prisma.page.findMany({
     where: {

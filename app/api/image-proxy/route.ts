@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Proxy endpoint to fetch images and handle CORS issues
  * Usage: /api/image-proxy?url=https://example.com/image.jpg

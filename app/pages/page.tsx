@@ -5,6 +5,8 @@ import Sidebar from '@/components/Sidebar'
 import NewDropdown from '@/components/NewDropdown'
 import { Button } from '@/components/ui/Button'
 
+export const dynamic = 'force-dynamic'
+
 async function getPages() {
   const pages = await prisma.page.findMany({
     where: {

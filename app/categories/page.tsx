@@ -3,6 +3,8 @@ import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 import { Plus, Folder, FileText } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 async function getCategories() {
   const categories = await prisma.category.findMany({
     include: {
