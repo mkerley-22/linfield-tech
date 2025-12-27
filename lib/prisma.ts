@@ -53,15 +53,6 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
       url: databaseUrl,
     },
   },
-  // Disable prepared statements for PgBouncer compatibility
-  // This prevents "prepared statement already exists" errors
-  // Prisma will use regular queries instead of prepared statements
-  __internal: {
-    engine: {
-      // Force Prisma to not use prepared statements
-      // This is needed for PgBouncer transaction mode
-    },
-  },
 })
 
 // Ensure we're using connection pooling properly
