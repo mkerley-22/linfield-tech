@@ -214,25 +214,28 @@ model InventoryDocument {
 }
 
 model InventoryItem {
-  id                 String              @id @default(cuid())
-  name               String
-  description        String?
-  quantity           Int                 @default(1)
-  manufacturer       String?
-  model              String?
-  serialNumbers      String?
-  location           String?
-  lastUsedAt         DateTime?
-  lastUsedBy         String?
-  imageUrl           String?
-  documentationLinks String?
-  checkoutEnabled    Boolean             @default(false)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  Checkout           Checkout[]
-  EventInventory     EventInventory[]
-  InventoryDocument  InventoryDocument[]
-  InventoryItemTag   InventoryItemTag[]
+  id                   String              @id @default(cuid())
+  name                 String
+  description          String?
+  quantity             Int                 @default(1)
+  manufacturer         String?
+  model                String?
+  serialNumbers        String?
+  location             String?
+  locationBreakdowns   String? // JSON: [{ location: string, quantity: number }]
+  usageNotes           String? // Notes about what items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
+  availableForCheckout Int? // Number available for checkout (defaults to quantity if null)
+  lastUsedAt           DateTime?
+  lastUsedBy           String?
+  imageUrl             String?
+  documentationLinks   String?
+  checkoutEnabled      Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  Checkout             Checkout[]
+  EventInventory       EventInventory[]
+  InventoryDocument    InventoryDocument[]
+  InventoryItemTag     InventoryItemTag[]
 
   @@index([lastUsedAt])
   @@index([name])

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, X, Loader2, Calendar, Clock, MapPin, Repeat, Plus, Trash2 } from 'lucide-react'
 import { Button } from './ui/Button'
+import { roundDateTimeToQuarterHour } from '@/lib/time-utils'
 
 interface Category {
   id: string
@@ -479,7 +480,11 @@ export default function EventEditor({ eventId, initialData }: { eventId?: string
               <input
                 type="datetime-local"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                onChange={(e) => {
+                  const rounded = roundDateTimeToQuarterHour(e.target.value)
+                  setStartTime(rounded)
+                }}
+                step="900"
                 className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               />
             </div>
@@ -490,7 +495,11 @@ export default function EventEditor({ eventId, initialData }: { eventId?: string
               <input
                 type="datetime-local"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                onChange={(e) => {
+                  const rounded = roundDateTimeToQuarterHour(e.target.value)
+                  setEndTime(rounded)
+                }}
+                step="900"
                 className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               />
             </div>
@@ -536,7 +545,11 @@ export default function EventEditor({ eventId, initialData }: { eventId?: string
               <input
                 type="datetime-local"
                 value={setupTime}
-                onChange={(e) => setSetupTime(e.target.value)}
+                onChange={(e) => {
+                  const rounded = roundDateTimeToQuarterHour(e.target.value)
+                  setSetupTime(rounded)
+                }}
+                step="900"
                 className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               />
               <p className="text-xs text-gray-500 mt-1">Time before the event starts for setup</p>

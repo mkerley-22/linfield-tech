@@ -16,6 +16,9 @@ interface InventoryEditorProps {
     model?: string
     serialNumbers?: string | string[]  // Can be string (JSON) or array
     location?: string
+    locationBreakdowns?: string | Array<{ location: string; quantity: number }>
+    usageNotes?: string
+    availableForCheckout?: number | null
     checkoutEnabled?: boolean
     tagIds?: string[]
     imageUrl?: string
@@ -45,6 +48,19 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   })
   const [newSerialNumber, setNewSerialNumber] = useState('')
   const [location, setLocation] = useState(initialData?.location || '')
+  const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number }>>(() => {
+    if (!initialData?.locationBreakdowns) return []
+    try {
+      if (typeof initialData.locationBreakdowns === 'string') {
+        return JSON.parse(initialData.locationBreakdowns)
+      }
+      return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns : []
+    } catch {
+      return []
+    }
+  })
+  const [usageNotes, setUsageNotes] = useState(initialData?.usageNotes || '')
+  const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
   const [checkoutEnabled, setCheckoutEnabled] = useState(initialData?.checkoutEnabled || false)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || [])
   const [tags, setTags] = useState<Array<{ id: string; name: string; color: string }>>([])
@@ -189,6 +205,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           model,
           serialNumbers: serialNumbers.length > 0 ? JSON.stringify(serialNumbers) : null,
           location,
+          locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
+          usageNotes: usageNotes || null,
+          availableForCheckout: availableForCheckout || null,
           checkoutEnabled,
           tagIds: selectedTags,
           imageUrl: imageUrl || null,
@@ -248,8 +267,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           alert('Inventory item updated successfully!')
           router.refresh()
         } else {
-          alert('Inventory item created successfully!')
-          router.push(`/inventory/${savedItemId}/edit`)
+          // Redirect to inventory page with success message
+          router.push('/inventory?created=true')
         }
       } else {
         const error = await response.json()
@@ -508,7 +527,16 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           <input
             type="number"
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            onChange={(e) => {
+              const val = e.target.value
+              if (val === '') {
+                setQuantity(1)
+              } else {
+                const num = parseInt(val)
+                setQuantity(isNaN(num) ? 1 : num)
+              }
+            }}
+            onFocus={(e) => e.target.select()}
             min="1"
             className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
           />
@@ -524,6 +552,112 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           />
         </div>
       </div>
+
+      {/* Location Breakdown */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Location Breakdown
+        </label>
+        <p className="text-xs text-gray-500 mb-3">
+          Specify quantities at different locations (e.g., 5 in Tech Storage, 1 in Gym)
+        </p>
+        <div className="space-y-2 mb-3">
+          {locationBreakdowns.map((breakdown, index) => (
+            <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={breakdown.location}
+                  onChange={(e) => {
+                    const updated = [...locationBreakdowns]
+                    updated[index].location = e.target.value
+                    setLocationBreakdowns(updated)
+                  }}
+                  placeholder="Location"
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                />
+                <input
+                  type="number"
+                  value={breakdown.quantity}
+                  onChange={(e) => {
+                    const updated = [...locationBreakdowns]
+                    updated[index].quantity = parseInt(e.target.value) || 1
+                    setLocationBreakdowns(updated)
+                  }}
+                  min="1"
+                  placeholder="Quantity"
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocationBreakdowns(locationBreakdowns.filter((_, i) => i !== index))}
+                className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                title="Remove location"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setLocationBreakdowns([...locationBreakdowns, { location: '', quantity: 1 }])}
+          className="w-full md:w-auto"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Location
+        </Button>
+      </div>
+
+      {/* Usage Notes */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Usage Notes
+        </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Describe what these items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
+        </p>
+        <textarea
+          value={usageNotes}
+          onChange={(e) => setUsageNotes(e.target.value)}
+          placeholder="e.g., For basketball games, Talkback Mic for SQ7"
+          rows={3}
+          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+        />
+      </div>
+
+      {/* Available for Checkout */}
+      {checkoutEnabled && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Available for Checkout
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Number of items available for checkout (leave empty to use total quantity: {quantity})
+          </p>
+          <input
+            type="number"
+            value={availableForCheckout ?? ''}
+            onChange={(e) => {
+              const val = e.target.value
+              if (val === '') {
+                setAvailableForCheckout(null)
+              } else {
+                const num = parseInt(val)
+                setAvailableForCheckout(isNaN(num) ? null : Math.min(num, quantity))
+              }
+            }}
+            onFocus={(e) => e.target.select()}
+            min="1"
+            max={quantity}
+            placeholder={`Default: ${quantity} (all items)`}
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -875,18 +1009,24 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                     ? { backgroundColor: tag.color, borderColor: tag.color }
                     : {}
                 }
+                onClick={(e) => {
+                  // Only toggle if clicking on the tag name area, not the delete button
+                  if ((e.target as HTMLElement).closest('button[data-delete-tag]')) {
+                    return
+                  }
+                  toggleTag(tag.id)
+                }}
+                className="cursor-pointer"
               >
-                <button
-                  type="button"
-                  onClick={() => toggleTag(tag.id)}
-                  className="flex-1"
-                >
+                <span className="flex-1">
                   {tag.name}
-                </button>
+                </span>
                 <button
                   type="button"
+                  data-delete-tag
                   onClick={(e) => {
                     e.stopPropagation()
+                    e.preventDefault()
                     handleDeleteTag(tag.id, tag.name)
                   }}
                   className={`opacity-0 group-hover:opacity-100 transition-opacity ${

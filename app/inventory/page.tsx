@@ -16,6 +16,9 @@ interface InventoryItem {
   manufacturer?: string
   model?: string
   location?: string
+  locationBreakdowns?: string | null
+  usageNotes?: string | null
+  availableForCheckout?: number | null
   lastUsedAt?: string
   lastUsedBy?: string
   imageUrl?: string
@@ -25,6 +28,7 @@ interface InventoryItem {
 
 export default function InventoryPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [items, setItems] = useState<InventoryItem[]>([])
   const [tags, setTags] = useState<Array<{ id: string; name: string; color: string }>>([])
   const [selectedTag, setSelectedTag] = useState<string>('')
@@ -41,11 +45,21 @@ export default function InventoryPage() {
   const [deleting, setDeleting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
   useEffect(() => {
     loadTags()
     loadInventory()
+    
+    // Check for success message from URL
+    if (searchParams.get('created') === 'true') {
+      setToastMessage('Inventory item created successfully!')
+      setShowToast(true)
+      // Clean up URL
+      router.replace('/inventory', { scroll: false })
+    }
     
     // Listen for checkout updates from other pages
     const handleInventoryUpdate = () => {
@@ -60,7 +74,7 @@ export default function InventoryPage() {
       window.removeEventListener('checkoutStatusUpdated', handleInventoryUpdate)
       window.removeEventListener('inventoryUpdated', handleInventoryUpdate)
     }
-  }, [selectedTag, search])
+  }, [selectedTag, search, searchParams, router])
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -120,7 +134,8 @@ export default function InventoryPage() {
 
   const getAvailableQuantity = (item: InventoryItem) => {
     const checkedOut = item.Checkout.filter(c => c.status === 'checked_out').length
-    return item.quantity - checkedOut
+    const maxAvailable = item.availableForCheckout ?? item.quantity
+    return Math.max(0, maxAvailable - checkedOut)
   }
 
   // Sort items
@@ -241,6 +256,12 @@ export default function InventoryPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 overflow-y-auto lg:ml-0">
+        <Toast
+          message={toastMessage}
+          isVisible={showToast}
+          onClose={() => setShowToast(false)}
+          type="success"
+        />
         <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-16 lg:pt-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 lg:mb-8 gap-4">
             <div>

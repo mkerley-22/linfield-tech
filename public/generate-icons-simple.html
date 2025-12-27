@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Generate PWA Icons</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-top: 0;
+      color: #111;
+    }
+    .preview {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .preview-item {
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #e5e5e5;
+      border-radius: 8px;
+      background: #2563eb;
+      display: block;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .status {
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Generate PWA Icons from LC Logo</h1>
+    <p>This tool will create 192x192 and 512x512 PNG icons with a blue background matching your app theme.</p>
+    
+    <img id="logo" src="lc-logo.svg" style="display: none;" onerror="handleLogoError()" />
+    
+    <div class="preview">
+      <div class="preview-item">
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <p style="margin-top: 10px; color: #666;">192×192</p>
+      </div>
+      <div class="preview-item">
+        <canvas id="canvas512" width="512" height="512" style="max-width: 256px; height: auto;"></canvas>
+        <p style="margin-top: 10px; color: #666;">512×512</p>
+      </div>
+    </div>
+    
+    <div class="buttons">
+      <button id="generateBtn" onclick="generateIcons()">Generate Icons</button>
+      <button id="downloadBtn" onclick="downloadIcons()" disabled>Download Icons</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    const logo = document.getElementById('logo');
+    const canvas192 = document.getElementById('canvas192');
+    const canvas512 = document.getElementById('canvas512');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const status = document.getElementById('status');
+    
+    let icon192Blob = null;
+    let icon512Blob = null;
+
+    function showStatus(message, isSuccess = true) {
+      status.textContent = message;
+      status.className = 'status ' + (isSuccess ? 'success' : '');
+      setTimeout(() => {
+        status.className = 'status';
+      }, 3000);
+    }
+
+    function handleLogoError() {
+      showStatus('Error: Could not load lc-logo.svg. Make sure this file is in the same directory.', false);
+    }
+
+    logo.onload = function() {
+      generateIcons();
+    };
+
+    function generateIcons() {
+      try {
+        // Generate 192x192 icon with blue background
+        const ctx192 = canvas192.getContext('2d');
+        ctx192.fillStyle = '#2563eb'; // Blue background
+        ctx192.fillRect(0, 0, 192, 192);
+        
+        // Draw logo with padding (16px on each side = 160x160 logo area)
+        const logoSize = 160;
+        const padding = (192 - logoSize) / 2;
+        ctx192.drawImage(logo, padding, padding, logoSize, logoSize);
+        
+        // Generate 512x512 icon with blue background
+        const ctx512 = canvas512.getContext('2d');
+        ctx512.fillStyle = '#2563eb'; // Blue background
+        ctx512.fillRect(0, 0, 512, 512);
+        
+        // Draw logo with padding (42px on each side = 428x428 logo area)
+        const logoSize512 = 428;
+        const padding512 = (512 - logoSize512) / 2;
+        ctx512.drawImage(logo, padding512, padding512, logoSize512, logoSize512);
+        
+        // Convert to blobs for download
+        canvas192.toBlob(function(blob) {
+          icon192Blob = blob;
+          checkReady();
+        }, 'image/png');
+        
+        canvas512.toBlob(function(blob) {
+          icon512Blob = blob;
+          checkReady();
+        }, 'image/png');
+        
+        showStatus('Icons generated successfully!');
+      } catch (error) {
+        showStatus('Error generating icons: ' + error.message, false);
+      }
+    }
+
+    function checkReady() {
+      if (icon192Blob && icon512Blob) {
+        downloadBtn.disabled = false;
+      }
+    }
+
+    function downloadIcons() {
+      if (!icon192Blob || !icon512Blob) {
+        showStatus('Please generate icons first', false);
+        return;
+      }
+      
+      // Download 192x192
+      const url192 = URL.createObjectURL(icon192Blob);
+      const a192 = document.createElement('a');
+      a192.href = url192;
+      a192.download = 'icon-192.png';
+      document.body.appendChild(a192);
+      a192.click();
+      document.body.removeChild(a192);
+      URL.revokeObjectURL(url192);
+      
+      // Download 512x512 after a short delay
+      setTimeout(() => {
+        const url512 = URL.createObjectURL(icon512Blob);
+        const a512 = document.createElement('a');
+        a512.href = url512;
+        a512.download = 'icon-512.png';
+        document.body.appendChild(a512);
+        a512.click();
+        document.body.removeChild(a512);
+        URL.revokeObjectURL(url512);
+        showStatus('Icons downloaded! Place them in the /public directory.');
+      }, 100);
+    }
+
+    // Auto-generate on load
+    if (logo.complete) {
+      generateIcons();
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate PWA Icons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .preview {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Generate PWA Icons from LC Logo</h1>
+    <p>This will create 192x192 and 512x512 PNG icons from the LC logo SVG</p>
+    
+    <img id="logo" src="/lc-logo.svg" style="display: none;" />
+    
+    <div class="preview">
+      <div>
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <p>192x192</p>
+      </div>
+      <div>
+        <canvas id="canvas512" width="512" height="512"></canvas>
+        <p>512x512</p>
+      </div>
+    </div>
+    
+    <div>
+      <button onclick="generateIcons()">Generate Icons</button>
+      <button onclick="downloadIcons()">Download Icons</button>
+    </div>
+  </div>
+
+  <script>
+    const logo = document.getElementById('logo');
+    const canvas192 = document.getElementById('canvas192');
+    const canvas512 = document.getElementById('canvas512');
+    
+    let icon192Blob = null;
+    let icon512Blob = null;
+
+    logo.onload = function() {
+      generateIcons();
+    };
+
+    function generateIcons() {
+      // Generate 192x192 icon
+      const ctx192 = canvas192.getContext('2d');
+      ctx192.fillStyle = '#2563eb'; // Blue background
+      ctx192.fillRect(0, 0, 192, 192);
+      ctx192.drawImage(logo, 16, 16, 160, 160);
+      
+      // Generate 512x512 icon
+      const ctx512 = canvas512.getContext('2d');
+      ctx512.fillStyle = '#2563eb'; // Blue background
+      ctx512.fillRect(0, 0, 512, 512);
+      ctx512.drawImage(logo, 42, 42, 428, 428);
+      
+      // Convert to blobs for download
+      canvas192.toBlob(function(blob) {
+        icon192Blob = blob;
+      }, 'image/png');
+      
+      canvas512.toBlob(function(blob) {
+        icon512Blob = blob;
+      }, 'image/png');
+    }
+
+    function downloadIcons() {
+      if (!icon192Blob || !icon512Blob) {
+        alert('Please generate icons first');
+        return;
+      }
+      
+      // Download 192x192
+      const url192 = URL.createObjectURL(icon192Blob);
+      const a192 = document.createElement('a');
+      a192.href = url192;
+      a192.download = 'icon-192.png';
+      a192.click();
+      URL.revokeObjectURL(url192);
+      
+      // Download 512x512
+      setTimeout(() => {
+        const url512 = URL.createObjectURL(icon512Blob);
+        const a512 = document.createElement('a');
+        a512.href = url512;
+        a512.download = 'icon-512.png';
+        a512.click();
+        URL.revokeObjectURL(url512);
+      }, 100);
+    }
+  </script>
+</body>
+</html>
+
