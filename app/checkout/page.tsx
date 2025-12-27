@@ -74,6 +74,7 @@ export default function CheckoutPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [showDenyModal, setShowDenyModal] = useState(false)
   const [denyMessage, setDenyMessage] = useState('')
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false)
 
   useEffect(() => {
     // Check authentication first with retry logic
@@ -398,19 +399,27 @@ export default function CheckoutPage() {
 
   const handleSharePublicPage = async () => {
     const url = `${window.location.origin}/checkout/public`
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Equipment Checkout',
-          text: 'Request equipment checkout',
-          url,
-        })
-      } catch (err) {
-        // User cancelled
-      }
-    } else {
+    try {
       await navigator.clipboard.writeText(url)
-      alert('Public checkout page link copied to clipboard!')
+      setCopiedToClipboard(true)
+      setTimeout(() => setCopiedToClipboard(false), 2000)
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = url
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        setCopiedToClipboard(true)
+        setTimeout(() => setCopiedToClipboard(false), 2000)
+      } catch (err) {
+        alert('Failed to copy. Please copy manually: ' + url)
+      }
+      document.body.removeChild(textArea)
     }
   }
 
@@ -485,8 +494,17 @@ export default function CheckoutPage() {
                 variant="secondary"
                 size="sm"
               >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Public Page
+                {copiedToClipboard ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share Public Page
+                  </>
+                )}
               </Button>
             </div>
             <p className="text-gray-600">View and manage equipment checkouts and requests</p>
