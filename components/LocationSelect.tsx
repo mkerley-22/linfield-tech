@@ -104,6 +104,22 @@ export default function LocationSelect({ value, onChange, placeholder = 'Select 
     }
   }
 
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onChange('')
+    setSearchQuery('')
+    setIsOpen(false)
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }
+
+  const handleInputFocus = () => {
+    setIsOpen(true)
+    // When opening, show all options (clear search to show everything)
+    setSearchQuery('')
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setSearchQuery(newValue)
@@ -121,25 +137,35 @@ export default function LocationSelect({ value, onChange, placeholder = 'Select 
           type="text"
           value={displayValue}
           onChange={handleInputChange}
-          onFocus={() => {
-            setIsOpen(true)
-            setSearchQuery(value)
-          }}
+          onFocus={handleInputFocus}
           placeholder={placeholder}
-          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 pr-10"
+          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 pr-20"
         />
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(!isOpen)
-            if (!isOpen) {
-              setSearchQuery(value)
-            }
-          }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-        >
-          <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {value && !isOpen && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+              title="Clear selection"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(!isOpen)
+              if (!isOpen) {
+                // When opening, show all options
+                setSearchQuery('')
+              }
+            }}
+            className="p-1 text-gray-400 hover:text-gray-600"
+          >
+            <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {isOpen && (
