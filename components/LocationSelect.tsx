@@ -93,13 +93,14 @@ export default function LocationSelect({ value, onChange, placeholder = 'Select 
   }, [isOpen])
 
   const handleSelect = (location: string) => {
-    if (location === 'Other') {
-      // Keep dropdown open for custom input
-      setSearchQuery('')
-    } else {
-      onChange(location)
-      setSearchQuery('')
-      setIsOpen(false)
+    onChange(location)
+    setSearchQuery('')
+    setIsOpen(false)
+  }
+
+  const handleAddNew = () => {
+    if (searchQuery.trim()) {
+      saveCustomLocation(searchQuery)
     }
   }
 
@@ -107,17 +108,9 @@ export default function LocationSelect({ value, onChange, placeholder = 'Select 
     const newValue = e.target.value
     setSearchQuery(newValue)
     setIsOpen(true)
-    
-    // If there's an exact match, update the value
-    const match = allLocations.find(loc => loc.toLowerCase() === newValue.toLowerCase())
-    if (match) {
-      onChange(match)
-    } else if (newValue.trim()) {
-      // Allow free-form input
-      onChange(newValue)
-    }
   }
 
+  // Show search query when open, otherwise show selected value
   const displayValue = isOpen ? searchQuery : value
 
   return (
@@ -151,7 +144,8 @@ export default function LocationSelect({ value, onChange, placeholder = 'Select 
 
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
-          {filteredLocations.length > 0 ? (
+          {/* Show filtered locations */}
+          {filteredLocations.length > 0 && (
             <div className="py-1">
               {filteredLocations.map((location) => (
                 <button
@@ -159,31 +153,56 @@ export default function LocationSelect({ value, onChange, placeholder = 'Select 
                   type="button"
                   onClick={() => handleSelect(location)}
                   className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
-                    value === location ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                    value === location ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'
                   }`}
                 >
                   {location}
                 </button>
               ))}
             </div>
-          ) : null}
+          )}
           
+          {/* Show "Add" option if typing something new */}
           {isNewLocation && (
-            <div className="border-t border-gray-200 py-1">
-              <button
-                type="button"
-                onClick={() => saveCustomLocation(searchQuery)}
-                className="w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors text-blue-600 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add &quot;{searchQuery}&quot;
-              </button>
+            <>
+              {filteredLocations.length > 0 && (
+                <div className="border-t border-gray-200"></div>
+              )}
+              <div className="py-1">
+                <button
+                  type="button"
+                  onClick={handleAddNew}
+                  className="w-full text-left px-4 py-2 hover:bg-green-50 transition-colors text-green-600 font-medium flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add &quot;{searchQuery}&quot;
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Show message if no results and not typing something new */}
+          {filteredLocations.length === 0 && !isNewLocation && searchQuery && (
+            <div className="px-4 py-2 text-sm text-gray-500">
+              No locations found. Type to add a new location.
             </div>
           )}
 
-          {filteredLocations.length === 0 && !isNewLocation && searchQuery && (
-            <div className="px-4 py-2 text-sm text-gray-500">
-              No locations found
+          {/* Show all locations if search is empty */}
+          {!searchQuery && (
+            <div className="py-1">
+              {allLocations.map((location) => (
+                <button
+                  key={location}
+                  type="button"
+                  onClick={() => handleSelect(location)}
+                  className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
+                    value === location ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-900'
+                  }`}
+                >
+                  {location}
+                </button>
+              ))}
             </div>
           )}
         </div>
