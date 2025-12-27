@@ -15,23 +15,31 @@ export default function SchoolDudeIntegration() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [syncMessage, setSyncMessage] = useState('')
   const [daysInAdvance, setDaysInAdvance] = useState<number>(365) // Default to 1 year
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(true)
 
-  // Load saved preferences from localStorage
+  // Load saved preferences from database
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedCalendar = localStorage.getItem('schoolDude_selectedCalendar')
-      if (savedCalendar) {
-        setSelectedCalendar(savedCalendar)
-      }
-      
-      const savedDays = localStorage.getItem('schoolDude_daysInAdvance')
-      if (savedDays) {
-        const days = parseInt(savedDays, 10)
-        if (!isNaN(days) && days >= 1 && days <= 730) {
-          setDaysInAdvance(days)
+    const loadPreferences = async () => {
+      try {
+        const response = await fetch('/api/user/preferences')
+        if (response.ok) {
+          const data = await response.json()
+          const prefs = data.preferences
+          if (prefs.schoolDudeCalendarId) {
+            setSelectedCalendar(prefs.schoolDudeCalendarId)
+          }
+          if (prefs.schoolDudeDaysInAdvance) {
+            setDaysInAdvance(prefs.schoolDudeDaysInAdvance)
+          }
         }
+      } catch (error) {
+        console.error('Failed to load preferences:', error)
+      } finally {
+        setIsLoadingPreferences(false)
       }
     }
+
+    loadPreferences()
   }, [])
 
   const loadCalendars = async () => {
@@ -162,15 +170,24 @@ export default function SchoolDudeIntegration() {
             </label>
             <select
               value={selectedCalendar}
-              onChange={(e) => {
-                setSelectedCalendar(e.target.value)
-                // Save to localStorage
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('schoolDude_selectedCalendar', e.target.value)
+              onChange={async (e) => {
+                const newCalendar = e.target.value
+                setSelectedCalendar(newCalendar)
+                // Save to database
+                try {
+                  await fetch('/api/user/preferences', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      schoolDudeCalendarId: newCalendar,
+                    }),
+                  })
+                } catch (error) {
+                  console.error('Failed to save calendar preference:', error)
                 }
               }}
               className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-              disabled={isLoadingCalendars}
+              disabled={isLoadingCalendars || isLoadingPreferences}
             >
               <option value="primary">Primary Calendar</option>
               {calendars.map((cal) => (
@@ -195,15 +212,24 @@ export default function SchoolDudeIntegration() {
               min="1"
               max="730"
               value={daysInAdvance}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const days = Math.max(1, Math.min(730, parseInt(e.target.value) || 365))
                 setDaysInAdvance(days)
-                // Save to localStorage
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('schoolDude_daysInAdvance', days.toString())
+                // Save to database
+                try {
+                  await fetch('/api/user/preferences', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      schoolDudeDaysInAdvance: days,
+                    }),
+                  })
+                } catch (error) {
+                  console.error('Failed to save days preference:', error)
                 }
               }}
               className="w-24 px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+              disabled={isLoadingPreferences}
             />
             <span className="text-sm text-gray-600">days</span>
             <div className="flex-1 text-xs text-gray-500">

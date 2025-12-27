@@ -80,7 +80,7 @@ model CheckoutRequest {
   pickupLocation         String?
   pickedUp               Boolean                  @default(false)
   pickedUpAt             DateTime?
-  messagesLastViewedAt   DateTime?                // Track when admin last viewed messages
+  messagesLastViewedAt   DateTime? // Track when admin last viewed messages
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime
   CheckoutRequestMessage CheckoutRequestMessage[]
@@ -268,7 +268,7 @@ model Page {
   description String?
   parentId    String?
   categoryId  String?
-  headerImage String?      // URL or path to header image (250px height x 1200px width)
+  headerImage String? // URL or path to header image (250px height x 1200px width)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime
   order       Int          @default(0)
@@ -322,19 +322,32 @@ model Tag {
 }
 
 model User {
-  id        String     @id
-  email     String     @unique
-  name      String
-  picture   String?
-  googleId  String?    @unique
-  role      String     @default("user")
-  createdAt DateTime   @default(now())
-  updatedAt DateTime
-  Checkout  Checkout[]
-  Session   Session[]
+  id              String           @id
+  email           String           @unique
+  name            String
+  picture         String?
+  googleId        String?          @unique
+  role            String           @default("user")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
+  Checkout        Checkout[]
+  Session         Session[]
+  UserPreferences UserPreferences?
 
   @@index([googleId])
   @@index([email])
+}
+
+model UserPreferences {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  schoolDudeCalendarId    String? // Selected calendar ID for School Dude integration
+  schoolDudeDaysInAdvance Int?     @default(365) // Days in advance for School Dude sync
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  User                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model PublicSiteSettings {
@@ -344,8 +357,8 @@ model PublicSiteSettings {
   homepagePageId  String?
   enabled         Boolean  @default(false)
   searchEnabled   Boolean  @default(true)
-  navigationJson  String?  // JSON array of category IDs for navigation
-  themeJson       String?  // JSON object with theme settings (colors, fonts, spacing)
+  navigationJson  String? // JSON array of category IDs for navigation
+  themeJson       String? // JSON object with theme settings (colors, fonts, spacing)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
