@@ -117,9 +117,9 @@ export async function POST(request: NextRequest) {
       preview: typeof messageContent === 'string' ? messageContent.substring(0, 100) : String(messageContent).substring(0, 100),
     })
 
-    // If still no content, check alternative field names and nested structures
+    // If still no content, fetch it from Resend API using email_id
     if (!messageContent || messageContent.length === 0) {
-      // Check various possible field names including nested structures
+      // First check alternative field names in webhook payload
       const body = data.body || data.content || data.message || data.text_content || 
                    data.html_content || rawEmail || 
                    (typeof data.body === 'object' ? (data.body.text || data.body.html) : null) ||
@@ -128,11 +128,66 @@ export async function POST(request: NextRequest) {
       if (body) {
         messageContent = typeof body === 'string' ? body : JSON.stringify(body)
         console.log('Found content in alternative field:', messageContent.substring(0, 100))
+      } else if (data.email_id && process.env.RESEND_API_KEY) {
+        // Fetch email content from Resend API
+        try {
+          console.log('Fetching email content from Resend API for email_id:', data.email_id)
+          const resend = new Resend(process.env.RESEND_API_KEY)
+          
+          // Resend Receiving API endpoint: GET /emails/{email_id}
+          const response = await fetch(`https://api.resend.com/emails/${data.email_id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          })
+          
+          if (response.ok) {
+            const emailData = await response.json()
+            console.log('Fetched email from Resend API:', {
+              hasText: !!emailData.text,
+              hasHtml: !!emailData.html,
+              keys: Object.keys(emailData),
+            })
+            
+            // Extract content from API response
+            const apiText = emailData.text || emailData.body_text || emailData.plain_text
+            const apiHtml = emailData.html || emailData.body_html
+            
+            if (apiText) {
+              messageContent = typeof apiText === 'string' ? apiText : String(apiText)
+            } else if (apiHtml) {
+              // Convert HTML to text
+              const htmlStr = typeof apiHtml === 'string' ? apiHtml : String(apiHtml)
+              messageContent = htmlStr
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .trim()
+            }
+            
+            if (messageContent) {
+              console.log('Successfully fetched email content from Resend API:', messageContent.substring(0, 100))
+            }
+          } else {
+            const errorText = await response.text()
+            console.error('Failed to fetch email from Resend API:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorText,
+            })
+          }
+        } catch (error: any) {
+          console.error('Error fetching email from Resend API:', error)
+        }
       } else {
-        // Resend webhook might not include email body by default
-        // You may need to configure the webhook to include it, or use Resend API to fetch it
-        console.warn('Email body not found in webhook payload. Resend inbound email webhooks may not include body by default.')
-        console.warn('Consider configuring Resend webhook to include email body, or use Resend API to fetch email content using email_id:', data.email_id)
+        console.warn('Email body not found in webhook payload and email_id not available for API fetch')
       }
     }
     
