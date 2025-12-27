@@ -500,7 +500,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Quantity
@@ -525,7 +525,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Manufacturer
@@ -581,7 +581,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="space-y-2">
           <input
             type="text"
             value={newSerialNumber}
@@ -594,7 +594,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               }
             }}
             placeholder="Enter serial number and press Enter"
-            className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
           />
           <Button
             type="button"
@@ -607,6 +607,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               }
             }}
             disabled={!newSerialNumber.trim()}
+            className="w-full"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
@@ -979,12 +980,12 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </p>
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-gray-200">
+      <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200">
         <Button
           onClick={handleSave}
           disabled={saving || !name.trim()}
           variant="primary"
-          className="flex-1"
+          className="w-full md:flex-1"
         >
           {saving ? (
             <>
@@ -1001,6 +1002,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         <Button
           onClick={() => router.back()}
           variant="secondary"
+          className="w-full md:w-auto"
         >
           <X className="w-4 h-4 mr-2" />
           Cancel
