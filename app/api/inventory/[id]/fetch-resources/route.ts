@@ -24,6 +24,47 @@ async function validateImageUrl(url: string): Promise<boolean> {
   }
 }
 
+// Validate that a URL is accessible and returns valid content (not 404)
+async function validateDocumentationUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { 
+      method: 'HEAD', 
+      signal: AbortSignal.timeout(5000),
+      redirect: 'follow'
+    })
+    
+    // Explicitly reject 404s
+    if (response.status === 404) {
+      return false
+    }
+    
+    // Accept successful responses (200-299)
+    if (response.ok) {
+      return true
+    }
+    
+    // Some servers return 403 for HEAD but allow GET, so accept redirects
+    if (response.status >= 300 && response.status < 400 && response.headers.get('location')) {
+      return true
+    }
+    
+    // Reject other error statuses
+    return false
+  } catch (error) {
+    // If HEAD fails, try GET with a small timeout to check if it's actually accessible
+    try {
+      const getResponse = await fetch(url, { 
+        method: 'GET', 
+        signal: AbortSignal.timeout(3000),
+        redirect: 'follow'
+      })
+      return getResponse.ok && getResponse.status !== 404
+    } catch {
+      return false
+    }
+  }
+}
+
 // Fetch image from Google Custom Search API
 async function fetchImageFromGoogle(manufacturer: string, model: string, productName: string): Promise<string | null> {
   const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY
