@@ -12,30 +12,89 @@ interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  // TODO: Implement email sending
-  // Example with nodemailer:
-  // const transporter = nodemailer.createTransport({
-  //   host: process.env.SMTP_HOST,
-  //   port: parseInt(process.env.SMTP_PORT || '587'),
-  //   secure: false,
-  //   auth: {
-  //     user: process.env.SMTP_USER,
-  //     pass: process.env.SMTP_PASS,
-  //   },
-  // })
-  // await transporter.sendMail({
-  //   from: process.env.SMTP_FROM || 'noreply@example.com',
-  //   ...options,
-  // })
+  // Try Resend first (recommended)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text || options.html.replace(/<[^>]*>/g, ''),
+      })
+      
+      console.log('Email sent successfully via Resend to:', options.to)
+      return true
+    } catch (error) {
+      console.error('Resend email error:', error)
+      // Fall through to try other methods or log
+    }
+  }
 
-  // For now, just log the email
-  console.log('Email would be sent:', {
+  // Try SendGrid if configured
+  if (process.env.SENDGRID_API_KEY) {
+    try {
+      const sgMail = (await import('@sendgrid/mail')).default
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+      
+      await sgMail.send({
+        from: process.env.EMAIL_FROM || 'noreply@example.com',
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text || options.html.replace(/<[^>]*>/g, ''),
+      })
+      
+      console.log('Email sent successfully via SendGrid to:', options.to)
+      return true
+    } catch (error) {
+      console.error('SendGrid email error:', error)
+      // Fall through to try other methods or log
+    }
+  }
+
+  // Try SMTP if configured
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      const nodemailer = await import('nodemailer')
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_PORT === '465',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      })
+      
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text || options.html.replace(/<[^>]*>/g, ''),
+      })
+      
+      console.log('Email sent successfully via SMTP to:', options.to)
+      return true
+    } catch (error) {
+      console.error('SMTP email error:', error)
+      // Fall through to log
+    }
+  }
+
+  // If no email service is configured, just log
+  console.log('Email would be sent (no email service configured):', {
     to: options.to,
     subject: options.subject,
-    html: options.html,
+    html: options.html.substring(0, 100) + '...',
   })
+  console.log('To enable email sending, set up Resend, SendGrid, or SMTP. See QUICK_EMAIL_SETUP.md')
 
-  return true
+  return false
 }
 
 export async function sendCheckoutRequestConfirmation(
