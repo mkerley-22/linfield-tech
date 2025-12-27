@@ -15,22 +15,31 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try Resend first (recommended)
   if (process.env.RESEND_API_KEY) {
     try {
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      
-      await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || options.html.replace(/<[^>]*>/g, ''),
-        replyTo: options.replyTo,
-      })
-      
-      console.log('Email sent successfully via Resend to:', options.to)
-      return true
-    } catch (error) {
-      console.error('Resend email error:', error)
+      // Dynamic import to avoid build errors if package not installed
+      const resendModule = await import('resend').catch(() => null)
+      if (resendModule) {
+        const { Resend } = resendModule
+        const resend = new Resend(process.env.RESEND_API_KEY)
+        
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || options.html.replace(/<[^>]*>/g, ''),
+          replyTo: options.replyTo,
+        })
+        
+        console.log('Email sent successfully via Resend to:', options.to)
+        return true
+      }
+    } catch (error: any) {
+      // If package not installed, error.message will contain "Cannot find module"
+      if (error?.message?.includes('Cannot find module')) {
+        console.log('Resend package not installed. Install with: npm install resend')
+      } else {
+        console.error('Resend email error:', error)
+      }
       // Fall through to try other methods or log
     }
   }
@@ -38,22 +47,29 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try SendGrid if configured
   if (process.env.SENDGRID_API_KEY) {
     try {
-      const sgMail = (await import('@sendgrid/mail')).default
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-      
-      await sgMail.send({
-        from: process.env.EMAIL_FROM || 'noreply@example.com',
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || options.html.replace(/<[^>]*>/g, ''),
-        replyTo: options.replyTo,
-      })
-      
-      console.log('Email sent successfully via SendGrid to:', options.to)
-      return true
-    } catch (error) {
-      console.error('SendGrid email error:', error)
+      const sendgridModule = await import('@sendgrid/mail').catch(() => null)
+      if (sendgridModule) {
+        const sgMail = sendgridModule.default
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+        
+        await sgMail.send({
+          from: process.env.EMAIL_FROM || 'noreply@example.com',
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || options.html.replace(/<[^>]*>/g, ''),
+          replyTo: options.replyTo,
+        })
+        
+        console.log('Email sent successfully via SendGrid to:', options.to)
+        return true
+      }
+    } catch (error: any) {
+      if (error?.message?.includes('Cannot find module')) {
+        console.log('SendGrid package not installed. Install with: npm install @sendgrid/mail')
+      } else {
+        console.error('SendGrid email error:', error)
+      }
       // Fall through to try other methods or log
     }
   }
@@ -61,30 +77,37 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try SMTP if configured
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
-      const nodemailer = await import('nodemailer')
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_PORT === '465',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      })
-      
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || options.html.replace(/<[^>]*>/g, ''),
-        replyTo: options.replyTo,
-      })
-      
-      console.log('Email sent successfully via SMTP to:', options.to)
-      return true
-    } catch (error) {
-      console.error('SMTP email error:', error)
+      const nodemailerModule = await import('nodemailer').catch(() => null)
+      if (nodemailerModule) {
+        const nodemailer = nodemailerModule.default || nodemailerModule
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        })
+        
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || options.html.replace(/<[^>]*>/g, ''),
+          replyTo: options.replyTo,
+        })
+        
+        console.log('Email sent successfully via SMTP to:', options.to)
+        return true
+      }
+    } catch (error: any) {
+      if (error?.message?.includes('Cannot find module')) {
+        console.log('Nodemailer package not installed. Install with: npm install nodemailer')
+      } else {
+        console.error('SMTP email error:', error)
+      }
       // Fall through to log
     }
   }
