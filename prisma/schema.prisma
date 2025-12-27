@@ -222,9 +222,9 @@ model InventoryItem {
   model                String?
   serialNumbers        String?
   location             String?
-  locationBreakdowns   String? // JSON: [{ location: string, quantity: number }]
-  usageNotes           String? // Notes about what items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
-  availableForCheckout Int? // Number available for checkout (defaults to quantity if null)
+  // locationBreakdowns   String? // JSON: [{ location: string, quantity: number }] - Uncomment after running migration
+  // usageNotes           String? // Notes about what items are used for (e.g., "For basketball games", "Talkback Mic for SQ7") - Uncomment after running migration
+  // availableForCheckout Int? // Number available for checkout (defaults to quantity if null) - Uncomment after running migration
   lastUsedAt           DateTime?
   lastUsedBy           String?
   imageUrl             String?

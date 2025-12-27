@@ -97,9 +97,9 @@ export async function POST(request: NextRequest) {
       model,
       serialNumbers,
       location,
-      locationBreakdowns,
-      usageNotes,
-      availableForCheckout,
+      // locationBreakdowns, // Uncomment after running migration
+      // usageNotes, // Uncomment after running migration
+      // availableForCheckout, // Uncomment after running migration
       checkoutEnabled,
       tagIds = [],
       imageUrl,
@@ -132,9 +132,9 @@ export async function POST(request: NextRequest) {
         model,
         serialNumbers: serialNumbersValue,
         location,
-        locationBreakdowns: locationBreakdowns || null,
-        usageNotes: usageNotes || null,
-        availableForCheckout: availableForCheckout || null,
+        // locationBreakdowns: locationBreakdowns || null, // Uncomment after running migration
+        // usageNotes: usageNotes || null, // Uncomment after running migration
+        // availableForCheckout: availableForCheckout || null, // Uncomment after running migration
         checkoutEnabled: checkoutEnabled !== undefined ? checkoutEnabled : false,
         imageUrl: imageUrl || null,
         documentationLinks: documentationLinks || null,
