@@ -58,7 +58,6 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
   const [isLoading, setIsLoading] = useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
 
   useEffect(() => {
     loadItem(params.id)
@@ -69,22 +68,10 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
     }
     window.addEventListener('inventoryUpdated', handleInventoryUpdate)
     
-    // Close menu when clicking outside
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      if (showMenu && !target.closest('.relative')) {
-        setShowMenu(false)
-      }
-    }
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    
     return () => {
       window.removeEventListener('inventoryUpdated', handleInventoryUpdate)
-      document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [params.id, showMenu])
+  }, [params.id])
 
   const loadItem = async (id: string) => {
     if (!id) return
