@@ -236,29 +236,25 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
           </Link>
 
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-6 relative">
-            {/* 3-dot menu - top right, shows on hover */}
+            {/* 3-dot menu - top right, always visible, shows delete on hover */}
             <div className="absolute top-4 right-4 group">
               <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label="More options"
               >
                 <MoreVertical className="w-5 h-5 text-gray-500" />
               </button>
-              {showMenu && (
-                <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                  <button
-                    onClick={() => {
-                      setShowMenu(false)
-                      setShowDeleteConfirm(true)
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </div>
-              )}
+              <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(true)
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
             </div>
 
             <div className="mb-6">
