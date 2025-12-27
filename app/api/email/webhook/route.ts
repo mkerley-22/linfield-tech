@@ -135,13 +135,13 @@ export async function POST(request: NextRequest) {
       
       // Also check for patterns that might be in the middle (like email addresses in angle brackets)
       const emailPattern = /<[^>]+@[^>]+>/g
-      const emailMatches = messageContent.matchAll(emailPattern)
-      for (const match of emailMatches) {
+      let emailMatch
+      while ((emailMatch = emailPattern.exec(messageContent)) !== null) {
         // If we find an email address and it's followed by "wrote:" or similar, that's likely the start of quoted content
-        const afterEmail = messageContent.substring(match.index! + match[0].length)
+        const afterEmail = messageContent.substring(emailMatch.index + emailMatch[0].length)
         if (/wrote:|said:|writes:/i.test(afterEmail.substring(0, 50))) {
-          if (match.index! < earliestQuoteIndex) {
-            earliestQuoteIndex = match.index!
+          if (emailMatch.index < earliestQuoteIndex) {
+            earliestQuoteIndex = emailMatch.index
           }
         }
       }
