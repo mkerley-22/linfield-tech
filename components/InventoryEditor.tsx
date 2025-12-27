@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { Button } from './ui/Button'
+import LocationSelect from './LocationSelect'
 
 interface InventoryEditorProps {
   itemId?: string
@@ -389,12 +390,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Location
           </label>
-          <input
-            type="text"
+          <LocationSelect
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g., Tech Office, Storage Room A"
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+            onChange={setLocation}
+            placeholder="Select or type location"
           />
         </div>
       </div>
