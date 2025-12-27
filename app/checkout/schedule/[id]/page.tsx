@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Calendar, Clock, MapPin, CheckCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { roundToQuarterHour } from '@/lib/time-utils'
 
 export default function SchedulePickupPage() {
   const router = useRouter()
@@ -21,6 +22,8 @@ export default function SchedulePickupPage() {
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0]
     setPickupDate(today)
+    // Set location to Tech Closet (fixed value)
+    setPickupLocation('Tech Closet')
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,10 +128,23 @@ export default function SchedulePickupPage() {
             <input
               type="time"
               value={pickupTime}
-              onChange={(e) => setPickupTime(e.target.value)}
+              onChange={(e) => {
+                // Round to nearest 15-minute interval
+                const rounded = roundToQuarterHour(e.target.value)
+                setPickupTime(rounded)
+              }}
+              onBlur={(e) => {
+                // Ensure time is rounded when user leaves the field
+                const rounded = roundToQuarterHour(e.target.value)
+                if (rounded !== e.target.value) {
+                  setPickupTime(rounded)
+                }
+              }}
+              step="900"
               required
               className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             />
+            <p className="text-xs text-gray-500 mt-1">Times are available in 15-minute intervals (e.g., 8:00, 8:15, 8:30, 8:45)</p>
           </div>
 
           <div>
@@ -139,10 +155,8 @@ export default function SchedulePickupPage() {
             <input
               type="text"
               value={pickupLocation}
-              onChange={(e) => setPickupLocation(e.target.value)}
-              placeholder="e.g., Tech Storage Room, Main Office"
-              required
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+              readOnly
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
             />
           </div>
 
