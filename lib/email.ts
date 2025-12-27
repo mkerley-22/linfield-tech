@@ -192,7 +192,6 @@ export async function sendCheckoutRequestConfirmation(
         <p>Hello ${requesterName},</p>
         <p>Thank you for submitting your equipment checkout request. We have received your request and will review it shortly.</p>
         <p>You will receive an email notification once your request has been reviewed.</p>
-        <p>Request ID: <strong>${requestId}</strong></p>
         <p>If you have any questions, please don't hesitate to contact us.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
         <p style="color: #6b7280; font-size: 12px;">This is an automated message. Please do not reply to this email.</p>
@@ -432,8 +431,6 @@ export async function sendReadyForPickupEmail(
             <strong>Note:</strong> Please schedule your pickup time as soon as possible to ensure availability.
           </p>
         </div>
-        
-        <p>Request ID: <strong>${requestId}</strong></p>
         
         <p style="color: #6b7280; font-size: 14px;">
           If you have any questions or need assistance, please contact your system administrator.
