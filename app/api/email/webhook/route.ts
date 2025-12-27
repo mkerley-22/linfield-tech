@@ -106,11 +106,22 @@ export async function POST(request: NextRequest) {
       preview: messageContent.substring(0, 100),
     })
 
+    // If still no content, check alternative field names
+    if (!messageContent) {
+      const body = data.body || data.content || data.message || data.text_content
+      if (body) {
+        messageContent = typeof body === 'string' ? body : JSON.stringify(body)
+        console.log('Found content in alternative field (body/content/message):', messageContent.substring(0, 100))
+      }
+    }
+    
     if (!messageContent || messageContent.length < 3) {
       console.log('Message content too short or empty after extraction:', {
         textStr: textStr.substring(0, 200),
         htmlStr: htmlStr.substring(0, 200),
         messageContent,
+        fullDataKeys: Object.keys(data),
+        fullDataSample: JSON.stringify(data).substring(0, 500),
       })
       return NextResponse.json({ received: true, error: 'Message too short' })
     }
