@@ -14,8 +14,13 @@ if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
     // CRITICAL: Use transaction mode instead of session mode
     // Transaction mode allows up to 200 connections vs 15 in session mode
     // This is the key to preventing "max clients reached" errors
-    if (!url.searchParams.has('pgbouncer')) {
-      url.searchParams.set('pgbouncer', 'transaction') // Use transaction mode, not session mode
+    // Always override to transaction mode, even if pgbouncer=true is already set
+    const currentMode = url.searchParams.get('pgbouncer')
+    if (currentMode !== 'transaction') {
+      url.searchParams.set('pgbouncer', 'transaction') // Force transaction mode
+      if (currentMode === 'true') {
+        console.log('Converting pgbouncer from session mode (true) to transaction mode')
+      }
     }
     
     // Set reasonable connection limits for transaction mode
