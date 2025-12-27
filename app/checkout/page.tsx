@@ -224,9 +224,11 @@ export default function CheckoutPage() {
             r.status === 'denied'
           )
         } else if (activeTab === 'ready') {
-          filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
-            r.status === 'approved' && r.readyForPickup && !r.pickedUp
-          )
+          filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
+            // Ensure readyForPickup is treated as boolean
+            const isReady = r.readyForPickup === true || r.readyForPickup === 'true'
+            return r.status === 'approved' && isReady && !r.pickedUp
+          })
         } else if (activeTab === 'pickedup') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')
