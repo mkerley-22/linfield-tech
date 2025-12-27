@@ -343,7 +343,7 @@ export async function sendReadyForPickupEmail(
   requesterName: string,
   requestId: string
 ): Promise<boolean> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   const scheduleUrl = `${baseUrl}/checkout/schedule/${requestId}`
   
   const subject = 'Your Equipment is Ready for Pickup'
