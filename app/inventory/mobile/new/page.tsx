@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, ArrowLeft, Image as ImageIcon, X } from 'lucide-react'
+import LocationSelect from '@/components/LocationSelect'
 import Link from 'next/link'
 
 export default function NewMobileInventoryPage() {
