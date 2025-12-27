@@ -50,8 +50,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ items })
   } catch (error: any) {
     console.error('Get inventory error:', error)
+    
+    // Check if it's a connection pool error
+    if (error.message?.includes('MaxClientsInSessionMode') || error.message?.includes('max clients reached')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection pool exhausted. Please try again in a moment.',
+          items: [] 
+        },
+        { status: 503 } // Service Unavailable
+      )
+    }
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch inventory' },
+      { 
+        error: error.message || 'Failed to fetch inventory',
+        items: [] 
+      },
       { status: 500 }
     )
   }

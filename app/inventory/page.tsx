@@ -100,9 +100,17 @@ export default function InventoryPage() {
       if (response.ok) {
         const data = await response.json()
         setItems(data.items || [])
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to load inventory' }))
+        console.error('Failed to load inventory:', errorData.error)
+        // Show error to user
+        alert(`Failed to load inventory: ${errorData.error || 'Unknown error'}`)
+        setItems([])
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load inventory:', error)
+      alert(`Failed to load inventory: ${error.message || 'Network error'}`)
+      setItems([])
     } finally {
       setIsLoading(false)
     }

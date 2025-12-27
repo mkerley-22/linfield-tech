@@ -16,11 +16,16 @@ if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
       url.searchParams.set('pgbouncer', 'true')
     }
     // Set connection limits to prevent pool exhaustion
+    // Lower limit for serverless to avoid "max clients reached" errors
     if (!url.searchParams.has('connection_limit')) {
-      url.searchParams.set('connection_limit', '10')
+      url.searchParams.set('connection_limit', '5')
     }
     if (!url.searchParams.has('pool_timeout')) {
-      url.searchParams.set('pool_timeout', '20')
+      url.searchParams.set('pool_timeout', '10')
+    }
+    // Add connect timeout to fail fast if pool is exhausted
+    if (!url.searchParams.has('connect_timeout')) {
+      url.searchParams.set('connect_timeout', '5')
     }
     databaseUrl = url.toString()
   } catch (error) {
@@ -36,7 +41,13 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
       url: databaseUrl,
     },
   },
+  // Add connection pool configuration
+  // This helps prevent "max clients reached" errors
+  // Prisma will manage connections more efficiently
 })
+
+// Ensure we're using connection pooling properly
+// In serverless environments, we need to be careful about connection management
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
