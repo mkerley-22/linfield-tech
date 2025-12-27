@@ -29,6 +29,15 @@ This guide will help you set up email receiving so that replies to checkout requ
 4. Click **"Create"**
 5. Copy the webhook secret (if you set one)
 
+**⚠️ IMPORTANT NOTE**: Resend's inbound email webhooks (`email.received`) currently **do not include the email body content** by default. They only include metadata (from, to, subject, email_id, etc.).
+
+**Workaround Options:**
+1. **Check Resend Settings**: Look for any option in the webhook configuration to include email body/content
+2. **Use Email Subject**: We can extract request info from the subject line if needed
+3. **Alternative**: Consider using a different email receiving service that includes body content, or manually copy replies into the system
+
+The webhook will still receive the email and match it to the correct checkout request, but the message content will need to be handled differently.
+
 ## Step 3: Add Webhook Secret to Vercel (Optional but Recommended)
 
 If you set a webhook secret in Resend:
