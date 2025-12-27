@@ -745,7 +745,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   <option value="manual">Manual</option>
                   <option value="spec">Specification</option>
                   <option value="datasheet">Datasheet</option>
-                  <option value="support">Support</option>
+                  <option value="support">Linfield AV Support</option>
                   <option value="guide">Guide</option>
                 </select>
               </div>

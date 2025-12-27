@@ -64,8 +64,37 @@ async function getNotifications() {
     },
   })
 
+  // Count requests with unread messages from requester
+  const allRequests = await prisma.checkoutRequest.findMany({
+    include: {
+      CheckoutRequestMessage: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+  })
+
+  const requestsWithUnreadMessages = allRequests.filter(req => {
+    if (!req.CheckoutRequestMessage || req.CheckoutRequestMessage.length === 0) {
+      return false
+    }
+    const latestMessage = req.CheckoutRequestMessage[0]
+    if (latestMessage.senderType !== 'requester') {
+      return false
+    }
+    if (!req.messagesLastViewedAt) {
+      return true
+    }
+    return new Date(latestMessage.createdAt) > new Date(req.messagesLastViewedAt)
+  })
+
+  const unreadMessageCount = requestsWithUnreadMessages.length
+
   return {
     unseenCount: unseenCheckoutRequests.length,
+    unreadMessageCount,
     recentRequests: unseenCheckoutRequests,
   }
 }
@@ -93,7 +122,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Notifications Section */}
-          {notifications.unseenCount > 0 && (
+          {(notifications.unseenCount > 0 || notifications.unreadMessageCount > 0) && (
             <div className="mt-8 mb-8">
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
@@ -104,7 +133,13 @@ export default async function DashboardPage() {
                     <div>
                       <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
                       <p className="text-sm text-gray-600">
-                        {notifications.unseenCount} new checkout request{notifications.unseenCount !== 1 ? 's' : ''} pending review
+                        {notifications.unseenCount > 0 && (
+                          <span>{notifications.unseenCount} new checkout request{notifications.unseenCount !== 1 ? 's' : ''}</span>
+                        )}
+                        {notifications.unseenCount > 0 && notifications.unreadMessageCount > 0 && <span> • </span>}
+                        {notifications.unreadMessageCount > 0 && (
+                          <span>{notifications.unreadMessageCount} unread message{notifications.unreadMessageCount !== 1 ? 's' : ''}</span>
+                        )}
                       </p>
                     </div>
                   </div>

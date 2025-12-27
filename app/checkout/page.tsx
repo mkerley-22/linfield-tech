@@ -453,6 +453,8 @@ export default function CheckoutPage() {
         setNewMessage('')
         loadRequestDetail(requestId)
         loadRequests()
+        // Trigger notification refresh in sidebar
+        window.dispatchEvent(new CustomEvent('checkoutStatusUpdated'))
       } else {
         const error = await response.json()
         if (response.status === 401) {
