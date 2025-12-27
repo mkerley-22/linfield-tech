@@ -196,23 +196,28 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
     )
   }
 
+  // Calculate total quantity from locationBreakdowns if available, otherwise use item.quantity
+  const totalQuantity = (() => {
+    if (item.locationBreakdowns) {
+      try {
+        const breakdowns = typeof item.locationBreakdowns === 'string' 
+          ? JSON.parse(item.locationBreakdowns) 
+          : item.locationBreakdowns
+        if (Array.isArray(breakdowns) && breakdowns.length > 0) {
+          return breakdowns.reduce((sum: number, b: LocationBreakdown) => sum + (b.quantity || 0), 0)
+        }
+      } catch (e) {
+        console.error('Error parsing locationBreakdowns:', e)
+      }
+    }
+    return item.quantity
+  })()
+
   // Calculate available quantity - only count checkouts with 'checked_out' status
   // 'returned' status should not count against availability
   const checkedOut = (item.checkouts || []).filter((c) => c.status === 'checked_out').length
-  const available = Math.max(0, item.quantity - checkedOut)
-  
-  // Debug logging to help troubleshoot
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Item availability calculation:', {
-      itemName: item.name,
-      quantity: item.quantity,
-      totalCheckouts: item.checkouts?.length || 0,
-      checkedOutCount: checkedOut,
-      returnedCount: (item.checkouts || []).filter((c) => c.status === 'returned').length,
-      available,
-      checkouts: item.checkouts?.map(c => ({ id: c.id, status: c.status, checkedOutBy: c.checkedOutBy }))
-    })
-  }
+  const maxAvailable = item.availableForCheckout ?? totalQuantity
+  const available = Math.max(0, maxAvailable - checkedOut)
   const upcomingEvents = (item.eventItems || [])
     .filter((ei) => new Date(ei.event.startTime) >= new Date())
     .sort((a, b) => new Date(a.event.startTime).getTime() - new Date(b.event.startTime).getTime())
