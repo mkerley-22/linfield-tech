@@ -93,8 +93,7 @@ export default function CheckoutPage() {
           const data = await response.json()
           if (data.user) {
             setIsAuthenticated(true)
-            // Load data after confirming auth
-            loadRequests()
+            // Load data after confirming auth - will be triggered by useEffect when isAuthenticated changes
             return
           }
         }
@@ -133,7 +132,7 @@ export default function CheckoutPage() {
       if (selectedRequest) {
         loadRequestDetail(selectedRequest.id)
       }
-      loadRequests()
+      loadRequests(activeTab)
     }
     
     window.addEventListener('checkoutRequestUpdated', handleMessageUpdate)
@@ -146,7 +145,7 @@ export default function CheckoutPage() {
       }
       // Only refresh requests list if no request is selected (to avoid flashing)
       if (isAuthenticated && !selectedRequest) {
-        loadRequests()
+        loadRequests(activeTab)
       }
     }, 30000)
     
