@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Package, Tag as TagIcon, Calendar, User, MoreVertical, Edit, Trash2, X, Grid3x3, List, ArrowUpDown, Heart, Image as ImageIcon } from 'lucide-react'
+import { Plus, Search, Package, Tag as TagIcon, Calendar, User, MoreVertical, Edit, Trash2, X, Grid3x3, List, ArrowUpDown, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface InventoryItem {
@@ -424,40 +424,13 @@ export default function InventoryPage() {
                         </div>
                       )}
                       
-                      {/* Badge - Top Left */}
-                      {available === item.quantity && available > 0 && (
-                        <div className="absolute top-3 left-3 bg-white rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-900">
-                          In Stock
-                        </div>
-                      )}
-                      {isLowStock && !isOutOfStock && (
-                        <div className="absolute top-3 left-3 bg-yellow-100 rounded-md border border-yellow-200 px-2 py-1 text-xs font-medium text-yellow-800">
-                          Low Stock
-                        </div>
-                      )}
-                      {isOutOfStock && (
-                        <div className="absolute top-3 left-3 bg-red-100 rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-800">
-                          Out of Stock
-                        </div>
-                      )}
-                      
-                      {/* Heart Icon - Top Right */}
-                      <div className="absolute top-3 right-3 z-10">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            // Favorite functionality can be added later
-                          }}
-                          className="p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors"
-                          aria-label="Favorite"
-                        >
-                          <Heart className="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors" />
-                        </button>
+                      {/* Availability Badge - Top Left */}
+                      <div className="absolute top-3 left-3 bg-white rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-900">
+                        {available} / {item.quantity} Available
                       </div>
                       
-                      {/* Menu Button - Top Right (below heart) */}
-                      <div className="absolute top-12 right-3 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
+                      {/* Menu Button - Top Right (appears on hover) */}
+                      <div className="absolute top-3 right-3 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
                         <button
                           onClick={(e) => {
                             e.preventDefault()
@@ -496,20 +469,13 @@ export default function InventoryPage() {
                           </div>
                         )}
                       </div>
-                      
-                      {/* Pagination Dots - Bottom Center (placeholder for future multi-image support) */}
-                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                      </div>
                     </div>
 
                     {/* Content Section */}
                     <div className="p-4 flex flex-col flex-1">
                       {/* Manufacturer/Brand */}
                       {item.manufacturer && (
-                        <p className="text-sm text-green-600 mb-1 font-medium">
+                        <p className="text-sm text-blue-600 mb-1 font-medium">
                           {item.manufacturer}
                         </p>
                       )}
@@ -524,10 +490,6 @@ export default function InventoryPage() {
                         </h3>
                       </Link>
                       
-                      {/* Availability/Quantity */}
-                      <p className="text-base font-semibold text-gray-900 mb-4">
-                        {available} / {item.quantity} Available
-                      </p>
                       
                       {/* View Details Button */}
                       <Link
