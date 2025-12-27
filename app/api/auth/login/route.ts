@@ -5,7 +5,9 @@ import { createSession, setSessionCookie } from '@/lib/auth'
 
 // Use a separate redirect URI for user login (not Google Drive integration)
 // This MUST match what's configured in Google Cloud Console
-const LOGIN_REDIRECT_URI = 'http://localhost:3000/api/auth/login/callback'
+const LOGIN_REDIRECT_URI = process.env.LOGIN_REDIRECT_URI || process.env.NEXT_PUBLIC_APP_URL 
+  ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/login/callback`
+  : 'http://localhost:3000/api/auth/login/callback'
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
