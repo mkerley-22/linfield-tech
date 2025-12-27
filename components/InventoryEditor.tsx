@@ -79,6 +79,45 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     loadTags()
   }, [])
 
+  // Handle paste events for image upload
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      // Only handle paste if we're in the image upload area or form
+      const items = e.clipboardData?.items
+      if (!items) return
+
+      // Look for image in clipboard
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          e.preventDefault()
+          const blob = items[i].getAsFile()
+          if (blob) {
+            // Create a File object from the blob
+            const file = new File([blob], `pasted-image-${Date.now()}.png`, { type: blob.type })
+            
+            // Create a synthetic event to reuse existing upload logic
+            const syntheticEvent = {
+              target: {
+                files: [file],
+                value: '',
+              },
+            } as React.ChangeEvent<HTMLInputElement>
+            
+            await handleImageUpload(syntheticEvent)
+          }
+          break
+        }
+      }
+    }
+
+    // Add paste listener to the document
+    document.addEventListener('paste', handlePaste)
+    
+    return () => {
+      document.removeEventListener('paste', handlePaste)
+    }
+  }, [itemId, pendingImageFile]) // Dependencies for handleImageUpload
+
 
   const loadTags = async () => {
     try {
