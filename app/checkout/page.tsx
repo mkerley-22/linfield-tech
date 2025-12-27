@@ -637,15 +637,19 @@ export default function CheckoutPage() {
               { 
                 key: 'approved', 
                 label: 'Approved',
-                count: allRequests.filter((r) => 
-                  r.status === 'approved' && !r.readyForPickup && !r.pickedUp && 
-                  (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned'))
-                ).length,
-                unreadMessages: allRequests.filter((r) => 
-                  r.status === 'approved' && !r.readyForPickup && !r.pickedUp && 
-                  (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned')) &&
-                  (unreadMessageCounts.get(r.id) || 0) > 0
-                ).length
+                count: allRequests.filter((r) => {
+                  const isReady = Boolean(r.readyForPickup)
+                  const isPickedUp = Boolean(r.pickedUp)
+                  return r.status === 'approved' && !isReady && !isPickedUp && 
+                    (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned'))
+                }).length,
+                unreadMessages: allRequests.filter((r) => {
+                  const isReady = Boolean(r.readyForPickup)
+                  const isPickedUp = Boolean(r.pickedUp)
+                  return r.status === 'approved' && !isReady && !isPickedUp && 
+                    (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned')) &&
+                    (unreadMessageCounts.get(r.id) || 0) > 0
+                }).length
               },
               { 
                 key: 'denied', 
@@ -660,21 +664,27 @@ export default function CheckoutPage() {
                 label: 'Ready for Pickup',
                 count: allRequests.filter((r) => {
                   const isReady = Boolean(r.readyForPickup)
-                  return r.status === 'approved' && isReady && !r.pickedUp
+                  const isPickedUp = Boolean(r.pickedUp)
+                  return r.status === 'approved' && isReady && !isPickedUp
                 }).length,
                 unreadMessages: allRequests.filter((r) => {
                   const isReady = Boolean(r.readyForPickup)
-                  return r.status === 'approved' && isReady && !r.pickedUp && (unreadMessageCounts.get(r.id) || 0) > 0
+                  const isPickedUp = Boolean(r.pickedUp)
+                  return r.status === 'approved' && isReady && !isPickedUp && (unreadMessageCounts.get(r.id) || 0) > 0
                 }).length
               },
               { 
                 key: 'pickedup', 
                 label: 'Picked up',
-                count: allRequests.filter((r) => r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')).length,
-                unreadMessages: allRequests.filter((r) => 
-                  r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned') &&
-                  (unreadMessageCounts.get(r.id) || 0) > 0
-                ).length
+                count: allRequests.filter((r) => {
+                  const isPickedUp = Boolean(r.pickedUp)
+                  return isPickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')
+                }).length,
+                unreadMessages: allRequests.filter((r) => {
+                  const isPickedUp = Boolean(r.pickedUp)
+                  return isPickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned') &&
+                    (unreadMessageCounts.get(r.id) || 0) > 0
+                }).length
               },
               { 
                 key: 'returned', 
