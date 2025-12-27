@@ -4,6 +4,8 @@ import SearchBar from '@/components/SearchBar'
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 async function searchPages(query: string) {
   if (!query) {
     return []

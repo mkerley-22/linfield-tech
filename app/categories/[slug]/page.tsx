@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Edit, ArrowLeft, FileText, Plus } from 'lucide-react'
 import DriveIntegrationWrapper from '@/components/DriveIntegrationWrapper'
 
+export const dynamic = 'force-dynamic'
+
 async function getCategory(slug: string) {
   const category = await prisma.category.findUnique({
     where: { slug },

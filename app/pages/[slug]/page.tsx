@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Edit, ArrowLeft, FileText, Image as ImageIcon, Video, Download, Plus } from 'lucide-react'
 import { formatFileSize } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 async function getPage(slug: string) {
   const page = await prisma.page.findUnique({
     where: { slug },
