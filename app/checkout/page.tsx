@@ -132,11 +132,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     // Listen for message updates
+    // Note: We don't call loadRequests here because it would create an infinite loop
+    // (loadRequests dispatches checkoutRequestUpdated, which would trigger this again)
     const handleMessageUpdate = () => {
       if (selectedRequest) {
         loadRequestDetail(selectedRequest.id)
       }
-      loadRequests(activeTab)
+      // Don't call loadRequests here - it's already being called by other useEffects
+      // The event is just for notifying the sidebar
     }
     
     window.addEventListener('checkoutRequestUpdated', handleMessageUpdate)
