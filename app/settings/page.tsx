@@ -55,13 +55,11 @@ export default function SettingsPage() {
 
     checkAuth()
 
-    // Load preferences from localStorage
-    const googlePref = localStorage.getItem('integration_google_enabled')
-    const calendarPref = localStorage.getItem('integration_calendar_enabled')
-    const aiPref = localStorage.getItem('integration_ai_enabled')
-    
-    setGoogleEnabled(googlePref === 'true')
-    setCalendarEnabled(calendarPref === 'true')
+    // Check actual connection status from API (not localStorage)
+    checkIntegrationStatus()
+
+    // Load AI preference from localStorage (this is just a UI toggle, not a connection)
+    const aiPref = typeof window !== 'undefined' ? localStorage.getItem('integration_ai_enabled') : null
     setAiEnabled(aiPref === 'true')
 
     // Load public site settings
@@ -69,6 +67,30 @@ export default function SettingsPage() {
       loadPublicSiteSettings()
     }
   }, [router, activeTab])
+
+  const checkIntegrationStatus = async () => {
+    // Check Google Drive connection status
+    try {
+      const response = await fetch('/api/auth/google/status')
+      if (response.ok) {
+        const data = await response.json()
+        setGoogleEnabled(data.connected || false)
+      }
+    } catch (error) {
+      console.error('Failed to check Google status:', error)
+    }
+
+    // Check Google Calendar connection status
+    try {
+      const response = await fetch('/api/auth/google/calendar/status')
+      if (response.ok) {
+        const data = await response.json()
+        setCalendarEnabled(data.connected || false)
+      }
+    } catch (error) {
+      console.error('Failed to check Calendar status:', error)
+    }
+  }
 
   const loadPublicSiteSettings = async () => {
     setLoadingSettings(true)
@@ -107,12 +129,14 @@ export default function SettingsPage() {
 
   const handleGoogleToggle = (enabled: boolean) => {
     setGoogleEnabled(enabled)
-    localStorage.setItem('integration_google_enabled', String(enabled))
+    // Don't store in localStorage - connection status comes from database
+    // This toggle just shows/hides the connection UI
   }
 
   const handleCalendarToggle = (enabled: boolean) => {
     setCalendarEnabled(enabled)
-    localStorage.setItem('integration_calendar_enabled', String(enabled))
+    // Don't store in localStorage - connection status comes from database
+    // This toggle just shows/hides the connection UI
   }
 
   const handleAIToggle = (enabled: boolean) => {
