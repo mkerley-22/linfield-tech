@@ -14,7 +14,7 @@ export async function GET(
       include: {
         CheckoutRequestMessage: {
           orderBy: {
-            createdAt: 'asc',
+            createdAt: 'desc', // Latest messages first
           },
         },
       },

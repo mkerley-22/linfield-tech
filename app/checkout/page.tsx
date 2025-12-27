@@ -77,6 +77,7 @@ export default function CheckoutPage() {
   const [denyMessage, setDenyMessage] = useState('')
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [unreadMessageCounts, setUnreadMessageCounts] = useState<Map<string, number>>(new Map())
 
   useEffect(() => {
     // Check authentication first with retry logic
@@ -516,7 +517,10 @@ export default function CheckoutPage() {
               { 
                 key: 'requests', 
                 label: 'New Requests',
-                count: allRequests.filter((r) => r.status === 'unseen' || r.status === 'seen').length
+                count: allRequests.filter((r) => r.status === 'unseen' || r.status === 'seen').length,
+                unreadMessages: allRequests.filter((r) => 
+                  (r.status === 'unseen' || r.status === 'seen') && (unreadMessageCounts.get(r.id) || 0) > 0
+                ).length
               },
               { 
                 key: 'approved', 
@@ -524,27 +528,46 @@ export default function CheckoutPage() {
                 count: allRequests.filter((r) => 
                   r.status === 'approved' && !r.readyForPickup && !r.pickedUp && 
                   (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned'))
+                ).length,
+                unreadMessages: allRequests.filter((r) => 
+                  r.status === 'approved' && !r.readyForPickup && !r.pickedUp && 
+                  (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned')) &&
+                  (unreadMessageCounts.get(r.id) || 0) > 0
                 ).length
               },
               { 
                 key: 'denied', 
                 label: 'Denied',
-                count: allRequests.filter((r) => r.status === 'denied').length
+                count: allRequests.filter((r) => r.status === 'denied').length,
+                unreadMessages: allRequests.filter((r) => 
+                  r.status === 'denied' && (unreadMessageCounts.get(r.id) || 0) > 0
+                ).length
               },
               { 
                 key: 'ready', 
                 label: 'Ready for Pickup',
-                count: allRequests.filter((r) => r.status === 'approved' && r.readyForPickup && !r.pickedUp).length
+                count: allRequests.filter((r) => r.status === 'approved' && r.readyForPickup && !r.pickedUp).length,
+                unreadMessages: allRequests.filter((r) => 
+                  r.status === 'approved' && r.readyForPickup && !r.pickedUp && (unreadMessageCounts.get(r.id) || 0) > 0
+                ).length
               },
               { 
                 key: 'pickedup', 
                 label: 'Picked up',
-                count: allRequests.filter((r) => r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')).length
+                count: allRequests.filter((r) => r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')).length,
+                unreadMessages: allRequests.filter((r) => 
+                  r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned') &&
+                  (unreadMessageCounts.get(r.id) || 0) > 0
+                ).length
               },
               { 
                 key: 'returned', 
                 label: 'Returned',
-                count: allRequests.filter((r) => r.checkouts && r.checkouts.length > 0 && r.checkouts.every((c: any) => c.status === 'returned')).length
+                count: allRequests.filter((r) => r.checkouts && r.checkouts.length > 0 && r.checkouts.every((c: any) => c.status === 'returned')).length,
+                unreadMessages: allRequests.filter((r) => 
+                  r.checkouts && r.checkouts.length > 0 && r.checkouts.every((c: any) => c.status === 'returned') &&
+                  (unreadMessageCounts.get(r.id) || 0) > 0
+                ).length
               },
             ].map((tab) => (
               <button
@@ -560,6 +583,12 @@ export default function CheckoutPage() {
                 {tab.count > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">
                     {tab.count}
+                  </span>
+                )}
+                {tab.unreadMessages > 0 && (
+                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full relative">
+                    {tab.unreadMessages}
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
                   </span>
                 )}
               </button>

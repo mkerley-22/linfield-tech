@@ -14,6 +14,32 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Count requests with unread messages from requester
+    // A request has unread messages if:
+    // 1. It has at least one message from requester (senderType === 'requester')
+    // 2. The latest message is from requester (not admin)
+    const allRequests = await prisma.checkoutRequest.findMany({
+      include: {
+        CheckoutRequestMessage: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1, // Only need the latest message
+        },
+      },
+    })
+
+    const requestsWithUnreadMessages = allRequests.filter(req => {
+      if (!req.CheckoutRequestMessage || req.CheckoutRequestMessage.length === 0) {
+        return false
+      }
+      const latestMessage = req.CheckoutRequestMessage[0]
+      // Unread if latest message is from requester
+      return latestMessage.senderType === 'requester'
+    })
+
+    const unreadMessageCount = requestsWithUnreadMessages.length
+
     // Get recent unseen/seen requests (last 5)
     const recentUnseenRequests = await prisma.checkoutRequest.findMany({
       where: {
@@ -36,6 +62,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       unseenCheckoutRequests,
+      unreadMessageCount,
       recentUnseenRequests,
     })
   } catch (error: any) {

@@ -94,19 +94,60 @@ export async function POST(request: NextRequest) {
     messageContent = typeof messageContent === 'string' ? messageContent : String(messageContent || '')
 
     // Remove email signature/quoted text (common patterns)
-    // But be less aggressive - only remove if we have enough content
-    if (messageContent && messageContent.length > 50) {
-      // Only clean up if we have substantial content
-      messageContent = messageContent
-        .split(/On .* wrote:/i)[0] // Remove "On [date] [person] wrote:"
-        .split(/-----Original Message-----/i)[0] // Remove "-----Original Message-----"
-        .split(/From:.*/i)[0] // Remove "From: ..."
-        .split(/Sent:.*/i)[0] // Remove "Sent: ..."
-        .split(/Date:.*/i)[0] // Remove "Date: ..."
-        .split(/Subject:.*/i)[0] // Remove "Subject: ..."
-        .split(/To:.*/i)[0] // Remove "To: ..."
-        .replace(/^>+\s*/gm, '') // Remove quote markers (lines starting with >)
+    // Be aggressive - remove all quoted/reply content to get only the actual reply
+    if (messageContent && messageContent.length > 0) {
+      // First, try to find where the actual reply ends and quoted content begins
+      // Common patterns that indicate the start of quoted content
+      const quoteStartPatterns = [
+        /On .* wrote:/i,
+        /-----Original Message-----/i,
+        /From:.*@/i,
+        /Sent:.*/i,
+        /Date:.*/i,
+        /Subject:.*/i,
+        /To:.*@/i,
+        /<support@tech\.linfieldtechhub\.com>/i,
+        /New Message on Your Equipment Checkout Request/i,
+        /Hello .*?,\s*You have received/i,
+        /💬 Reply to this email/i,
+        /Reply to this email/i,
+        /If you have any questions/i,
+        /This is an automated/i,
+        /Please do not reply/i,
+        /^[-=]{3,}$/m, // Separator lines
+      ]
+      
+      // Find the earliest occurrence of any quote pattern
+      let earliestQuoteIndex = messageContent.length
+      for (const pattern of quoteStartPatterns) {
+        const match = messageContent.match(pattern)
+        if (match && match.index !== undefined && match.index < earliestQuoteIndex) {
+          earliestQuoteIndex = match.index
+        }
+      }
+      
+      // Take only the content before the first quote pattern
+      let cleaned = messageContent.substring(0, earliestQuoteIndex).trim()
+      
+      // Remove quote markers (lines starting with >)
+      cleaned = cleaned.replace(/^>+\s*/gm, '').trim()
+      
+      // Remove lines that are just email headers or separators
+      cleaned = cleaned.split('\n')
+        .filter(line => {
+          const trimmed = line.trim()
+          // Remove empty lines and lines that look like headers or separators
+          if (!trimmed) return false
+          if (/^[-=]{3,}$/.test(trimmed)) return false // Separator lines
+          if (/^From:|^To:|^Subject:|^Date:|^Sent:/i.test(trimmed)) return false
+          if (/^<.*@.*>$/.test(trimmed)) return false // Email addresses in brackets
+          if (/^Re:.*$/i.test(trimmed)) return false // Subject lines
+          return true
+        })
+        .join('\n')
         .trim()
+      
+      messageContent = cleaned
     }
 
     // Log the extracted content for debugging

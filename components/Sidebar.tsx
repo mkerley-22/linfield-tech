@@ -10,6 +10,7 @@ import UserMenu from './UserMenu'
 export default function Sidebar() {
   const pathname = usePathname()
   const [unseenCheckoutRequests, setUnseenCheckoutRequests] = useState(0)
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0)
   const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState(true)
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function Sidebar() {
         if (response.ok) {
           const data = await response.json()
           setUnseenCheckoutRequests(data.unseenCheckoutRequests || 0)
+          setUnreadMessageCount(data.unreadMessageCount || 0)
         }
       } catch (error) {
         console.error('Failed to fetch notifications:', error)
@@ -93,11 +95,11 @@ export default function Sidebar() {
                 >
                   <Icon className="w-5 h-5" />
                   <span className="flex-1">{item.label}</span>
-                  {item.href === '/checkout' && unseenCheckoutRequests > 0 && (
+                  {item.href === '/checkout' && (unseenCheckoutRequests > 0 || unreadMessageCount > 0) && (
                     <span className="ml-auto relative">
                       <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                       <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] text-center flex items-center justify-center shadow-sm">
-                        {unseenCheckoutRequests > 99 ? '99+' : unseenCheckoutRequests}
+                        {unseenCheckoutRequests + unreadMessageCount > 99 ? '99+' : unseenCheckoutRequests + unreadMessageCount}
                       </span>
                     </span>
                   )}
