@@ -277,7 +277,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
       if (response.ok) {
         const data = await response.json()
-        const savedItemId = data.item.id
+        const savedItemId = data.item.id || itemId
+        
+        console.log('Save successful, item:', data.item)
+        console.log('Saved locationBreakdowns:', data.item.locationBreakdowns)
 
         // Upload pending image if exists
         if (pendingImageFile) {

@@ -179,6 +179,9 @@ export async function PUT(
       })
     )
     
+    console.log('Updated item locationBreakdowns:', item.locationBreakdowns)
+    console.log('Updated item quantity:', item.quantity)
+    
     return NextResponse.json({ item })
   } catch (error: any) {
     console.error('Update inventory error:', error)
