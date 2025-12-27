@@ -527,114 +527,222 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Quantity
-          </label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => {
-              const val = e.target.value
-              if (val === '') {
-                setQuantity(1)
-              } else {
-                const num = parseInt(val)
-                setQuantity(isNaN(num) ? 1 : num)
-              }
-            }}
-            onFocus={(e) => e.target.select()}
-            min="1"
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Location
-          </label>
-          <LocationSelect
-            value={location}
-            onChange={setLocation}
-            placeholder="Select or type location"
-          />
-        </div>
-      </div>
-
-      {/* Location Breakdown */}
+      {/* Quantity, Location, and Usage Rows */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Location Breakdown
+          Inventory Locations
         </label>
         <p className="text-xs text-gray-500 mb-3">
-          Specify quantities at different locations (e.g., 5 in Tech Storage, 1 in Gym)
+          Add items by quantity, location, and usage. Total quantity is calculated automatically.
         </p>
-        <div className="space-y-2 mb-3">
-          {locationBreakdowns.map((breakdown, index) => (
-            <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex-1 grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={breakdown.location}
-                  onChange={(e) => {
-                    const updated = [...locationBreakdowns]
-                    updated[index].location = e.target.value
-                    setLocationBreakdowns(updated)
-                  }}
-                  placeholder="Location"
-                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
-                />
+        <div className="space-y-3">
+          {locationBreakdowns.length === 0 ? (
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                 <input
                   type="number"
-                  value={breakdown.quantity}
+                  value={quantity}
                   onChange={(e) => {
-                    const updated = [...locationBreakdowns]
-                    updated[index].quantity = parseInt(e.target.value) || 1
-                    setLocationBreakdowns(updated)
+                    const val = e.target.value
+                    if (val === '') {
+                      setQuantity(1)
+                    } else {
+                      const num = parseInt(val)
+                      setQuantity(isNaN(num) ? 1 : num)
+                    }
                   }}
+                  onFocus={(e) => e.target.select()}
                   min="1"
-                  placeholder="Quantity"
-                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                  max="999"
+                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                  placeholder="100"
                 />
               </div>
-              <button
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                <LocationSelect
+                  value={location}
+                  onChange={setLocation}
+                  placeholder="Select or type location"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
+                <input
+                  type="text"
+                  value={usageNotes}
+                  onChange={(e) => setUsageNotes(e.target.value)}
+                  placeholder="e.g., For basketball games"
+                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                />
+              </div>
+              <Button
                 type="button"
-                onClick={() => setLocationBreakdowns(locationBreakdowns.filter((_, i) => i !== index))}
-                className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                title="Remove location"
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  if (quantity > 0 && location) {
+                    setLocationBreakdowns([{ location, quantity, usage: usageNotes }])
+                    setLocation('')
+                    setUsageNotes('')
+                    setQuantity(1)
+                  } else {
+                    alert('Please enter quantity and location before adding')
+                  }
+                }}
+                className="mb-0"
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
-          ))}
+          ) : (
+            <>
+              {locationBreakdowns.map((breakdown, index) => (
+                <div key={index} className="flex items-end gap-2">
+                  <div className="w-24">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      value={breakdown.quantity}
+                      onChange={(e) => {
+                        const updated = [...locationBreakdowns]
+                        updated[index].quantity = parseInt(e.target.value) || 1
+                        setLocationBreakdowns(updated)
+                        // Update total quantity
+                        const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                        setQuantity(total)
+                      }}
+                      onFocus={(e) => e.target.select()}
+                      min="1"
+                      max="999"
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                    <LocationSelect
+                      value={breakdown.location}
+                      onChange={(value) => {
+                        const updated = [...locationBreakdowns]
+                        updated[index].location = value
+                        setLocationBreakdowns(updated)
+                      }}
+                      placeholder="Select or type location"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
+                    <input
+                      type="text"
+                      value={breakdown.usage || ''}
+                      onChange={(e) => {
+                        const updated = [...locationBreakdowns]
+                        updated[index].usage = e.target.value
+                        setLocationBreakdowns(updated)
+                      }}
+                      placeholder="e.g., For basketball games"
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = locationBreakdowns.filter((_, i) => i !== index)
+                      setLocationBreakdowns(updated)
+                      // Update total quantity
+                      const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                      setQuantity(total || 1)
+                    }}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors mb-0"
+                    title="Remove row"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <div className="flex items-end gap-2">
+                <div className="w-24">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === '') {
+                        setQuantity(1)
+                      } else {
+                        const num = parseInt(val)
+                        setQuantity(isNaN(num) ? 1 : num)
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    min="1"
+                    max="999"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
+                    placeholder="100"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                  <LocationSelect
+                    value={location}
+                    onChange={setLocation}
+                    placeholder="Select or type location"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
+                  <input
+                    type="text"
+                    value={usageNotes}
+                    onChange={(e) => setUsageNotes(e.target.value)}
+                    placeholder="e.g., For basketball games"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    if (quantity > 0 && location) {
+                      setLocationBreakdowns([...locationBreakdowns, { location, quantity, usage: usageNotes }])
+                      setLocation('')
+                      setUsageNotes('')
+                      setQuantity(1)
+                    } else {
+                      alert('Please enter quantity and location before adding')
+                    }
+                  }}
+                  className="mb-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={() => setLocationBreakdowns([...locationBreakdowns, { location: '', quantity: 1 }])}
-          className="w-full md:w-auto"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Location
-        </Button>
+        {locationBreakdowns.length > 0 && (
+          <p className="text-xs text-gray-500 mt-2">
+            Total Quantity: <span className="font-medium text-gray-700">{quantity}</span>
+          </p>
+        )}
       </div>
 
-      {/* Usage Notes */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Usage Notes
-        </label>
-        <p className="text-xs text-gray-500 mb-2">
-          Describe what these items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
-        </p>
-        <textarea
-          value={usageNotes}
-          onChange={(e) => setUsageNotes(e.target.value)}
-          placeholder="e.g., For basketball games, Talkback Mic for SQ7"
-          rows={3}
-          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+      {/* Checkout Toggle */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="checkoutEnabled"
+          checked={checkoutEnabled}
+          onChange={(e) => setCheckoutEnabled(e.target.checked)}
+          className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 accent-blue-600 cursor-pointer"
+          style={{ colorScheme: 'light' }}
         />
+        <label htmlFor="checkoutEnabled" className="text-sm font-medium text-gray-700 cursor-pointer">
+          Allow staff to checkout
+        </label>
       </div>
 
       {/* Available for Checkout */}
