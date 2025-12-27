@@ -9,6 +9,7 @@ interface EmailOptions {
   subject: string
   html: string
   text?: string
+  replyTo?: string
 }
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
