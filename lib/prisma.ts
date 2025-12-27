@@ -23,22 +23,21 @@ if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
       }
     }
     
-    // Set reasonable connection limits for transaction mode
-    // Transaction mode can handle more connections, but we still want to be conservative
-    if (!url.searchParams.has('connection_limit')) {
-      url.searchParams.set('connection_limit', '10') // Can be higher in transaction mode
-    }
-    if (!url.searchParams.has('pool_timeout')) {
-      url.searchParams.set('pool_timeout', '10')
-    }
-    // Add connect timeout to fail fast if pool is exhausted
-    if (!url.searchParams.has('connect_timeout')) {
-      url.searchParams.set('connect_timeout', '5')
-    }
-    // Add statement timeout to prevent long-running queries from holding connections
-    if (!url.searchParams.has('statement_timeout')) {
-      url.searchParams.set('statement_timeout', '30000') // 30 seconds
-    }
+    // Only set parameters that are valid in PostgreSQL connection strings
+    // Prisma/PostgreSQL connection strings support limited parameters
+    // connection_limit and pool_timeout are Prisma-specific and should be set in PrismaClient config, not URL
+    // Remove any invalid parameters that might cause issues
+    
+    // Keep only valid PostgreSQL connection string parameters:
+    // - sslmode (already there)
+    // - pgbouncer (we just set this)
+    // Remove connection_limit, pool_timeout, connect_timeout, statement_timeout from URL
+    // These should be handled by Prisma Client configuration, not the connection string
+    
+    url.searchParams.delete('connection_limit')
+    url.searchParams.delete('pool_timeout')
+    url.searchParams.delete('connect_timeout')
+    url.searchParams.delete('statement_timeout')
     
     console.log('Configured Supabase connection pooler in transaction mode')
     databaseUrl = url.toString()
