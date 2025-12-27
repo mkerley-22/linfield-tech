@@ -682,34 +682,33 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         {/* Add Documentation Section */}
         <div className="space-y-3">
           {/* Upload File */}
-          {itemId ? (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <Upload className="w-5 h-5 text-gray-600" />
-                <h4 className="text-sm font-medium text-gray-900">Upload Document</h4>
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-3 mb-3">
+              <Upload className="w-5 h-5 text-gray-600" />
+              <h4 className="text-sm font-medium text-gray-900">Upload Document</h4>
+            </div>
+            <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors w-fit">
+              <Upload className="w-4 h-4" />
+              <span className="text-sm">{uploading ? 'Uploading...' : 'Choose File'}</span>
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            {uploading && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading...
               </div>
-              <label className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors w-fit">
-                <Upload className="w-4 h-4" />
-                <span className="text-sm">{uploading ? 'Uploading...' : 'Choose File'}</span>
-                <input
-                  type="file"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="hidden"
-                />
-              </label>
-              {uploading && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Uploading...
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-500">Save the equipment first to upload documents</p>
-            </div>
-          )}
+            )}
+            {!itemId && pendingDocuments.length > 0 && (
+              <p className="text-sm text-blue-600 mt-2">
+                {pendingDocuments.length} document(s) will be uploaded after saving
+              </p>
+            )}
+          </div>
 
           {/* Add External Link */}
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
