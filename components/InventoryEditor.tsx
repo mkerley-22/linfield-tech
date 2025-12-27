@@ -555,9 +555,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       </div>
 
-      {/* Uncomment after running migration:
-      Location Breakdown */}
-      {/* <div>
+      {/* Uncomment after running migration - Location Breakdown, Usage Notes, Available for Checkout */}
+      {false && (
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Location Breakdown
         </label>
