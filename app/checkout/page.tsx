@@ -161,7 +161,10 @@ export default function CheckoutPage() {
     // Only load data if authenticated
     if (isAuthenticated) {
       // Pass activeTab explicitly to avoid stale closure issues
+      console.log('Loading requests for tab:', activeTab, 'isAuthenticated:', isAuthenticated)
       loadRequests(activeTab)
+    } else {
+      console.log('Not authenticated, skipping loadRequests')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, filter, isAuthenticated])
