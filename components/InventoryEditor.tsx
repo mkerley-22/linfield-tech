@@ -125,11 +125,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
   // Update total quantity whenever locationBreakdowns change
   useEffect(() => {
-    if (locationBreakdowns.length > 0) {
-      const total = locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
-      setQuantity(total || 1)
-    }
-  }, [locationBreakdowns])
+    const total = locationBreakdowns.length > 0 
+      ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+      : (initialData?.quantity || 1)
+    setQuantity(total || 1)
+  }, [locationBreakdowns, initialData?.quantity])
 
   // Clean up pending image preview URL when component unmounts or image changes
   useEffect(() => {
