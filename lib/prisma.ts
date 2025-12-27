@@ -11,27 +11,31 @@ let databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL
 if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
   try {
     const url = new URL(databaseUrl)
-    // Add pgbouncer mode for connection pooling
+    // CRITICAL: Use transaction mode instead of session mode
+    // Transaction mode allows up to 200 connections vs 15 in session mode
+    // This is the key to preventing "max clients reached" errors
     if (!url.searchParams.has('pgbouncer')) {
-      url.searchParams.set('pgbouncer', 'true')
+      url.searchParams.set('pgbouncer', 'transaction') // Use transaction mode, not session mode
     }
-    // Set connection limits to prevent pool exhaustion
-    // Very low limit for serverless to avoid "max clients reached" errors
-    // Supabase free tier has a pool_size limit, so we need to be conservative
+    
+    // Set reasonable connection limits for transaction mode
+    // Transaction mode can handle more connections, but we still want to be conservative
     if (!url.searchParams.has('connection_limit')) {
-      url.searchParams.set('connection_limit', '3')
+      url.searchParams.set('connection_limit', '10') // Can be higher in transaction mode
     }
     if (!url.searchParams.has('pool_timeout')) {
-      url.searchParams.set('pool_timeout', '5')
+      url.searchParams.set('pool_timeout', '10')
     }
     // Add connect timeout to fail fast if pool is exhausted
     if (!url.searchParams.has('connect_timeout')) {
-      url.searchParams.set('connect_timeout', '3')
+      url.searchParams.set('connect_timeout', '5')
     }
     // Add statement timeout to prevent long-running queries from holding connections
     if (!url.searchParams.has('statement_timeout')) {
       url.searchParams.set('statement_timeout', '30000') // 30 seconds
     }
+    
+    console.log('Configured Supabase connection pooler in transaction mode')
     databaseUrl = url.toString()
   } catch (error) {
     console.error('Error parsing DATABASE_URL:', error)
