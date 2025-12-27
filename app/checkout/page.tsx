@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 import { Package, Search, User, Calendar, CheckCircle, Clock, Eye, EyeOff, Check, X, MessageSquare, Share2, Mail, Phone, Trash2, MapPin, Calendar as CalendarIcon, ArrowRight, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Toast } from '@/components/ui/Toast'
 import { format } from 'date-fns'
 
 interface Checkout {
@@ -74,7 +75,8 @@ export default function CheckoutPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [showDenyModal, setShowDenyModal] = useState(false)
   const [denyMessage, setDenyMessage] = useState('')
-  const [copiedToClipboard, setCopiedToClipboard] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
 
   useEffect(() => {
     // Check authentication first with retry logic
@@ -401,8 +403,8 @@ export default function CheckoutPage() {
     const url = `${window.location.origin}/checkout/public`
     try {
       await navigator.clipboard.writeText(url)
-      setCopiedToClipboard(true)
-      setTimeout(() => setCopiedToClipboard(false), 2000)
+      setToastMessage('Public checkout page link copied to clipboard!')
+      setShowToast(true)
     } catch (err) {
       // Fallback for older browsers
       const textArea = document.createElement('textarea')
@@ -414,10 +416,11 @@ export default function CheckoutPage() {
       textArea.select()
       try {
         document.execCommand('copy')
-        setCopiedToClipboard(true)
-        setTimeout(() => setCopiedToClipboard(false), 2000)
+        setToastMessage('Public checkout page link copied to clipboard!')
+        setShowToast(true)
       } catch (err) {
-        alert('Failed to copy. Please copy manually: ' + url)
+        setToastMessage('Failed to copy. Please copy manually: ' + url)
+        setShowToast(true)
       }
       document.body.removeChild(textArea)
     }
@@ -484,6 +487,12 @@ export default function CheckoutPage() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        type="success"
+      />
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-8">
           <div className="mb-8">
@@ -494,17 +503,8 @@ export default function CheckoutPage() {
                 variant="secondary"
                 size="sm"
               >
-                {copiedToClipboard ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share Public Page
-                  </>
-                )}
+                <Share2 className="w-4 h-4 mr-2" />
+                Share Public Page
               </Button>
             </div>
             <p className="text-gray-600">View and manage equipment checkouts and requests</p>
