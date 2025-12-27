@@ -66,11 +66,13 @@ export async function POST(request: NextRequest) {
     // Ensure text and html are strings
     const textStr = typeof text === 'string' ? text : (text?.toString() || '')
     const htmlStr = typeof html === 'string' ? html : (html?.toString() || '')
-    let messageContent = textStr || ''
+    let messageContent: string = textStr || ''
     
     if (!messageContent && htmlStr) {
+      // Ensure htmlStr is a string before using string methods
+      const htmlStrSafe = typeof htmlStr === 'string' ? htmlStr : String(htmlStr || '')
       // Simple HTML to text conversion (remove tags but preserve line breaks)
-      messageContent = htmlStr
+      messageContent = htmlStrSafe
         .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
         .replace(/<\/p>/gi, '\n\n') // Convert </p> to double newlines
         .replace(/<[^>]*>/g, '') // Remove all other HTML tags
@@ -82,9 +84,12 @@ export async function POST(request: NextRequest) {
         .trim()
     }
 
+    // Ensure messageContent is always a string
+    messageContent = typeof messageContent === 'string' ? messageContent : String(messageContent || '')
+
     // Remove email signature/quoted text (common patterns)
     // But be less aggressive - only remove if we have enough content
-    if (messageContent.length > 50) {
+    if (messageContent && messageContent.length > 50) {
       // Only clean up if we have substantial content
       messageContent = messageContent
         .split(/On .* wrote:/i)[0] // Remove "On [date] [person] wrote:"
@@ -100,14 +105,14 @@ export async function POST(request: NextRequest) {
 
     // Log the extracted content for debugging
     console.log('Extracted message content:', {
-      originalTextLength: textStr.length,
-      originalHtmlLength: htmlStr.length,
-      extractedLength: messageContent.length,
-      preview: messageContent.substring(0, 100),
+      originalTextLength: typeof textStr === 'string' ? textStr.length : 0,
+      originalHtmlLength: typeof htmlStr === 'string' ? htmlStr.length : 0,
+      extractedLength: typeof messageContent === 'string' ? messageContent.length : 0,
+      preview: typeof messageContent === 'string' ? messageContent.substring(0, 100) : String(messageContent).substring(0, 100),
     })
 
     // If still no content, check alternative field names
-    if (!messageContent) {
+    if (!messageContent || messageContent.length === 0) {
       const body = data.body || data.content || data.message || data.text_content
       if (body) {
         messageContent = typeof body === 'string' ? body : JSON.stringify(body)
@@ -115,11 +120,15 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Ensure messageContent is a string before checking length
+    messageContent = typeof messageContent === 'string' ? messageContent : String(messageContent || '')
+    
     if (!messageContent || messageContent.length < 3) {
       console.log('Message content too short or empty after extraction:', {
-        textStr: textStr.substring(0, 200),
-        htmlStr: htmlStr.substring(0, 200),
-        messageContent,
+        textStr: typeof textStr === 'string' ? textStr.substring(0, 200) : String(textStr),
+        htmlStr: typeof htmlStr === 'string' ? htmlStr.substring(0, 200) : String(htmlStr),
+        messageContent: typeof messageContent === 'string' ? messageContent : String(messageContent),
+        messageContentType: typeof messageContent,
         fullDataKeys: Object.keys(data),
         fullDataSample: JSON.stringify(data).substring(0, 500),
       })
