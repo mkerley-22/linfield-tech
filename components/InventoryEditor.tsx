@@ -256,14 +256,17 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
       const url = itemId ? `/api/inventory/${itemId}` : '/api/inventory'
       const method = itemId ? 'PUT' : 'POST'
 
-      // Calculate total quantity from location breakdowns
-      const calculatedQuantity = locationBreakdowns.length > 0 
-        ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+      // Filter out empty rows (rows without location) before saving
+      const validBreakdowns = locationBreakdowns.filter(b => b.location && b.location.trim() !== '')
+      
+      // Calculate total quantity from valid location breakdowns
+      const calculatedQuantity = validBreakdowns.length > 0 
+        ? validBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
         : parseInt(String(quantity)) || 1
 
-      // Prepare locationBreakdowns for saving
-      const locationBreakdownsToSave = locationBreakdowns.length > 0 
-        ? JSON.stringify(locationBreakdowns) 
+      // Prepare locationBreakdowns for saving (only save rows with locations)
+      const locationBreakdownsToSave = validBreakdowns.length > 0 
+        ? JSON.stringify(validBreakdowns) 
         : null
 
       console.log('Saving with locationBreakdowns:', locationBreakdowns)
