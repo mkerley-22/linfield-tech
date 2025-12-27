@@ -233,8 +233,14 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
               </button>
               <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
                     setShowDeleteConfirm(true)
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                 >
@@ -242,6 +248,8 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
                   Delete
                 </button>
               </div>
+              {/* Invisible hover area to keep menu open when moving to dropdown */}
+              <div className="absolute right-0 top-0 w-40 h-32 opacity-0 pointer-events-none group-hover:pointer-events-auto"></div>
             </div>
 
             <div className="mb-6">
