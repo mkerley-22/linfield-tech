@@ -207,20 +207,19 @@ Search for the manufacturer's official website or reputable retailers like Amazo
               role: 'system',
               content: `You are a helpful assistant that finds product documentation URLs. Given a product name, manufacturer, and model, return a JSON object with:
 - documentationLinks: An array of objects, each with:
-  - url: Direct link to documentation webpage or support page (NOT direct PDF links)
+  - url: Direct link to documentation (prefer direct PDF file URLs ending in .pdf)
   - title: Descriptive title (e.g., "User Manual", "Product Specifications", "Technical Datasheet")
   - type: One of 'manual', 'spec', 'datasheet', 'support', 'guide'
 
 CRITICAL RULES:
-1. Prefer official manufacturer website pages (e.g., manufacturer.com/product/support) over direct PDF links
+1. PREFER direct PDF file URLs (ending in .pdf) over webpage links
 2. NEVER return chrome-extension:// URLs or browser extension URLs
-3. NEVER return direct PDF file URLs (e.g., .pdf files) - instead return the webpage that hosts the PDF
-4. Prefer product support pages, documentation hubs, or download pages on manufacturer websites
-5. URLs must be valid HTTP/HTTPS web addresses (no file://, chrome-extension://, or other protocols)
-6. Focus on official manufacturer websites first, then reputable retailers with product pages
-7. If you can only find PDF links, return the manufacturer's support/documentation page URL instead
+3. URLs must be valid HTTP/HTTPS web addresses (no file://, chrome-extension://, or other protocols)
+4. Focus on finding actual PDF documentation files hosted on manufacturer websites or official repositories
+5. Return direct download links to PDF files when available
+6. Only return URLs that are likely to still exist and be accessible
 
-Search for official manufacturer websites, product support pages, and documentation repositories. Return actual webpage URLs when possible. If you cannot find specific URLs, return an empty array.`,
+Search for official manufacturer documentation PDFs, product manuals, specifications sheets, and technical datasheets. Return direct PDF file URLs when possible. If you cannot find specific URLs, return an empty array.`,
             },
             {
               role: 'user',
@@ -230,13 +229,14 @@ Manufacturer: ${item.manufacturer}
 Model: ${item.model}
 Product Name: ${item.name}
 
-Provide webpage URLs to official documentation pages (NOT direct PDF files). Prefer manufacturer website support pages, product pages, or documentation hubs. Examples:
-- Good: https://www.manufacturer.com/support/product-name
-- Good: https://www.manufacturer.com/products/product-name/specifications
+Provide direct PDF file URLs to official documentation. Prefer PDF files ending in .pdf hosted on manufacturer websites. Examples:
+- Good: https://www.manufacturer.com/resource-files/product-manual.pdf
+- Good: https://www.manufacturer.com/downloads/product-specs.pdf
+- Good: https://www.manufacturer.com/support/files/user-guide.pdf
 - Bad: chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://...
-- Bad: https://www.manufacturer.com/resource-files/product.pdf
+- Bad: file:///path/to/file.pdf
 
-Return only valid HTTP/HTTPS webpage URLs.`,
+Return only valid HTTP/HTTPS URLs to PDF files.`,
             },
           ],
           response_format: { type: 'json_object' },
@@ -247,15 +247,13 @@ Return only valid HTTP/HTTPS webpage URLs.`,
           const parsed = JSON.parse(responseContent)
           const rawLinks = parsed.documentationLinks || []
           
-          // Filter out invalid URLs (chrome-extension, file://, direct PDFs, etc.)
+          // Filter out invalid URLs (chrome-extension, file://, etc.) but keep PDFs
           documentationLinks = rawLinks.filter((link: { url: string; title: string; type: string }) => {
             const url = link.url?.toLowerCase() || ''
             // Reject chrome-extension URLs
             if (url.startsWith('chrome-extension://')) return false
             // Reject file:// URLs
             if (url.startsWith('file://')) return false
-            // Reject direct PDF links (prefer webpages that host PDFs)
-            if (url.endsWith('.pdf') && !url.includes('view') && !url.includes('download')) return false
             // Must be http or https
             if (!url.startsWith('http://') && !url.startsWith('https://')) return false
             return true
