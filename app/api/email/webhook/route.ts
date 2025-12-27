@@ -137,10 +137,11 @@ export async function POST(request: NextRequest) {
           // Use Resend SDK to fetch email content
           const emailResponse = await resend.emails.receiving.get(data.email_id)
           
-          // Resend API may return { data: { text, html, ... } } or direct object
-          const emailData = emailResponse?.data || emailResponse
-          
-          if (emailData) {
+          // Resend API returns { data: { text, html, ... }, error: null } or { data: null, error: {...} }
+          if (emailResponse.error) {
+            console.error('Resend API returned an error:', emailResponse.error)
+          } else if (emailResponse.data) {
+            const emailData = emailResponse.data
             console.log('Fetched email from Resend API:', {
               hasText: !!emailData.text,
               hasHtml: !!emailData.html,
@@ -148,8 +149,8 @@ export async function POST(request: NextRequest) {
             })
             
             // Extract content from API response
-            const apiText = emailData.text || emailData.body_text || emailData.plain_text
-            const apiHtml = emailData.html || emailData.body_html
+            const apiText = emailData.text || (emailData as any).body_text || (emailData as any).plain_text
+            const apiHtml = emailData.html || (emailData as any).body_html
             
             if (apiText) {
               messageContent = typeof apiText === 'string' ? apiText : String(apiText)
