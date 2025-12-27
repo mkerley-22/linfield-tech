@@ -1,8 +1,8 @@
 {
-  "name": "Linfield AV Hub - Inventory",
-  "short_name": "AV Inventory",
-  "description": "Mobile inventory management with camera support",
-  "start_url": "/inventory/mobile",
+  "name": "Linfield AV Hub",
+  "short_name": "AV Hub",
+  "description": "Audio/Video equipment and knowledge management",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
