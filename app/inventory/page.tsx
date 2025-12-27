@@ -417,13 +417,12 @@ export default function InventoryPage() {
                         />
                       ) : null}
                       {/* No Photo Placeholder */}
-                      <div 
-                        className={`w-full h-full flex flex-col items-center justify-center p-4 ${item.imageUrl ? 'hidden' : ''}`}
-                        style={{ display: item.imageUrl ? 'none' : 'flex' }}
-                      >
-                        <ImageIcon className="w-16 h-16 text-gray-300 mb-2" />
-                        <p className="text-xs text-gray-400 text-center">No Photo</p>
-                      </div>
+                      {!item.imageUrl && (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                          <ImageIcon className="w-16 h-16 text-gray-300 mb-2" />
+                          <p className="text-xs text-gray-400 text-center">No Photo</p>
+                        </div>
+                      )}
                       
                       {/* Badge - Top Left */}
                       {available === item.quantity && available > 0 && (
