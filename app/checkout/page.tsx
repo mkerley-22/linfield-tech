@@ -227,6 +227,10 @@ export default function CheckoutPage() {
         const allRequestsData = data.requests || []
         setAllRequests(allRequestsData)
         
+        // Debug: Log all requests to see their structure
+        console.log('All requests loaded:', allRequestsData.length)
+        console.log('Sample request:', allRequestsData[0])
+        
         let filteredRequests = allRequestsData
         
         // Filter based on active tab (use tabToUse to avoid stale closure)
@@ -253,8 +257,26 @@ export default function CheckoutPage() {
             const isReady = Boolean(r.readyForPickup)
             const isPickedUp = Boolean(r.pickedUp)
             const matches = r.status === 'approved' && isReady && !isPickedUp
+            
+            // Debug logging for ready tab
+            if (r.status === 'approved') {
+              console.log('Ready filter check:', {
+                id: r.id,
+                name: r.requesterName,
+                status: r.status,
+                readyForPickup: r.readyForPickup,
+                readyForPickupType: typeof r.readyForPickup,
+                isReady,
+                pickedUp: r.pickedUp,
+                pickedUpType: typeof r.pickedUp,
+                isPickedUp,
+                matches
+              })
+            }
+            
             return matches
           })
+          console.log('Ready tab - Total:', allRequestsData.length, 'Filtered:', filteredRequests.length)
         } else if (tabToUse === 'pickedup') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
             const isPickedUp = Boolean(r.pickedUp)
