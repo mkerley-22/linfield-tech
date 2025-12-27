@@ -16,14 +16,26 @@ interface EmailOptions {
   replyTo?: string
 }
 
+// Helper function to format email "from" field with display name
+function getEmailFrom(): string {
+  const emailFrom = process.env.EMAIL_FROM || 'onboarding@resend.dev'
+  // If email already has a display name, use it as-is
+  if (emailFrom.includes('<')) {
+    return emailFrom
+  }
+  // Otherwise, add "Linfield AV Support" as the display name
+  return `Linfield AV Support <${emailFrom}>`
+}
+
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try Resend first (recommended)
   if (process.env.RESEND_API_KEY) {
     try {
+      const emailFrom = getEmailFrom()
       console.log('[Email] Attempting to send via Resend...', {
         hasApiKey: !!process.env.RESEND_API_KEY,
         apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 5),
-        emailFrom: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        emailFrom,
         to: options.to,
         subject: options.subject,
         hasResendClass: !!ResendClass,
@@ -33,7 +45,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         const resend = new ResendClass(process.env.RESEND_API_KEY)
         
         const result = await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+          from: emailFrom,
           to: options.to,
           subject: options.subject,
           html: options.html,
@@ -100,7 +112,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         sgMail.setApiKey(process.env.SENDGRID_API_KEY)
         
         await sgMail.send({
-          from: process.env.EMAIL_FROM || 'noreply@example.com',
+          from: getEmailFrom(),
           to: options.to,
           subject: options.subject,
           html: options.html,
@@ -137,8 +149,14 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
           },
         })
         
+        // For SMTP, use SMTP_FROM if available, otherwise format SMTP_USER with display name
+        const smtpFrom = process.env.SMTP_FROM || process.env.SMTP_USER || ''
+        const formattedSmtpFrom = smtpFrom.includes('<') 
+          ? smtpFrom 
+          : `Linfield AV Support <${smtpFrom}>`
+        
         await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          from: formattedSmtpFrom,
           to: options.to,
           subject: options.subject,
           html: options.html,
