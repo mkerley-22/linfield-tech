@@ -66,23 +66,32 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const [newSerialNumber, setNewSerialNumber] = useState('')
   const [location, setLocation] = useState(initialData?.location || '')
   const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number; usage?: string }>>(() => {
-    if (!initialData?.locationBreakdowns) return []
+    if (!initialData?.locationBreakdowns) {
+      console.log('No locationBreakdowns in initialData')
+      return []
+    }
     try {
+      let parsed: any = null
       if (typeof initialData.locationBreakdowns === 'string') {
-        const parsed = JSON.parse(initialData.locationBreakdowns)
-        // If old format (without usage), convert to new format
-        return Array.isArray(parsed) ? parsed.map((item: any) => ({
+        parsed = JSON.parse(initialData.locationBreakdowns)
+        console.log('Parsed locationBreakdowns from string:', parsed)
+      } else if (Array.isArray(initialData.locationBreakdowns)) {
+        parsed = initialData.locationBreakdowns
+        console.log('locationBreakdowns is already an array:', parsed)
+      }
+      
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const mapped = parsed.map((item: any) => ({
           location: item.location || '',
           quantity: item.quantity || 1,
           usage: item.usage || ''
-        })) : []
+        }))
+        console.log('Mapped locationBreakdowns:', mapped)
+        return mapped
       }
-      return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns.map((item: any) => ({
-        location: item.location || '',
-        quantity: item.quantity || 1,
-        usage: item.usage || ''
-      })) : []
-    } catch {
+      return []
+    } catch (error) {
+      console.error('Error parsing locationBreakdowns:', error, initialData.locationBreakdowns)
       return []
     }
   })
