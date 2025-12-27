@@ -65,6 +65,17 @@ export async function GET(request: NextRequest) {
       )
     }
     
+    // Check if it's a prepared statement error (should have been retried, but provide user-friendly message)
+    if (error.message?.includes('prepared statement')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection issue. Please refresh the page.',
+          items: [] 
+        },
+        { status: 503 } // Service Unavailable
+      )
+    }
+    
     return NextResponse.json(
       { 
         error: error.message || 'Failed to fetch inventory',
