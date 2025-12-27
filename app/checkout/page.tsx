@@ -228,7 +228,18 @@ export default function CheckoutPage() {
             // Ensure readyForPickup is properly checked as boolean
             // Handle both boolean true and truthy values
             const isReady = Boolean(r.readyForPickup)
-            return r.status === 'approved' && isReady && !r.pickedUp
+            const matches = r.status === 'approved' && isReady && !r.pickedUp
+            // Debug logging in development
+            if (process.env.NODE_ENV === 'development' && r.readyForPickup) {
+              console.log('Ready for Pickup filter check:', {
+                id: r.id,
+                status: r.status,
+                readyForPickup: r.readyForPickup,
+                pickedUp: r.pickedUp,
+                matches
+              })
+            }
+            return matches
           })
         } else if (activeTab === 'pickedup') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
