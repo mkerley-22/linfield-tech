@@ -76,17 +76,23 @@ export async function GET(request: NextRequest) {
     const existingUser = await withRetry(
       () =>
         prisma.user.findUnique({
-          where: { email: userInfo.email },
+          where: { email: userInfo.email! },
         }),
       3,
       1000
     )
     
-    let user
+    let user: { id: string; email: string; name: string; role: string }
     if (existingUser) {
       // Update existing user - ALWAYS set admin for mkerley@linfield.com
-      const updateData: any = {
-        name: userInfo.name,
+      const updateData: {
+        name: string
+        picture: string | null
+        googleId: string | null | undefined
+        updatedAt: Date
+        role?: string
+      } = {
+        name: userInfo.name!,
         picture: userInfo.picture || null,
         googleId: userInfo.id || null,
         updatedAt: new Date(),
@@ -101,7 +107,7 @@ export async function GET(request: NextRequest) {
       user = await withRetry(
         () =>
           prisma.user.update({
-            where: { email: userInfo.email },
+            where: { email: userInfo.email! },
             data: updateData,
           }),
         3,
@@ -128,8 +134,8 @@ export async function GET(request: NextRequest) {
           prisma.user.create({
             data: {
               id: crypto.randomUUID(),
-              email: userInfo.email,
-              name: userInfo.name,
+              email: userInfo.email!,
+              name: userInfo.name!,
               picture: userInfo.picture || null,
               googleId: userInfo.id || null,
               role: isAdminEmail ? 'admin' : 'viewer', // Set admin for mkerley@linfield.com, default to viewer for others
@@ -156,14 +162,14 @@ export async function GET(request: NextRequest) {
     const verifySession = await withRetry(
       () =>
         prisma.session.findUnique({
-          where: { token: session.token },
+          where: { token: session.token! },
           include: { User: true },
         }),
       3,
       1000
     )
     
-    if (!verifySession) {
+    if (!verifySession || !verifySession.User) {
       console.error('ERROR: Session created but not found in database!')
       return NextResponse.redirect(new URL('/login?error=auth_failed', request.url))
     }
