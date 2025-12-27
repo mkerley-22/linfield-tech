@@ -123,6 +123,14 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     loadTags()
   }, [])
 
+  // Update total quantity whenever locationBreakdowns change
+  useEffect(() => {
+    if (locationBreakdowns.length > 0) {
+      const total = locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+      setQuantity(total || 1)
+    }
+  }, [locationBreakdowns])
+
   // Clean up pending image preview URL when component unmounts or image changes
   useEffect(() => {
     return () => {
@@ -614,11 +622,14 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 onClick={() => {
                   if (newRowQuantity > 0 && location) {
                     const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
-                    setLocationBreakdowns([newBreakdown])
+                    const updated = [...locationBreakdowns, newBreakdown]
+                    setLocationBreakdowns(updated)
                     setLocation('')
                     setNewRowUsage('')
                     setNewRowQuantity(1)
-                    setQuantity(newRowQuantity)
+                    // Update total quantity - useEffect will also handle this, but set it immediately for UI responsiveness
+                    const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                    setQuantity(total || 1)
                   } else {
                     alert('Please enter quantity and location before adding')
                   }
@@ -759,8 +770,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           )}
         </div>
         {locationBreakdowns.length > 0 && (
-          <p className="text-xs text-gray-500 mt-2">
-            Total Quantity: <span className="font-medium text-gray-700">
+          <p className="text-sm text-gray-600 mt-4">
+            Total Quantity: <span className="font-semibold text-gray-900">
               {locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)}
             </span>
           </p>

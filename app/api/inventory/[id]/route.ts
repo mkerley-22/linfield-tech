@@ -125,6 +125,9 @@ export async function PUT(
       documentationLinks,
     } = body
     
+    // Log locationBreakdowns for debugging
+    console.log('Saving locationBreakdowns:', locationBreakdowns)
+    
     // Update tags
     await withRetry(
       () => prisma.inventoryItemTag.deleteMany({
