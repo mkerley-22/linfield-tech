@@ -425,7 +425,12 @@ export default function InventoryPage() {
                       )}
                       
                       {/* Availability Badge - Top Left */}
-                      <div className="absolute top-3 left-3 bg-white rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-900">
+                      <div className={cn(
+                        "absolute top-3 left-3 rounded-lg border px-2 py-1 text-xs font-medium shadow-sm",
+                        isOutOfStock ? "bg-red-100 text-red-800 border-red-200" :
+                        isLowStock ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
+                        "bg-green-100 text-green-800 border-green-200"
+                      )}>
                         {available} / {item.quantity} Available
                       </div>
                       
