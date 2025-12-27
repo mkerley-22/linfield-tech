@@ -114,10 +114,9 @@ async function getNotifications() {
 }
 
 export default async function DashboardPage() {
-  try {
-    const pages = await getPages()
-    const categories = await getCategories()
-    const notifications = await getNotifications()
+  const pages = await getPages()
+  const categories = await getCategories()
+  const notifications = await getNotifications()
 
   return (
     <div className="flex h-screen bg-gray-50">
