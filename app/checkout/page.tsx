@@ -225,8 +225,9 @@ export default function CheckoutPage() {
           )
         } else if (activeTab === 'ready') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
-            // Ensure readyForPickup is treated as boolean
-            const isReady = r.readyForPickup === true || r.readyForPickup === 'true'
+            // Ensure readyForPickup is properly checked as boolean
+            // Handle both boolean true and truthy values
+            const isReady = Boolean(r.readyForPickup)
             return r.status === 'approved' && isReady && !r.pickedUp
           })
         } else if (activeTab === 'pickedup') {
