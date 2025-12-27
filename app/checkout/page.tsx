@@ -138,15 +138,16 @@ export default function CheckoutPage() {
     window.addEventListener('checkoutRequestUpdated', handleMessageUpdate)
     window.addEventListener('checkoutStatusUpdated', handleMessageUpdate)
     
-    // Auto-refresh messages every 10 seconds
+    // Auto-refresh messages every 30 seconds (less aggressive to avoid flashing)
     const interval = setInterval(() => {
       if (isAuthenticated && selectedRequest) {
         loadRequestDetail(selectedRequest.id)
       }
-      if (isAuthenticated) {
+      // Only refresh requests list if no request is selected (to avoid flashing)
+      if (isAuthenticated && !selectedRequest) {
         loadRequests()
       }
-    }, 10000)
+    }, 30000)
     
     return () => {
       window.removeEventListener('checkoutRequestUpdated', handleMessageUpdate)
@@ -277,9 +278,21 @@ export default function CheckoutPage() {
         const data = await response.json()
         setSelectedRequest(data.request)
         
-        // Refresh requests list to update notification counts
-        // (viewing the request marks messages as read)
-        loadRequests()
+        // Update the request in allRequests to reflect messagesLastViewedAt change
+        // This updates notification counts without full reload
+        setAllRequests(prev => prev.map(req => 
+          req.id === id ? { ...req, messagesLastViewedAt: data.request.messagesLastViewedAt } : req
+        ))
+        
+        // Update unread counts for this request
+        setUnreadMessageCounts(prev => {
+          const newCounts = new Map(prev)
+          // If messages were just viewed, remove unread count for this request
+          if (data.request.messagesLastViewedAt) {
+            newCounts.delete(id)
+          }
+          return newCounts
+        })
         
         // Fetch item names
         const items = parsedItems(data.request.items)
