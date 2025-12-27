@@ -55,6 +55,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const [newTagColor, setNewTagColor] = useState('#2563eb')
   const [creatingTag, setCreatingTag] = useState(false)
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '')
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null) // Store image file before saving
+  const [pendingImagePreview, setPendingImagePreview] = useState<string>('') // Preview URL for pending image
   const [documentationLinks, setDocumentationLinks] = useState<Array<{ url: string; title: string; type: string }>>(
     initialData?.documentationLinks ? (() => {
       try {
@@ -71,6 +73,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const [documents, setDocuments] = useState<Array<{ id: string; fileName: string; filePath: string; fileType: string }>>(
     initialData?.documents || []
   )
+  const [pendingDocuments, setPendingDocuments] = useState<File[]>([]) // Store document files before saving
 
   useEffect(() => {
     loadTags()
@@ -135,41 +138,63 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !itemId) return
+    if (!file) return
 
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file')
       return
     }
 
-    setUploadingImage(true)
-    try {
-      const formData = new FormData()
-      formData.append('image', file)
+    // If itemId exists, upload immediately
+    if (itemId) {
+      setUploadingImage(true)
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
 
-      const response = await fetch(`/api/inventory/${itemId}/upload-image`, {
-        method: 'POST',
-        body: formData,
-      })
+        const response = await fetch(`/api/inventory/${itemId}/upload-image`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (response.ok) {
-        const data = await response.json()
-        setImageUrl(data.imageUrl)
-        alert('Image uploaded successfully')
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to upload image')
+        if (response.ok) {
+          const data = await response.json()
+          setImageUrl(data.imageUrl)
+          setPendingImageFile(null)
+          setPendingImagePreview('')
+          alert('Image uploaded successfully')
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to upload image')
+        }
+      } catch (error) {
+        console.error('Upload error:', error)
+        alert('Failed to upload image')
+      } finally {
+        setUploadingImage(false)
+        e.target.value = ''
       }
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert('Failed to upload image')
-    } finally {
-      setUploadingImage(false)
+    } else {
+      // If no itemId, store file for later upload after saving
+      setPendingImageFile(file)
+      const previewUrl = URL.createObjectURL(file)
+      setPendingImagePreview(previewUrl)
       e.target.value = ''
     }
   }
 
   const handleDeleteImage = async () => {
+    // If pending image, just remove it
+    if (pendingImageFile) {
+      setPendingImageFile(null)
+      if (pendingImagePreview) {
+        URL.revokeObjectURL(pendingImagePreview)
+        setPendingImagePreview('')
+      }
+      return
+    }
+
+    // If saved image, delete from server
     if (!itemId || !confirm('Delete this image?')) return
 
     try {
@@ -213,36 +238,50 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !itemId) return
+    if (!file) return
 
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
+    // If itemId exists, upload immediately
+    if (itemId) {
+      setUploading(true)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
 
-      const response = await fetch(`/api/inventory/${itemId}/documents`, {
-        method: 'POST',
-        body: formData,
-      })
+        const response = await fetch(`/api/inventory/${itemId}/documents`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (response.ok) {
-        const data = await response.json()
-        setDocuments([...documents, data.document])
-        alert('Document uploaded successfully')
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Failed to upload document')
+        if (response.ok) {
+          const data = await response.json()
+          setDocuments([...documents, data.document])
+          alert('Document uploaded successfully')
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to upload document')
+        }
+      } catch (error) {
+        console.error('Upload error:', error)
+        alert('Failed to upload document')
+      } finally {
+        setUploading(false)
+        e.target.value = ''
       }
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert('Failed to upload document')
-    } finally {
-      setUploading(false)
+    } else {
+      // If no itemId, store file for later upload after saving
+      setPendingDocuments([...pendingDocuments, file])
       e.target.value = ''
     }
   }
 
-  const handleDeleteDocument = async (docId: string) => {
+  const handleDeleteDocument = async (docId: string, index?: number) => {
+    // If it's a pending document (no docId), just remove from array
+    if (index !== undefined && !docId) {
+      setPendingDocuments(pendingDocuments.filter((_, i) => i !== index))
+      return
+    }
+
+    // If saved document, delete from server
     if (!itemId || !confirm('Delete this document?')) return
 
     try {
@@ -522,7 +561,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             />
             
             {/* Hover Overlay with Replace and Delete buttons */}
-            {itemId && (
+            {(itemId || pendingImageFile) && (
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                 <label className="px-4 py-2 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
                   <ImageIcon className="w-4 h-4 inline mr-2" />
@@ -546,9 +585,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               </div>
             )}
           </div>
-        ) : (
-          <div>
-            {itemId ? (
+            ) : (
               <label className="flex flex-col items-center justify-center w-64 aspect-square bg-gray-200 rounded-2xl border-2 border-dashed border-gray-400 cursor-pointer hover:border-blue-500 hover:bg-gray-300 transition-colors">
                 <ImageIcon className="w-12 h-12 text-gray-500 mb-2" />
                 <span className="text-sm text-gray-700 font-medium">Upload Image</span>
@@ -560,13 +597,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   className="hidden"
                 />
               </label>
-            ) : (
-              <div className="w-64 aspect-square bg-gray-200 rounded-2xl border border-gray-300 flex items-center justify-center">
-                <p className="text-sm text-gray-600 text-center px-4">Save the equipment first to upload an image</p>
-              </div>
             )}
-          </div>
-        )}
       </div>
 
       {/* Documentation */}
