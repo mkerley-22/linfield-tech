@@ -9,6 +9,10 @@ import { Button } from '@/components/ui/Button'
 import { Toast } from '@/components/ui/Toast'
 import { format } from 'date-fns'
 
+// Force dynamic rendering - this page uses client-side data fetching
+// Note: For client components, this prevents static optimization
+export const dynamic = 'force-dynamic'
+
 interface Checkout {
   id: string
   checkedOutBy: string
