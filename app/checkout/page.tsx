@@ -308,6 +308,10 @@ export default function CheckoutPage() {
         console.log('Filtered request IDs:', filteredRequests.map((r: CheckoutRequest) => r.id))
         setRequests(filteredRequests)
         
+        // Dispatch event to notify sidebar AFTER we've set the requests
+        // This prevents infinite loops since the event listener doesn't call loadRequests
+        window.dispatchEvent(new CustomEvent('checkoutRequestUpdated'))
+        
         // Force a re-render check
         console.log('Requests state will be set to:', filteredRequests.length, 'items')
         
