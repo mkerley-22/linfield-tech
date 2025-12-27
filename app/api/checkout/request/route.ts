@@ -199,7 +199,13 @@ export async function GET(request: NextRequest) {
       : []
 
     // Group checkouts by request ID
-    const checkoutsByRequestId = new Map<string, typeof allCheckouts>()
+    const checkoutsByRequestId = new Map<string, Array<{
+      id: string
+      status: string
+      returnedAt: Date | null
+      dueDate: Date | null
+      checkedOutAt: Date
+    }>>()
     allCheckouts.forEach(checkout => {
       if (checkout.notes) {
         // Find which request ID this checkout belongs to
@@ -208,13 +214,9 @@ export async function GET(request: NextRequest) {
           if (!checkoutsByRequestId.has(requestId)) {
             checkoutsByRequestId.set(requestId, [])
           }
-          checkoutsByRequestId.get(requestId)!.push({
-            id: checkout.id,
-            status: checkout.status,
-            returnedAt: checkout.returnedAt,
-            dueDate: checkout.dueDate,
-            checkedOutAt: checkout.checkedOutAt,
-          })
+          // Exclude notes from the response
+          const { notes, ...checkoutWithoutNotes } = checkout
+          checkoutsByRequestId.get(requestId)!.push(checkoutWithoutNotes)
         }
       }
     })
