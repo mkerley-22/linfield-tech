@@ -4,6 +4,10 @@
 // 2. Configure SMTP or API credentials in .env
 // 3. Implement the sendEmail function below
 
+// Import Resend at the top level so it's included in the Vercel bundle
+// Since resend is in package.json, this should work
+import { Resend as ResendClass } from 'resend'
+
 interface EmailOptions {
   to: string
   subject: string
@@ -22,13 +26,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         emailFrom: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: options.to,
         subject: options.subject,
+        hasResendClass: !!Resend,
       })
       
-      // Use dynamic import with eval to prevent webpack from bundling
-      const resendModule = await new Function('return import("resend")')()
-      if (resendModule) {
-        const { Resend } = resendModule
-        const resend = new Resend(process.env.RESEND_API_KEY)
+      if (ResendClass) {
+        const resend = new ResendClass(process.env.RESEND_API_KEY)
         
         const result = await resend.emails.send({
           from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
@@ -46,7 +48,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         })
         return true
       } else {
-        console.error('[Email] Resend module loaded but is null/undefined')
+        console.error('[Email] Resend class not available')
       }
     } catch (error: any) {
       // If package not installed, error.message will contain "Cannot find module"
