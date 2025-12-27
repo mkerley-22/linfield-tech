@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function GET(
   request: NextRequest,
@@ -7,7 +8,8 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await Promise.resolve(params)
-    const item = await prisma.inventoryItem.findUnique({
+    const item = await withRetry(
+      () => prisma.inventoryItem.findUnique({
       where: { id: resolvedParams.id },
       include: {
         InventoryItemTag: {
@@ -37,7 +39,8 @@ export async function GET(
           },
         },
       },
-    })
+      })
+    )
     
     if (!item) {
       return NextResponse.json(
@@ -120,9 +123,11 @@ export async function PUT(
     } = body
     
     // Update tags
-    await prisma.inventoryItemTag.deleteMany({
-      where: { inventoryId: resolvedParams.id },
-    })
+    await withRetry(
+      () => prisma.inventoryItemTag.deleteMany({
+        where: { inventoryId: resolvedParams.id },
+      })
+    )
     
     // Handle migration: if serialNumbers is not provided but we have old data, convert it
     let serialNumbersValue = serialNumbers
@@ -134,7 +139,8 @@ export async function PUT(
       }
     }
 
-    const item = await prisma.inventoryItem.update({
+    const item = await withRetry(
+      () => prisma.inventoryItem.update({
       where: { id: resolvedParams.id },
       data: {
         name,
@@ -161,7 +167,8 @@ export async function PUT(
         },
         InventoryDocument: true,
       },
-    })
+      })
+    )
     
     return NextResponse.json({ item })
   } catch (error: any) {
@@ -179,9 +186,11 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await Promise.resolve(params)
-    await prisma.inventoryItem.delete({
-      where: { id: resolvedParams.id },
-    })
+    await withRetry(
+      () => prisma.inventoryItem.delete({
+        where: { id: resolvedParams.id },
+      })
+    )
     
     return NextResponse.json({ success: true })
   } catch (error: any) {

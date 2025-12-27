@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function GET(request: NextRequest) {
   try {
     // Get only items that have checkout enabled
-    const items = await prisma.inventoryItem.findMany({
+    const items = await withRetry(
+      () => prisma.inventoryItem.findMany({
       where: {
         checkoutEnabled: true,
       },
@@ -23,7 +25,8 @@ export async function GET(request: NextRequest) {
       orderBy: {
         name: 'asc',
       },
-    })
+      })
+    )
 
     // Calculate available quantity for each item
     const itemsWithAvailability = items.map((item) => {
