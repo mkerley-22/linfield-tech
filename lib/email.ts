@@ -16,13 +16,21 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try Resend first (recommended)
   if (process.env.RESEND_API_KEY) {
     try {
+      console.log('[Email] Attempting to send via Resend...', {
+        hasApiKey: !!process.env.RESEND_API_KEY,
+        apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 5),
+        emailFrom: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        to: options.to,
+        subject: options.subject,
+      })
+      
       // Use dynamic import with eval to prevent webpack from bundling
       const resendModule = await new Function('return import("resend")')()
       if (resendModule) {
         const { Resend } = resendModule
         const resend = new Resend(process.env.RESEND_API_KEY)
         
-        await resend.emails.send({
+        const result = await resend.emails.send({
           from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
           to: options.to,
           subject: options.subject,
@@ -31,18 +39,31 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
           replyTo: options.replyTo,
         })
         
-        console.log('Email sent successfully via Resend to:', options.to)
+        console.log('[Email] Email sent successfully via Resend:', {
+          to: options.to,
+          subject: options.subject,
+          result: result,
+        })
         return true
+      } else {
+        console.error('[Email] Resend module loaded but is null/undefined')
       }
     } catch (error: any) {
       // If package not installed, error.message will contain "Cannot find module"
       if (error?.message?.includes('Cannot find module') || error?.code === 'MODULE_NOT_FOUND') {
-        console.log('Resend package not installed. Install with: npm install resend')
+        console.error('[Email] Resend package not installed. Install with: npm install resend')
       } else {
-        console.error('Resend email error:', error)
+        console.error('[Email] Resend email error:', {
+          error: error?.message || error,
+          stack: error?.stack,
+          code: error?.code,
+          name: error?.name,
+        })
       }
       // Fall through to try other methods or log
     }
+  } else {
+    console.log('[Email] RESEND_API_KEY not found in environment variables')
   }
 
   // Try SendGrid if configured (only if package might be installed)
@@ -114,12 +135,17 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 
   // If no email service is configured, just log
-  console.log('Email would be sent (no email service configured):', {
+  console.log('[Email] No email service configured. Email would be sent:', {
     to: options.to,
     subject: options.subject,
     html: options.html.substring(0, 100) + '...',
+    envVars: {
+      hasResendKey: !!process.env.RESEND_API_KEY,
+      hasSendGridKey: !!process.env.SENDGRID_API_KEY,
+      hasSmtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+    },
   })
-  console.log('To enable email sending, set up Resend, SendGrid, or SMTP. See QUICK_EMAIL_SETUP.md')
+  console.log('[Email] To enable email sending, set up Resend, SendGrid, or SMTP. See QUICK_EMAIL_SETUP.md')
 
   return false
 }
