@@ -72,28 +72,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch image from Google Custom Search API
-    let imageUrl = await fetchImageFromGoogle(manufacturer, model, productName)
+    let imageUrl: string | null = null
 
-    // If Google search didn't return an image, try using Unsplash API as fallback
-    if (!imageUrl) {
-      try {
-        const unsplashQuery = `${manufacturer} ${model} product`
-        const unsplashUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(unsplashQuery)}&per_page=1&client_id=${process.env.UNSPLASH_ACCESS_KEY || ''}`
-        
-        if (process.env.UNSPLASH_ACCESS_KEY) {
-          const unsplashResponse = await fetch(unsplashUrl)
-          if (unsplashResponse.ok) {
-            const unsplashData = await unsplashResponse.json()
-            if (unsplashData.results && unsplashData.results.length > 0) {
-              imageUrl = unsplashData.results[0].urls.regular
-              console.log('Found image from Unsplash:', imageUrl)
-            }
+    // Try Unsplash first (no special setup needed, just API key)
+    try {
+      const unsplashQuery = `${manufacturer} ${model} product`
+      const unsplashUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(unsplashQuery)}&per_page=5&client_id=${process.env.UNSPLASH_ACCESS_KEY || ''}`
+      
+      if (process.env.UNSPLASH_ACCESS_KEY) {
+        const unsplashResponse = await fetch(unsplashUrl)
+        if (unsplashResponse.ok) {
+          const unsplashData = await unsplashResponse.json()
+          if (unsplashData.results && unsplashData.results.length > 0) {
+            // Try to find the best match (prefer images with product-related keywords)
+            const bestMatch = unsplashData.results.find((img: any) => 
+              img.description?.toLowerCase().includes(manufacturer.toLowerCase()) ||
+              img.description?.toLowerCase().includes(model.toLowerCase()) ||
+              img.alt_description?.toLowerCase().includes(manufacturer.toLowerCase())
+            ) || unsplashData.results[0]
+            
+            imageUrl = bestMatch.urls.regular
+            console.log('Found image from Unsplash:', imageUrl)
           }
         }
-      } catch (error) {
-        console.error('Unsplash API error:', error)
       }
+    } catch (error) {
+      console.error('Unsplash API error:', error)
+    }
+
+    // If Unsplash didn't return an image, try Google Custom Search API as fallback
+    if (!imageUrl) {
+      imageUrl = await fetchImageFromGoogle(manufacturer, model, productName)
     }
 
     return NextResponse.json({ 
