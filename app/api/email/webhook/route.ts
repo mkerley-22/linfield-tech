@@ -51,21 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const requestId = checkoutRequest.id
-
-    if (!checkoutRequest) {
-      console.log('Checkout request not found:', requestId)
-      return NextResponse.json({ received: true, error: 'Request not found' })
-    }
-
-    // Verify the sender email matches the requester
-    const senderEmail = from?.email || from
-    if (senderEmail.toLowerCase() !== checkoutRequest.requesterEmail.toLowerCase()) {
-      console.log('Sender email does not match requester:', {
-        sender: senderEmail,
-        requester: checkoutRequest.requesterEmail,
-      })
-      // Still allow it, but log it
-    }
+    // Sender email already verified when we found the request by requesterEmail
 
     // Extract message content (prefer text, fallback to HTML)
     // Ensure text and html are strings
@@ -96,7 +82,7 @@ export async function POST(request: NextRequest) {
         checkoutRequestId: requestId,
         senderType: 'requester',
         senderName: checkoutRequest.requesterName,
-        senderEmail: senderEmail,
+        senderEmail: senderEmailStr,
         message: messageContent,
       },
     })
