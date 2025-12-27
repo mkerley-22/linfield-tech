@@ -794,7 +794,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             Available for Checkout
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Number of items available for checkout (leave empty to use total quantity: {quantity})
+            Number of items available for checkout (leave empty to use total quantity: {locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity})
           </p>
           <input
             type="number"
@@ -810,8 +810,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             }}
             onFocus={(e) => e.target.select()}
             min="1"
-            max={quantity}
-            placeholder={`Default: ${quantity} (all items)`}
+            max={locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity}
+            placeholder={`Default: ${locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity} (all items)`}
             className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
           />
         </div>
