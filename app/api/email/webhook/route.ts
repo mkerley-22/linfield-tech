@@ -98,11 +98,12 @@ export async function POST(request: NextRequest) {
     if (messageContent && messageContent.length > 0) {
       // Common patterns that indicate the start of quoted content
       // These patterns match various email client reply formats
+      // Using [\s\S] instead of . with 's' flag for ES2015 compatibility
       const quoteStartPatterns = [
-        /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+.*?\d{1,2}[\s,]+.*?\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?<[^>]+@[^>]+>.*?wrote:/is, // "On Fri, Dec 26, 2025 at 9:55 PM <support@tech.linfieldtechhub.com> wrote:"
-        /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+.*?\d{1,2}[\s,]+.*?\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?wrote:/is, // "On Fri, Dec 26, 2025 at 9:55 PM ... wrote:"
-        /On\s+.*?\d{1,2}\/\d{1,2}\/\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?wrote:/is, // "On 12/26/2025 at 9:55 PM ... wrote:"
-        /On\s+.*?wrote:/i, // Generic "On ... wrote:"
+        /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+[\s\S]*?\d{1,2}[\s,]+[\s\S]*?\d{4}[\s\S]*?at[\s\S]*?\d{1,2}:\d{2}[\s\S]*?(AM|PM)[\s\S]*?<[^>]+@[^>]+>[\s\S]*?wrote:/i, // "On Fri, Dec 26, 2025 at 9:55 PM <support@tech.linfieldtechhub.com> wrote:"
+        /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+[\s\S]*?\d{1,2}[\s,]+[\s\S]*?\d{4}[\s\S]*?at[\s\S]*?\d{1,2}:\d{2}[\s\S]*?(AM|PM)[\s\S]*?wrote:/i, // "On Fri, Dec 26, 2025 at 9:55 PM ... wrote:"
+        /On[\s\S]*?\d{1,2}\/\d{1,2}\/\d{4}[\s\S]*?at[\s\S]*?\d{1,2}:\d{2}[\s\S]*?(AM|PM)[\s\S]*?wrote:/i, // "On 12/26/2025 at 9:55 PM ... wrote:"
+        /On[\s\S]*?wrote:/i, // Generic "On ... wrote:"
         /-----Original Message-----/i,
         /From:.*?@/i,
         /Sent:.*/i,
