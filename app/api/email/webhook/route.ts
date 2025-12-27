@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Resend } from 'resend'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,9 +24,14 @@ export async function POST(request: NextRequest) {
     const from = data.from || data.from_email || data.sender
     const to = data.to || data.to_email || data.recipient
     const subject = data.subject
-    const text = data.text || data.text_body || data.body_text || data.plain_text
-    const html = data.html || data.html_body || data.body_html
+    // For inbound emails, Resend webhook might not include body in the main payload
+    // Check if it's nested or in a different structure
+    const text = data.text || data.text_body || data.body_text || data.plain_text || data.body?.text || data.content?.text
+    const html = data.html || data.html_body || data.body_html || data.body?.html || data.content?.html
     const headers = data.headers || {}
+    
+    // Also check if there's a raw email or message field
+    const rawEmail = data.raw || data.message || data.email || data.email_body
 
     // Extract sender email
     const senderEmail = from?.email || from
