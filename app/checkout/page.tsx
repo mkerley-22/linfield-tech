@@ -231,7 +231,14 @@ export default function CheckoutPage() {
         
         // Debug: Log all requests to see their structure
         console.log('All requests loaded:', allRequestsData.length)
-        console.log('Sample request:', allRequestsData[0])
+        if (allRequestsData.length > 0) {
+          console.log('Sample request:', JSON.stringify(allRequestsData[0], null, 2))
+          console.log('Ready for Pickup requests:', allRequestsData.filter((r: CheckoutRequest) => {
+            const isReady = Boolean(r.readyForPickup)
+            const isPickedUp = Boolean(r.pickedUp)
+            return r.status === 'approved' && isReady && !isPickedUp
+          }))
+        }
         
         let filteredRequests = allRequestsData
         
