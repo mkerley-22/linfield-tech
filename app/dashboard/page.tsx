@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { withRetry } from '@/lib/prisma-retry'
 import Link from 'next/link'
 import { Plus, Search, FileText, Folder, Bell, Package, ArrowRight } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
@@ -11,7 +12,8 @@ export const dynamic = 'force-dynamic'
 
 async function getPages() {
   try {
-    const pages = await prisma.page.findMany({
+    const pages = await withRetry(
+      () => prisma.page.findMany({
       where: {
         parentId: null,
         isPublished: true,
@@ -25,7 +27,8 @@ async function getPages() {
         Category: true,
       },
       orderBy: { order: 'asc' },
-    })
+      })
+    )
     return pages
   } catch (error) {
     console.error('Error fetching pages:', error)
@@ -35,7 +38,8 @@ async function getPages() {
 
 async function getCategories() {
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await withRetry(
+      () => prisma.category.findMany({
       include: {
         Page: {
           where: { isPublished: true, parentId: null },
@@ -43,7 +47,8 @@ async function getCategories() {
         },
       },
       orderBy: { order: 'asc' },
-    })
+      })
+    )
     return categories
   } catch (error) {
     console.error('Error fetching categories:', error)
@@ -56,7 +61,8 @@ async function getNotifications() {
     // Only show notifications for requests that are still in "New Requests" status
     // (unseen or seen). Once they move to approved, denied, or any other status,
     // they should disappear from notifications.
-    const unseenCheckoutRequests = await prisma.checkoutRequest.findMany({
+    const unseenCheckoutRequests = await withRetry(
+      () => prisma.checkoutRequest.findMany({
       where: {
         status: {
           in: ['unseen', 'seen'],
@@ -73,10 +79,12 @@ async function getNotifications() {
         createdAt: true,
         items: true,
       },
-    })
+      })
+    )
 
     // Count requests with unread messages from requester
-    const allRequests = await prisma.checkoutRequest.findMany({
+    const allRequests = await withRetry(
+      () => prisma.checkoutRequest.findMany({
       include: {
         CheckoutRequestMessage: {
           orderBy: {
@@ -85,7 +93,8 @@ async function getNotifications() {
           take: 1,
         },
       },
-    })
+      })
+    )
 
     const requestsWithUnreadMessages = allRequests.filter(req => {
       if (!req.CheckoutRequestMessage || req.CheckoutRequestMessage.length === 0) {
