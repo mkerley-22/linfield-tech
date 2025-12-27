@@ -823,11 +823,14 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             value={availableForCheckout ?? ''}
             onChange={(e) => {
               const val = e.target.value
+              const calculatedTotal = locationBreakdowns.length > 0 
+                ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                : quantity
               if (val === '') {
                 setAvailableForCheckout(null)
               } else {
                 const num = parseInt(val)
-                setAvailableForCheckout(isNaN(num) ? null : Math.min(num, quantity))
+                setAvailableForCheckout(isNaN(num) ? null : Math.min(num, calculatedTotal))
               }
             }}
             onFocus={(e) => e.target.select()}
