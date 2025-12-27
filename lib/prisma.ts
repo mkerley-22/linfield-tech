@@ -7,35 +7,41 @@ const globalForPrisma = globalThis as unknown as {
 // Configure database URL with connection pooling parameters
 let databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
-// If using Supabase pooler, configure for transaction mode
-// Supabase uses port 6543 for transaction mode (200 connections) and 5432 for session mode (15 connections)
+// CRITICAL: For Supabase pooler, Prisma needs to use DIRECT connection, not pooler
+// The pooler (PgBouncer) doesn't support prepared statements that Prisma uses
+// Prepared statements cause "prepared statement already exists" errors with PgBouncer
 if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
   try {
-    // Parse the URL to properly handle password encoding
+    // Parse URL to extract components
     const url = new URL(databaseUrl)
     
-    // Change port from 5432 to 6543 for transaction mode
-    if (url.port === '5432' || databaseUrl.includes(':5432/')) {
-      url.port = '6543'
-      console.log('Switched Supabase pooler to port 6543 (transaction mode - 200 connections)')
+    // Convert pooler URL to direct connection URL
+    // Replace pooler.supabase.com with db.supabase.co (direct connection)
+    // Extract the region from pooler hostname: aws-1-us-east-1.pooler.supabase.com -> aws-1-us-east-1.db.supabase.co
+    const hostname = url.hostname
+    if (hostname.includes('pooler.supabase.com')) {
+      // Replace pooler with db in hostname
+      url.hostname = hostname.replace('pooler.supabase.com', 'db.supabase.co')
+      
+      // Direct connections use port 5432 (not 6543 which is pooler transaction mode)
+      url.port = '5432'
+      
+      // Remove ALL query parameters - keep only base connection string
+      url.search = ''
+      
+      databaseUrl = url.toString()
+      console.log('Converted Supabase pooler URL to direct connection URL (required for Prisma prepared statements)')
     }
-    
-    // Remove ALL query parameters - Prisma's URL validator rejects custom parameters
-    // Keep only the base connection string: postgres://user:pass@host:port/database
-    url.search = ''
-    
-    // Reconstruct the URL - this ensures proper encoding
-    databaseUrl = url.toString()
-    console.log('Cleaned connection string for Prisma compatibility')
   } catch (error) {
     console.error('Error processing DATABASE_URL:', error)
-    // If URL parsing fails, try simple string replacement as fallback
-    if (databaseUrl.includes(':5432/')) {
-      databaseUrl = databaseUrl.replace(':5432/', ':6543/')
-      // Remove query string
+    // Fallback: simple string replacement
+    if (databaseUrl.includes('pooler.supabase.com')) {
+      databaseUrl = databaseUrl.replace('pooler.supabase.com', 'db.supabase.co')
+      // Reset port to 5432 and remove query string
+      databaseUrl = databaseUrl.replace(':6543/', ':5432/').replace(':5432/', ':5432/')
       const baseUrl = databaseUrl.split('?')[0]
       databaseUrl = baseUrl
-      console.log('Used fallback method to configure connection string')
+      console.log('Used fallback method to convert to direct connection URL')
     }
   }
 }
