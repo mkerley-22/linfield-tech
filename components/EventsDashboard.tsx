@@ -329,57 +329,57 @@ export default function EventsDashboard() {
         }}
       />
       
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Upcoming Events</h2>
-          <p className="text-sm text-gray-600 mt-1">Tech events and meetings</p>
+          <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Upcoming Events</h2>
+          <p className="text-xs lg:text-sm text-gray-600 mt-1">Tech events and meetings</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {calendars.length > 0 && (
             <>
-              <Button
+              <button
                 onClick={handleSyncEvents}
                 disabled={isSyncing}
-                variant="secondary"
-                size="sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Sync all events"
               >
                 {isSyncing ? (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Syncing...
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span className="hidden sm:inline">Syncing...</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Sync All
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Sync</span>
                   </>
                 )}
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => handleImportEvents()}
                 disabled={isImporting}
-                variant="secondary"
-                size="sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Import from Google Calendar"
               >
                 {isImporting ? (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Importing...
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span className="hidden sm:inline">Importing...</span>
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Import from Calendar
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Import</span>
                   </>
                 )}
-              </Button>
+              </button>
             </>
           )}
           <Link href="/events/new">
-            <Button variant="primary" size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              New Event
-            </Button>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">New</span>
+            </button>
           </Link>
         </div>
       </div>
