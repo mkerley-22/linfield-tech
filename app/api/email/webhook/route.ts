@@ -18,55 +18,39 @@ export async function POST(request: NextRequest) {
 
     const { from, to, subject, text, html, headers } = data
 
-    // Extract checkout request ID from reply-to or subject
-    // Format: "checkout-{requestId}@tech.linfieldtechhub.com" or subject contains request ID
-    let requestId: string | null = null
-
-    // Try to extract from reply-to header
-    // Ensure replyTo is a string
-    const replyTo = headers?.['reply-to'] || headers?.['Reply-To'] || to
-    const replyToStr = typeof replyTo === 'string' ? replyTo : (replyTo?.email || replyTo?.toString() || '')
-    if (replyToStr) {
-      // Extract short ID from reply-to: reply-{8chars}@tech.linfieldtechhub.com
-      const match = replyToStr.match(/reply-([a-f0-9]{8})@/)
-      if (match) {
-        const shortId = match[1]
-        // Find the checkout request that starts with this short ID
-        // Since UUIDs are random, first 8 chars should be unique enough
-        const checkoutRequest = await prisma.checkoutRequest.findFirst({
-          where: {
-            id: {
-              startsWith: shortId,
-            },
-          },
-        })
-        if (checkoutRequest) {
-          requestId = checkoutRequest.id
-        }
-      }
+    // Extract sender email
+    const senderEmail = from?.email || from
+    const senderEmailStr = typeof senderEmail === 'string' ? senderEmail : (senderEmail?.toString() || '')
+    
+    if (!senderEmailStr) {
+      console.log('No sender email found in webhook')
+      return NextResponse.json({ received: true, error: 'No sender email' })
     }
 
-    // Request ID should be extracted from reply-to email address
-    // Format: reply-{8chars}@tech.linfieldtechhub.com (using first 8 chars of UUID)
-    // We no longer include request ID in subject line for user-friendliness
-
-    if (!requestId) {
-      // Ensure subject is a string for logging
-      const subjectStr = typeof subject === 'string' ? subject : (subject?.toString() || '')
-      console.log('Could not extract request ID from email:', { 
-        from, 
-        to, 
-        subject: subjectStr,
-        replyTo: replyToStr,
-        headers: JSON.stringify(headers),
-      })
-      return NextResponse.json({ received: true, error: 'No request ID found' })
-    }
-
-    // Find the checkout request
-    const checkoutRequest = await prisma.checkoutRequest.findUnique({
-      where: { id: requestId },
+    // Find the most recent active checkout request for this sender
+    // Active means: not picked up, not denied, or recently updated
+    const checkoutRequest = await prisma.checkoutRequest.findFirst({
+      where: {
+        requesterEmail: senderEmailStr.toLowerCase(),
+        status: {
+          not: 'denied',
+        },
+        OR: [
+          { pickedUp: false },
+          { pickedUpAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }, // Picked up within last 7 days
+        ],
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
     })
+
+    if (!checkoutRequest) {
+      console.log('No active checkout request found for sender:', senderEmailStr)
+      return NextResponse.json({ received: true, error: 'No active request found for this email' })
+    }
+
+    const requestId = checkoutRequest.id
 
     if (!checkoutRequest) {
       console.log('Checkout request not found:', requestId)
