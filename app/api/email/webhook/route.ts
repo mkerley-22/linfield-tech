@@ -16,7 +16,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const { from, to, subject, text, html, headers } = data
+    // Resend webhook structure may vary - log the full data to understand it
+    console.log('Resend webhook data structure:', JSON.stringify(data, null, 2))
+    
+    // Extract email fields - Resend may structure this differently
+    const from = data.from || data.from_email || data.sender
+    const to = data.to || data.to_email || data.recipient
+    const subject = data.subject
+    const text = data.text || data.text_body || data.body_text || data.plain_text
+    const html = data.html || data.html_body || data.body_html
+    const headers = data.headers || {}
 
     // Extract sender email
     const senderEmail = from?.email || from
