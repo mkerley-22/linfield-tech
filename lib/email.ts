@@ -41,12 +41,34 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
           replyTo: options.replyTo,
         })
         
-        console.log('[Email] Email sent successfully via Resend:', {
+        // Check if Resend returned an error in the response
+        if (result.error) {
+          console.error('[Email] Resend API returned an error:', {
+            error: result.error,
+            to: options.to,
+            subject: options.subject,
+            fullResult: result,
+          })
+          return false
+        }
+        
+        // Check if we got an ID (success indicator)
+        if (result.data?.id) {
+          console.log('[Email] Email sent successfully via Resend:', {
+            to: options.to,
+            subject: options.subject,
+            emailId: result.data.id,
+          })
+          return true
+        }
+        
+        // If no error but also no ID, log the full result for debugging
+        console.warn('[Email] Resend response unclear:', {
           to: options.to,
           subject: options.subject,
           result: result,
         })
-        return true
+        return false
       } else {
         console.error('[Email] Resend class not available')
       }
