@@ -117,12 +117,22 @@ export async function POST(request: NextRequest) {
       preview: typeof messageContent === 'string' ? messageContent.substring(0, 100) : String(messageContent).substring(0, 100),
     })
 
-    // If still no content, check alternative field names
+    // If still no content, check alternative field names and nested structures
     if (!messageContent || messageContent.length === 0) {
-      const body = data.body || data.content || data.message || data.text_content
+      // Check various possible field names including nested structures
+      const body = data.body || data.content || data.message || data.text_content || 
+                   data.html_content || rawEmail || 
+                   (typeof data.body === 'object' ? (data.body.text || data.body.html) : null) ||
+                   (typeof data.content === 'object' ? (data.content.text || data.content.html) : null)
+      
       if (body) {
         messageContent = typeof body === 'string' ? body : JSON.stringify(body)
-        console.log('Found content in alternative field (body/content/message):', messageContent.substring(0, 100))
+        console.log('Found content in alternative field:', messageContent.substring(0, 100))
+      } else {
+        // Resend webhook might not include email body by default
+        // You may need to configure the webhook to include it, or use Resend API to fetch it
+        console.warn('Email body not found in webhook payload. Resend inbound email webhooks may not include body by default.')
+        console.warn('Consider configuring Resend webhook to include email body, or use Resend API to fetch email content using email_id:', data.email_id)
       }
     }
     
