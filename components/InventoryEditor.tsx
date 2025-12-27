@@ -67,8 +67,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const [location, setLocation] = useState(initialData?.location || '')
   const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number; usage?: string }>>(() => {
     if (!initialData?.locationBreakdowns) {
-      console.log('No locationBreakdowns in initialData')
-      return []
+      console.log('No locationBreakdowns in initialData, initializing with empty row')
+      // Always start with at least one empty row
+      return [{ location: '', quantity: 1, usage: '' }]
     }
     try {
       let parsed: any = null
@@ -89,10 +90,12 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         console.log('Mapped locationBreakdowns:', mapped)
         return mapped
       }
-      return []
+      // If parsing fails or empty, return one empty row
+      return [{ location: '', quantity: 1, usage: '' }]
     } catch (error) {
       console.error('Error parsing locationBreakdowns:', error, initialData.locationBreakdowns)
-      return []
+      // Return one empty row on error
+      return [{ location: '', quantity: 1, usage: '' }]
     }
   })
   const [newRowQuantity, setNewRowQuantity] = useState(1) // Quantity for new row input
@@ -607,34 +610,37 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           Add items by quantity, location, and usage. Total quantity is calculated automatically.
         </p>
         <div className="space-y-3">
-          {locationBreakdowns.length === 0 ? (
-            <div className="flex items-end gap-2">
+          {locationBreakdowns.map((breakdown, index) => (
+            <div key={index} className="flex items-end gap-2">
               <div className="w-24">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                 <input
                   type="number"
-                  value={newRowQuantity}
+                  value={breakdown.quantity}
                   onChange={(e) => {
-                    const val = e.target.value
-                    if (val === '') {
-                      setNewRowQuantity(1)
-                    } else {
-                      const num = parseInt(val)
-                      setNewRowQuantity(isNaN(num) ? 1 : num)
-                    }
+                    const updated = [...locationBreakdowns]
+                    const newQuantity = parseInt(e.target.value) || 1
+                    updated[index].quantity = newQuantity
+                    setLocationBreakdowns(updated)
+                    // Quantity will be updated by useEffect, but update immediately for UI responsiveness
+                    const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                    setQuantity(total || 1)
                   }}
                   onFocus={(e) => e.target.select()}
                   min="1"
                   max="999"
                   className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
-                  placeholder="100"
                 />
               </div>
               <div className="flex-1">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
                 <LocationSelect
-                  value={location}
-                  onChange={setLocation}
+                  value={breakdown.location}
+                  onChange={(value) => {
+                    const updated = [...locationBreakdowns]
+                    updated[index].location = value
+                    setLocationBreakdowns(updated)
+                  }}
                   placeholder="Select or type location"
                 />
               </div>
@@ -642,164 +648,49 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
                 <input
                   type="text"
-                  value={newRowUsage}
-                  onChange={(e) => setNewRowUsage(e.target.value)}
+                  value={breakdown.usage || ''}
+                  onChange={(e) => {
+                    const updated = [...locationBreakdowns]
+                    updated[index].usage = e.target.value
+                    setLocationBreakdowns(updated)
+                  }}
                   placeholder="e.g., For basketball games"
                   className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (newRowQuantity > 0 && location) {
-                    const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
-                    const updated = [...locationBreakdowns, newBreakdown]
-                    setLocationBreakdowns(updated)
-                    setLocation('')
-                    setNewRowUsage('')
-                    setNewRowQuantity(1)
-                    // Update total quantity - useEffect will also handle this, but set it immediately for UI responsiveness
-                    const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
-                    setQuantity(total || 1)
-                  } else {
-                    alert('Please enter quantity and location before adding')
-                  }
-                }}
-                className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors mb-0"
-              >
-                <Plus className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <>
-              {locationBreakdowns.map((breakdown, index) => (
-                <div key={index} className="flex items-end gap-2">
-                  <div className="w-24">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      value={breakdown.quantity}
-                      onChange={(e) => {
-                        const updated = [...locationBreakdowns]
-                        const newQuantity = parseInt(e.target.value) || 1
-                        updated[index].quantity = newQuantity
-                        setLocationBreakdowns(updated)
-                        // Quantity will be updated by useEffect, but update immediately for UI responsiveness
-                        const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
-                        setQuantity(total || 1)
-                      }}
-                      onFocus={(e) => e.target.select()}
-                      min="1"
-                      max="999"
-                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
-                    <LocationSelect
-                      value={breakdown.location}
-                      onChange={(value) => {
-                        const updated = [...locationBreakdowns]
-                        updated[index].location = value
-                        setLocationBreakdowns(updated)
-                      }}
-                      placeholder="Select or type location"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
-                    <input
-                      type="text"
-                      value={breakdown.usage || ''}
-                      onChange={(e) => {
-                        const updated = [...locationBreakdowns]
-                        updated[index].usage = e.target.value
-                        setLocationBreakdowns(updated)
-                      }}
-                      placeholder="e.g., For basketball games"
-                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = locationBreakdowns.filter((_, i) => i !== index)
-                      setLocationBreakdowns(updated)
-                      // Update total quantity
-                      const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
-                      setQuantity(total || 1)
-                    }}
-                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors mb-0"
-                    title="Remove row"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-              <div className="flex items-end gap-2">
-                <div className="w-24">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                  <input
-                    type="number"
-                    value={newRowQuantity}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      if (val === '') {
-                        setNewRowQuantity(1)
-                      } else {
-                        const num = parseInt(val)
-                        setNewRowQuantity(isNaN(num) ? 1 : num)
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    min="1"
-                    max="999"
-                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
-                    placeholder="100"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
-                  <LocationSelect
-                    value={location}
-                    onChange={setLocation}
-                    placeholder="Select or type location"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
-                  <input
-                    type="text"
-                    value={newRowUsage}
-                    onChange={(e) => setNewRowUsage(e.target.value)}
-                    placeholder="e.g., For basketball games"
-                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
-                  />
-                </div>
+              {/* Show plus button on first row, delete button on additional rows */}
+              {index === 0 ? (
                 <button
                   type="button"
                   onClick={() => {
-                    if (newRowQuantity > 0 && location) {
-                      const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
-                      const updated = [...locationBreakdowns, newBreakdown]
-                      setLocationBreakdowns(updated)
-                      setLocation('')
-                      setNewRowUsage('')
-                      setNewRowQuantity(1)
-                      // Update total quantity
-                      const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
-                      setQuantity(total)
-                    } else {
-                      alert('Please enter quantity and location before adding')
-                    }
+                    // Add a new empty row
+                    const newBreakdown = { location: '', quantity: 1, usage: '' }
+                    const updated = [...locationBreakdowns, newBreakdown]
+                    setLocationBreakdowns(updated)
                   }}
                   className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors mb-0"
+                  title="Add another location"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
-              </div>
-            </>
-          )}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = locationBreakdowns.filter((_, i) => i !== index)
+                    setLocationBreakdowns(updated)
+                    // Update total quantity
+                    const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                    setQuantity(total || 1)
+                  }}
+                  className="w-10 h-10 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center justify-center transition-colors mb-0"
+                  title="Remove row"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
         {locationBreakdowns.length > 0 && (
           <p className="text-sm text-gray-600 mt-4">
