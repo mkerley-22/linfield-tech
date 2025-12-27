@@ -396,15 +396,15 @@ export default function InventoryPage() {
                 return (
                   <div
                     key={item.id}
-                    className="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden"
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden"
                   >
                     {/* Image Section */}
-                    <div className="relative bg-gray-50 aspect-square flex items-center justify-center">
+                    <div className="relative bg-gray-200 aspect-square flex items-center justify-center rounded-t-2xl overflow-hidden">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
                           alt={item.name}
-                          className="w-full h-full object-contain p-4"
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             // Fallback to placeholder if image fails to load
                             const target = e.target as HTMLImageElement
@@ -419,8 +419,8 @@ export default function InventoryPage() {
                       {/* No Photo Placeholder */}
                       {!item.imageUrl && (
                         <div className="w-full h-full flex flex-col items-center justify-center p-4">
-                          <ImageIcon className="w-16 h-16 text-gray-300 mb-2" />
-                          <p className="text-xs text-gray-400 text-center">No Photo</p>
+                          <ImageIcon className="w-16 h-16 text-gray-400 mb-2" />
+                          <p className="text-xs text-gray-500 text-center">No Photo</p>
                         </div>
                       )}
                       

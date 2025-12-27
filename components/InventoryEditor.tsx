@@ -508,11 +508,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           Product Image
         </label>
         {imageUrl ? (
-          <div className="group relative w-64 aspect-square bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+          <div className="group relative w-64 aspect-square bg-gray-200 rounded-2xl overflow-hidden border border-gray-300">
             <img
               src={imageUrl}
               alt="Product"
-              className="w-full h-full object-contain p-4"
+              className="w-full h-full object-cover"
               onError={(e) => {
                 const parent = e.currentTarget.parentElement
                 if (parent) {
@@ -549,9 +549,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         ) : (
           <div>
             {itemId ? (
-              <label className="flex flex-col items-center justify-center w-64 aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-blue-400 hover:bg-gray-100 transition-colors">
-                <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600 font-medium">Upload Image</span>
+              <label className="flex flex-col items-center justify-center w-64 aspect-square bg-gray-200 rounded-2xl border-2 border-dashed border-gray-400 cursor-pointer hover:border-blue-500 hover:bg-gray-300 transition-colors">
+                <ImageIcon className="w-12 h-12 text-gray-500 mb-2" />
+                <span className="text-sm text-gray-700 font-medium">Upload Image</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -561,8 +561,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 />
               </label>
             ) : (
-              <div className="w-64 aspect-square bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
-                <p className="text-sm text-gray-500 text-center px-4">Save the equipment first to upload an image</p>
+              <div className="w-64 aspect-square bg-gray-200 rounded-2xl border border-gray-300 flex items-center justify-center">
+                <p className="text-sm text-gray-600 text-center px-4">Save the equipment first to upload an image</p>
               </div>
             )}
           </div>
