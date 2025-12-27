@@ -16,6 +16,10 @@ export default function GlobalError({
     console.error('Global application error:', error)
   }, [error])
 
+  const handleGoHome = () => {
+    window.location.href = '/login'
+  }
+
   return (
     <html>
       <body>
@@ -36,11 +40,11 @@ export default function GlobalError({
                 Try again
               </Button>
               <Button
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={handleGoHome}
                 variant="secondary"
               >
                 <Home className="w-4 h-4 mr-2" />
-                Go Home
+                Go to Login
               </Button>
             </div>
           </div>

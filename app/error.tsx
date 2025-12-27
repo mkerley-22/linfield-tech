@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { AlertCircle, Home } from 'lucide-react'
-import Link from 'next/link'
 
 export default function Error({
   error,
@@ -12,10 +12,20 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const router = useRouter()
+
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Application error:', error)
   }, [error])
+
+  const handleTryAgain = () => {
+    reset()
+  }
+
+  const handleGoHome = () => {
+    router.push('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -29,17 +39,18 @@ export default function Error({
         </p>
         <div className="flex gap-3 justify-center">
           <Button
-            onClick={reset}
+            onClick={handleTryAgain}
             variant="primary"
           >
             Try again
           </Button>
-          <Link href="/dashboard">
-            <Button variant="secondary">
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
-            </Button>
-          </Link>
+          <Button
+            onClick={handleGoHome}
+            variant="secondary"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Go to Login
+          </Button>
         </div>
       </div>
     </div>
