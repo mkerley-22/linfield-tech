@@ -929,21 +929,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       </div>
 
-      {/* Checkout Toggle */}
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="checkoutEnabled"
-          checked={checkoutEnabled}
-          onChange={(e) => setCheckoutEnabled(e.target.checked)}
-          className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 accent-blue-600 cursor-pointer"
-          style={{ colorScheme: 'light' }}
-        />
-        <label htmlFor="checkoutEnabled" className="text-sm font-medium text-gray-700 cursor-pointer">
-          Allow staff to request checkout for this item
-        </label>
-      </div>
-
       {/* Product Image */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
