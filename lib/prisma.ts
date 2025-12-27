@@ -8,38 +8,24 @@ const globalForPrisma = globalThis as unknown as {
 let databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
 // If using Supabase pooler, configure for transaction mode
-// Supabase uses port 6543 for transaction mode and 5432 for session mode
-// OR we can use the pgbouncer parameter, but Prisma might reject it
-// Let's try using port 6543 for transaction mode (more reliable)
+// Supabase uses port 6543 for transaction mode (200 connections) and 5432 for session mode (15 connections)
+// Simply changing the port is the most reliable way - no parameters needed
 if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
   try {
-    // Option 1: Use port 6543 for transaction mode (Supabase's transaction mode port)
-    // This is more reliable than the pgbouncer parameter
+    // Change port from 5432 to 6543 for transaction mode
+    // This is the cleanest approach - no URL parameters needed
     if (databaseUrl.includes(':5432/')) {
       databaseUrl = databaseUrl.replace(':5432/', ':6543/')
-      console.log('Switched to port 6543 for transaction mode')
+      console.log('Switched Supabase pooler to port 6543 (transaction mode - 200 connections)')
     }
     
-    // Option 2: Also try to set pgbouncer parameter if port change doesn't work
-    // But remove it if Prisma rejects it - we'll use port-based approach instead
-    if (databaseUrl.includes('pgbouncer=true')) {
-      databaseUrl = databaseUrl.replace('pgbouncer=true', 'pgbouncer=transaction')
-    } else if (!databaseUrl.includes('pgbouncer=')) {
-      // Only add if not already present
-      const separator = databaseUrl.includes('?') ? '&' : '?'
-      databaseUrl = `${databaseUrl}${separator}pgbouncer=transaction`
+    // Remove ALL query parameters - Prisma might reject them
+    // Only keep the base connection string
+    const urlMatch = databaseUrl.match(/^(postgres:\/\/[^?]+)/)
+    if (urlMatch) {
+      databaseUrl = urlMatch[1]
+      console.log('Removed query parameters from connection string for Prisma compatibility')
     }
-    
-    // Remove any invalid parameters that Prisma might reject
-    databaseUrl = databaseUrl.replace(/[?&]connection_limit=[^&]*/g, '')
-    databaseUrl = databaseUrl.replace(/[?&]pool_timeout=[^&]*/g, '')
-    databaseUrl = databaseUrl.replace(/[?&]connect_timeout=[^&]*/g, '')
-    databaseUrl = databaseUrl.replace(/[?&]statement_timeout=[^&]*/g, '')
-    
-    // Clean up any double separators
-    databaseUrl = databaseUrl.replace(/\?\&/g, '?').replace(/\&\&/g, '&')
-    
-    console.log('Configured Supabase connection pooler for transaction mode')
   } catch (error) {
     console.error('Error processing DATABASE_URL:', error)
     // Use original URL if processing fails
