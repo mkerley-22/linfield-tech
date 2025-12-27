@@ -306,6 +306,20 @@ export default function EventsDashboard() {
 
   return (
     <div className="space-y-6">
+      {showIntegrationWarning && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Google Calendar Integration Required</h2>
+          <p className="text-gray-700 mb-4">
+            Enable Google Calendar Integration in Settings to import events from Google Calendar and manage tech events.
+          </p>
+          <Link href="/settings#integrations">
+            <Button variant="primary">
+              Go to Settings
+            </Button>
+          </Link>
+        </div>
+      )}
+      
       <EventModal
         event={selectedEvent}
         isOpen={isModalOpen}
