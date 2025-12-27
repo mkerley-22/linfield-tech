@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function POST(
   request: NextRequest,
@@ -13,26 +14,32 @@ export async function POST(
     }
 
     const resolvedParams = await Promise.resolve(params)
-    const checkout = await prisma.checkout.update({
-      where: { id: resolvedParams.id },
-      data: {
-        status: 'returned',
-        returnedAt: new Date(),
-      },
-      include: {
-        InventoryItem: true,
-        User: true,
-      },
-    })
+    
+    // Update checkout status to returned
+    const checkout = await withRetry(
+      () => prisma.checkout.update({
+        where: { id: resolvedParams.id },
+        data: {
+          status: 'returned',
+          returnedAt: new Date(),
+        },
+        include: {
+          InventoryItem: true,
+          User: true,
+        },
+      })
+    )
 
     // Update inventory item's lastUsedAt and lastUsedBy
-    await prisma.inventoryItem.update({
-      where: { id: checkout.inventoryId },
-      data: {
-        lastUsedAt: new Date(),
-        lastUsedBy: checkout.User?.name || checkout.checkedOutBy,
-      },
-    })
+    await withRetry(
+      () => prisma.inventoryItem.update({
+        where: { id: checkout.inventoryId },
+        data: {
+          lastUsedAt: new Date(),
+          lastUsedBy: checkout.User?.name || checkout.checkedOutBy,
+        },
+      })
+    )
     
     return NextResponse.json({ checkout, success: true })
   } catch (error: any) {
