@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy initialization - only create client when needed
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
 
 // Validate that a URL is actually an image
 async function validateImageUrl(url: string): Promise<boolean> {
@@ -130,6 +136,7 @@ export async function POST(
     // If still no image, try AI to find manufacturer website image
     if (!imageUrl && process.env.OPENAI_API_KEY) {
       try {
+        const openai = getOpenAI()
         const completion = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
@@ -192,6 +199,7 @@ Search for the manufacturer's official website or reputable retailers like Amazo
     let documentationLinks: Array<{ url: string; title: string; type: string }> = []
     if (process.env.OPENAI_API_KEY) {
       try {
+        const openai = getOpenAI()
         const completion = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [

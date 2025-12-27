@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy initialization - only create client when needed
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
 
 export async function POST(
   request: NextRequest,
@@ -26,13 +32,6 @@ export async function POST(
       )
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
-      )
-    }
-
     // Build context from event description
     const eventContext = `
 Event Title: ${event.title}
@@ -44,6 +43,7 @@ Event Type: ${event.eventType}
 `
 
     // Use AI to analyze equipment needs
+    const openai = getOpenAI()
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [

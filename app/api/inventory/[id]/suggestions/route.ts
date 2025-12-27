@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy initialization - only create client when needed
+function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured')
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
 
 export async function POST(
   request: NextRequest,
@@ -96,6 +102,7 @@ Return ONLY a JSON array of suggested item names (exact matches from the availab
 If no good matches exist in the available items, return an empty array [].`
 
     try {
+      const openai = getOpenAI()
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
