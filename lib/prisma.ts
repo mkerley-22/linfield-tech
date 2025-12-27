@@ -32,6 +32,12 @@ if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
   }
 }
 
+// Log the final connection string (without password) for debugging
+if (databaseUrl) {
+  const safeUrl = databaseUrl.replace(/:[^:@]+@/, ':****@')
+  console.log('Using database URL:', safeUrl)
+}
+
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   datasources: {
@@ -39,9 +45,6 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
       url: databaseUrl,
     },
   },
-  // Add connection pool configuration
-  // This helps prevent "max clients reached" errors
-  // Prisma will manage connections more efficiently
 })
 
 // Ensure we're using connection pooling properly
