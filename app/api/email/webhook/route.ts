@@ -33,15 +33,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If not found in reply-to, try subject line
-    // Ensure subject is a string
-    const subjectStr = typeof subject === 'string' ? subject : (subject?.toString() || '')
-    if (!requestId && subjectStr) {
-      const subjectMatch = subjectStr.match(/\[Request\s+([a-f0-9-]+)\]/i)
-      if (subjectMatch) {
-        requestId = subjectMatch[1]
-      }
-    }
+    // Request ID should be extracted from reply-to email address
+    // Format: checkout-{requestId}@tech.linfieldtechhub.com
+    // We no longer include request ID in subject line for user-friendliness
 
     if (!requestId) {
       console.log('Could not extract request ID from email:', { 

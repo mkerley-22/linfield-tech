@@ -244,7 +244,6 @@ export async function sendCheckoutRequestStatusUpdate(
           <p style="margin: 0;"><strong>Message:</strong></p>
           <p style="margin: 10px 0 0 0;">${message}</p>
         </div>` : ''}
-        <p>Request ID: <strong>${requestId}</strong></p>
         <p>If you have any questions, please don't hesitate to contact us.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
         <p style="color: #6b7280; font-size: 12px;">This is an automated message. Please do not reply to this email.</p>
@@ -268,7 +267,7 @@ export async function sendCheckoutRequestMessage(
 ): Promise<boolean> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   const replyToEmail = `checkout-${requestId}@tech.linfieldtechhub.com`
-  const subject = `[Request ${requestId}] New Message on Your Equipment Checkout Request`
+  const subject = `New Message on Your Equipment Checkout Request`
   const html = `
     <!DOCTYPE html>
     <html>
@@ -284,7 +283,6 @@ export async function sendCheckoutRequestMessage(
           <p style="margin: 0;"><strong>From:</strong> ${adminName}</p>
           <p style="margin: 10px 0 0 0;">${message}</p>
         </div>
-        <p>Request ID: <strong>${requestId}</strong></p>
         <div style="background-color: #dbeafe; border-left: 4px solid #2563eb; padding: 12px; margin: 20px 0; border-radius: 4px;">
           <p style="margin: 0; font-size: 14px; color: #1e40af;">
             <strong>💬 Reply to this email</strong> to respond directly in the checkout system. Your reply will be added to this request's message thread.
