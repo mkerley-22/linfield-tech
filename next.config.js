@@ -26,11 +26,22 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     // Make optional email packages external to avoid build errors if not installed
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        '@sendgrid/mail': false,
-        'nodemailer': false,
+    if (isServer) {
+      // For server-side, mark optional packages as external
+      config.externals = config.externals || []
+      if (typeof config.externals === 'function') {
+        const originalExternals = config.externals
+        config.externals = [
+          originalExternals,
+          (context, request, callback) => {
+            if (request === '@sendgrid/mail' || request === 'nodemailer') {
+              return callback(null, `commonjs ${request}`)
+            }
+            callback()
+          },
+        ]
+      } else if (Array.isArray(config.externals)) {
+        config.externals.push('@sendgrid/mail', 'nodemailer')
       }
     }
     return config

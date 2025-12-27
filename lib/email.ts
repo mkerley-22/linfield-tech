@@ -15,8 +15,8 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try Resend first (recommended)
   if (process.env.RESEND_API_KEY) {
     try {
-      // Dynamic import to avoid build errors if package not installed
-      const resendModule = await import('resend').catch(() => null)
+      // Use dynamic import with eval to prevent webpack from bundling
+      const resendModule = await new Function('return import("resend")')()
       if (resendModule) {
         const { Resend } = resendModule
         const resend = new Resend(process.env.RESEND_API_KEY)
@@ -35,7 +35,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       }
     } catch (error: any) {
       // If package not installed, error.message will contain "Cannot find module"
-      if (error?.message?.includes('Cannot find module')) {
+      if (error?.message?.includes('Cannot find module') || error?.code === 'MODULE_NOT_FOUND') {
         console.log('Resend package not installed. Install with: npm install resend')
       } else {
         console.error('Resend email error:', error)
@@ -44,10 +44,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     }
   }
 
-  // Try SendGrid if configured
+  // Try SendGrid if configured (only if package might be installed)
   if (process.env.SENDGRID_API_KEY) {
     try {
-      const sendgridModule = await import('@sendgrid/mail').catch(() => null)
+      // Use Function constructor to prevent webpack from analyzing this import
+      const sendgridModule = await new Function('return import("@sendgrid/mail")')().catch(() => null)
       if (sendgridModule) {
         const sgMail = sendgridModule.default
         sgMail.setApiKey(process.env.SENDGRID_API_KEY)
@@ -65,19 +66,19 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         return true
       }
     } catch (error: any) {
-      if (error?.message?.includes('Cannot find module')) {
-        console.log('SendGrid package not installed. Install with: npm install @sendgrid/mail')
+      if (error?.message?.includes('Cannot find module') || error?.code === 'MODULE_NOT_FOUND') {
+        // Silently ignore - package not installed
       } else {
         console.error('SendGrid email error:', error)
       }
-      // Fall through to try other methods or log
     }
   }
 
-  // Try SMTP if configured
+  // Try SMTP if configured (only if package might be installed)
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
-      const nodemailerModule = await import('nodemailer').catch(() => null)
+      // Use Function constructor to prevent webpack from analyzing this import
+      const nodemailerModule = await new Function('return import("nodemailer")')().catch(() => null)
       if (nodemailerModule) {
         const nodemailer = nodemailerModule.default || nodemailerModule
         const transporter = nodemailer.createTransport({
@@ -103,12 +104,11 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         return true
       }
     } catch (error: any) {
-      if (error?.message?.includes('Cannot find module')) {
-        console.log('Nodemailer package not installed. Install with: npm install nodemailer')
+      if (error?.message?.includes('Cannot find module') || error?.code === 'MODULE_NOT_FOUND') {
+        // Silently ignore - package not installed
       } else {
         console.error('SMTP email error:', error)
       }
-      // Fall through to log
     }
   }
 
