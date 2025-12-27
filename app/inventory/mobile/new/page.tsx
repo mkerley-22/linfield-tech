@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, X, Check, Loader2, ArrowLeft, Image as ImageIcon, Save } from 'lucide-react'
+import { Loader2, ArrowLeft, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NewMobileInventoryPage() {
@@ -14,53 +14,8 @@ export default function NewMobileInventoryPage() {
   const [model, setModel] = useState('')
   const [location, setLocation] = useState('')
   const [saving, setSaving] = useState(false)
-  const [showCamera, setShowCamera] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
-      setShowCamera(true)
-    } catch (error) {
-      console.error('Error accessing camera:', error)
-      alert('Unable to access camera. Please check permissions.')
-    }
-  }
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-      streamRef.current = null
-    }
-    setShowCamera(false)
-  }
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current
-      const video = videoRef.current
-      
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.drawImage(video, 0, 0)
-        const imageData = canvas.toDataURL('image/jpeg', 0.8)
-        setCapturedImage(imageData)
-        stopCamera()
-      }
-    }
-  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -153,38 +108,6 @@ export default function NewMobileInventoryPage() {
         </div>
       </div>
 
-      {/* Camera Modal */}
-      {showCamera && (
-        <div className="fixed inset-0 z-50 bg-black">
-          <div className="relative w-full h-full">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            <canvas ref={canvasRef} className="hidden" />
-            
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-6">
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={stopCamera}
-                  className="w-14 h-14 rounded-full bg-white flex items-center justify-center"
-                >
-                  <X className="w-6 h-6 text-gray-900" />
-                </button>
-                <button
-                  onClick={capturePhoto}
-                  className="w-20 h-20 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center"
-                >
-                  <div className="w-16 h-16 rounded-full bg-white border-2 border-gray-400"></div>
-                </button>
-                <div className="w-14"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Form */}
       <div className="p-4 space-y-4">
@@ -208,29 +131,21 @@ export default function NewMobileInventoryPage() {
               </button>
             </div>
           ) : (
-            <div className="flex gap-3">
-              <button
-                onClick={startCamera}
-                className="flex-1 h-32 bg-gray-100 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300"
-              >
-                <Camera className="w-8 h-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600">Take Photo</span>
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 h-32 bg-gray-100 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300"
-              >
-                <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600">Choose File</span>
-              </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full h-32 bg-gray-100 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300"
+            >
+              <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-600">Choose Photo</span>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                capture="environment"
                 onChange={handleFileSelect}
                 className="hidden"
               />
-            </div>
+            </button>
           )}
         </div>
 

@@ -230,15 +230,15 @@ export default function InventoryPage() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8">
-          <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 overflow-y-auto lg:ml-0">
+        <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-16 lg:pt-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 lg:mb-8 gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Equipment Inventory</h1>
-              <p className="text-gray-600">Manage and track all tech equipment</p>
+              <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">Equipment Inventory</h1>
+              <p className="text-sm lg:text-base text-gray-600">Manage and track all tech equipment</p>
             </div>
-            <Link href="/inventory/new">
-              <Button variant="primary">
+            <Link href="/inventory/new" className="w-full sm:w-auto">
+              <Button variant="primary" className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Equipment
               </Button>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Search, Package, Plus, X, Check, Loader2, ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { Camera, Search, Package, Plus, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 
@@ -23,12 +23,8 @@ export default function MobileInventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [showCamera, setShowCamera] = useState(false)
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     loadInventory()
@@ -57,58 +53,16 @@ export default function MobileInventoryPage() {
     }
   }
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' } // Use back camera on mobile
-      })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
-      setShowCamera(true)
-    } catch (error) {
-      console.error('Error accessing camera:', error)
-      alert('Unable to access camera. Please check permissions.')
-    }
-  }
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !selectedItem) return
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-      streamRef.current = null
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
     }
-    setShowCamera(false)
-    setCapturedImage(null)
-  }
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current
-      const video = videoRef.current
-      
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.drawImage(video, 0, 0)
-        const imageData = canvas.toDataURL('image/jpeg', 0.8)
-        setCapturedImage(imageData)
-        stopCamera()
-      }
-    }
-  }
-
-  const handleUsePhoto = async () => {
-    if (!capturedImage || !selectedItem) return
 
     try {
-      // Convert data URL to blob
-      const response = await fetch(capturedImage)
-      const blob = await response.blob()
-      const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' })
-
-      // Upload image
       const formData = new FormData()
       formData.append('image', file)
 
@@ -118,7 +72,6 @@ export default function MobileInventoryPage() {
       })
 
       if (uploadResponse.ok) {
-        setCapturedImage(null)
         setSelectedItem(null)
         loadInventory()
         alert('Photo uploaded successfully!')
@@ -129,6 +82,11 @@ export default function MobileInventoryPage() {
     } catch (error) {
       console.error('Upload error:', error)
       alert('Failed to upload photo')
+    } finally {
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
@@ -160,65 +118,15 @@ export default function MobileInventoryPage() {
         </div>
       </div>
 
-      {/* Camera Modal */}
-      {showCamera && (
-        <div className="fixed inset-0 z-50 bg-black">
-          <div className="relative w-full h-full">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            <canvas ref={canvasRef} className="hidden" />
-            
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-6">
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={stopCamera}
-                  className="w-14 h-14 rounded-full bg-white flex items-center justify-center"
-                >
-                  <X className="w-6 h-6 text-gray-900" />
-                </button>
-                <button
-                  onClick={capturePhoto}
-                  className="w-20 h-20 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center"
-                >
-                  <div className="w-16 h-16 rounded-full bg-white border-2 border-gray-400"></div>
-                </button>
-                <div className="w-14"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Photo Preview Modal */}
-      {capturedImage && selectedItem && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            <img src={capturedImage} alt="Captured" className="w-full rounded-lg mb-4" />
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setCapturedImage(null)
-                  setSelectedItem(null)
-                }}
-                className="flex-1 py-3 bg-gray-700 text-white rounded-lg font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUsePhoto}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium flex items-center justify-center gap-2"
-              >
-                <Check className="w-5 h-5" />
-                Use Photo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
       {/* Inventory List */}
       <div className="p-4">
@@ -238,7 +146,7 @@ export default function MobileInventoryPage() {
                 key={item.id}
                 onClick={() => {
                   setSelectedItem(item)
-                  startCamera()
+                  fileInputRef.current?.click()
                 }}
                 className="bg-white rounded-lg border border-gray-200 p-3 active:scale-95 transition-transform"
               >

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Home, BookOpen, Settings, Folder, Calendar, Package, ShoppingCart, ChevronDown, ChevronRight, Database } from 'lucide-react'
+import { Home, BookOpen, Settings, Folder, Calendar, Package, ShoppingCart, ChevronDown, ChevronRight, Database, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserMenu from './UserMenu'
 
@@ -12,6 +12,7 @@ export default function Sidebar() {
   const [unseenCheckoutRequests, setUnseenCheckoutRequests] = useState(0)
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
   const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState(true)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     // Fetch notification count
@@ -62,7 +63,34 @@ export default function Sidebar() {
   )
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center border border-gray-200"
+      >
+        {isMobileMenuOpen ? (
+          <X className="w-5 h-5 text-gray-700" />
+        ) : (
+          <Menu className="w-5 h-5 text-gray-700" />
+        )}
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-40
+        w-64 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
       <div className="p-6 border-b border-gray-200">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
@@ -86,6 +114,7 @@ export default function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors relative',
                     isActive
@@ -135,6 +164,7 @@ export default function Sidebar() {
                     <li key={item.href}>
                       <Link
                         href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
                           isActive
@@ -162,6 +192,7 @@ export default function Sidebar() {
             <UserMenu />
             <Link
               href="/settings"
+              onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
                 pathname === '/settings' || pathname?.startsWith('/settings/')
@@ -182,6 +213,7 @@ export default function Sidebar() {
         </p>
       </div>
     </aside>
+    </>
   )
 }
 

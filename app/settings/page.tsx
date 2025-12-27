@@ -124,7 +124,7 @@ export default function SettingsPage() {
     return (
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto flex items-center justify-center">
+        <main className="flex-1 overflow-y-auto lg:ml-0 flex items-center justify-center">
           <div className="text-center">
             <SettingsIcon className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-pulse" />
             <p className="text-gray-500">Loading...</p>
@@ -143,12 +143,12 @@ export default function SettingsPage() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">Settings</h1>
+      <main className="flex-1 overflow-y-auto lg:ml-0">
+        <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-16 lg:pt-8">
+          <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-6 lg:mb-8">Settings</h1>
           
           {/* Tabs */}
-          <div className="flex gap-2 mb-8 border-b border-gray-200">
+          <div className="flex gap-2 mb-6 lg:mb-8 border-b border-gray-200 overflow-x-auto">
             {isAdmin && (
               <button
                 onClick={() => setActiveTab('users')}
