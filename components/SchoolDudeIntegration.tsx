@@ -16,6 +16,24 @@ export default function SchoolDudeIntegration() {
   const [syncMessage, setSyncMessage] = useState('')
   const [daysInAdvance, setDaysInAdvance] = useState<number>(365) // Default to 1 year
 
+  // Load saved preferences from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedCalendar = localStorage.getItem('schoolDude_selectedCalendar')
+      if (savedCalendar) {
+        setSelectedCalendar(savedCalendar)
+      }
+      
+      const savedDays = localStorage.getItem('schoolDude_daysInAdvance')
+      if (savedDays) {
+        const days = parseInt(savedDays, 10)
+        if (!isNaN(days) && days >= 1 && days <= 730) {
+          setDaysInAdvance(days)
+        }
+      }
+    }
+  }, [])
+
   const loadCalendars = async () => {
     if (!calendarEnabled) return
     
@@ -144,7 +162,13 @@ export default function SchoolDudeIntegration() {
             </label>
             <select
               value={selectedCalendar}
-              onChange={(e) => setSelectedCalendar(e.target.value)}
+              onChange={(e) => {
+                setSelectedCalendar(e.target.value)
+                // Save to localStorage
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('schoolDude_selectedCalendar', e.target.value)
+                }
+              }}
               className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               disabled={isLoadingCalendars}
             >
@@ -171,7 +195,14 @@ export default function SchoolDudeIntegration() {
               min="1"
               max="730"
               value={daysInAdvance}
-              onChange={(e) => setDaysInAdvance(Math.max(1, Math.min(730, parseInt(e.target.value) || 365)))}
+              onChange={(e) => {
+                const days = Math.max(1, Math.min(730, parseInt(e.target.value) || 365))
+                setDaysInAdvance(days)
+                // Save to localStorage
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('schoolDude_daysInAdvance', days.toString())
+                }
+              }}
               className="w-24 px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             />
             <span className="text-sm text-gray-600">days</span>
