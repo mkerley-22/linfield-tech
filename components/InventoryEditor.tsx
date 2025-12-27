@@ -16,9 +16,9 @@ interface InventoryEditorProps {
     model?: string
     serialNumbers?: string | string[]  // Can be string (JSON) or array
     location?: string
-    locationBreakdowns?: string | Array<{ location: string; quantity: number }>
-    usageNotes?: string
-    availableForCheckout?: number | null
+    // locationBreakdowns?: string | Array<{ location: string; quantity: number }> // Uncomment after running migration
+    // usageNotes?: string // Uncomment after running migration
+    // availableForCheckout?: number | null // Uncomment after running migration
     checkoutEnabled?: boolean
     tagIds?: string[]
     imageUrl?: string
@@ -48,19 +48,20 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   })
   const [newSerialNumber, setNewSerialNumber] = useState('')
   const [location, setLocation] = useState(initialData?.location || '')
-  const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number }>>(() => {
-    if (!initialData?.locationBreakdowns) return []
-    try {
-      if (typeof initialData.locationBreakdowns === 'string') {
-        return JSON.parse(initialData.locationBreakdowns)
-      }
-      return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns : []
-    } catch {
-      return []
-    }
-  })
-  const [usageNotes, setUsageNotes] = useState(initialData?.usageNotes || '')
-  const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
+  // Uncomment after running migration:
+  // const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number }>>(() => {
+  //   if (!initialData?.locationBreakdowns) return []
+  //   try {
+  //     if (typeof initialData.locationBreakdowns === 'string') {
+  //       return JSON.parse(initialData.locationBreakdowns)
+  //     }
+  //     return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns : []
+  //   } catch {
+  //     return []
+  //   }
+  // })
+  // const [usageNotes, setUsageNotes] = useState(initialData?.usageNotes || '')
+  // const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
   const [checkoutEnabled, setCheckoutEnabled] = useState(initialData?.checkoutEnabled || false)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || [])
   const [tags, setTags] = useState<Array<{ id: string; name: string; color: string }>>([])
@@ -205,9 +206,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           model,
           serialNumbers: serialNumbers.length > 0 ? JSON.stringify(serialNumbers) : null,
           location,
-          locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
-          usageNotes: usageNotes || null,
-          availableForCheckout: availableForCheckout || null,
+          // Uncomment after running migration:
+          // locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
+          // usageNotes: usageNotes || null,
+          // availableForCheckout: availableForCheckout || null,
           checkoutEnabled,
           tagIds: selectedTags,
           imageUrl: imageUrl || null,
@@ -553,8 +555,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       </div>
 
+      {/* Uncomment after running migration:
       {/* Location Breakdown */}
-      <div>
+      {/* <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Location Breakdown
         </label>
@@ -658,6 +661,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           />
         </div>
       )}
+      */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

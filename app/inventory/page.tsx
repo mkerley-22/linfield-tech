@@ -17,9 +17,9 @@ interface InventoryItem {
   manufacturer?: string
   model?: string
   location?: string
-  locationBreakdowns?: string | null
-  usageNotes?: string | null
-  availableForCheckout?: number | null
+  // locationBreakdowns?: string | null // Uncomment after running migration
+  // usageNotes?: string | null // Uncomment after running migration
+  // availableForCheckout?: number | null // Uncomment after running migration
   lastUsedAt?: string
   lastUsedBy?: string
   imageUrl?: string
@@ -135,8 +135,10 @@ export default function InventoryPage() {
 
   const getAvailableQuantity = (item: InventoryItem) => {
     const checkedOut = item.Checkout.filter(c => c.status === 'checked_out').length
-    const maxAvailable = item.availableForCheckout ?? item.quantity
-    return Math.max(0, maxAvailable - checkedOut)
+    // Uncomment after running migration:
+    // const maxAvailable = item.availableForCheckout ?? item.quantity
+    // return Math.max(0, maxAvailable - checkedOut)
+    return Math.max(0, item.quantity - checkedOut)
   }
 
   // Sort items
