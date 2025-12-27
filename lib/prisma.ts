@@ -9,26 +9,34 @@ let databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
 // If using Supabase pooler, configure for transaction mode
 // Supabase uses port 6543 for transaction mode (200 connections) and 5432 for session mode (15 connections)
-// Simply changing the port is the most reliable way - no parameters needed
 if (databaseUrl && databaseUrl.includes('pooler.supabase.com')) {
   try {
+    // Parse the URL to properly handle password encoding
+    const url = new URL(databaseUrl)
+    
     // Change port from 5432 to 6543 for transaction mode
-    // This is the cleanest approach - no URL parameters needed
-    if (databaseUrl.includes(':5432/')) {
-      databaseUrl = databaseUrl.replace(':5432/', ':6543/')
+    if (url.port === '5432' || databaseUrl.includes(':5432/')) {
+      url.port = '6543'
       console.log('Switched Supabase pooler to port 6543 (transaction mode - 200 connections)')
     }
     
-    // Remove ALL query parameters - Prisma might reject them
-    // Only keep the base connection string
-    const urlMatch = databaseUrl.match(/^(postgres:\/\/[^?]+)/)
-    if (urlMatch) {
-      databaseUrl = urlMatch[1]
-      console.log('Removed query parameters from connection string for Prisma compatibility')
-    }
+    // Remove ALL query parameters - Prisma's URL validator rejects custom parameters
+    // Keep only the base connection string: postgres://user:pass@host:port/database
+    url.search = ''
+    
+    // Reconstruct the URL - this ensures proper encoding
+    databaseUrl = url.toString()
+    console.log('Cleaned connection string for Prisma compatibility')
   } catch (error) {
     console.error('Error processing DATABASE_URL:', error)
-    // Use original URL if processing fails
+    // If URL parsing fails, try simple string replacement as fallback
+    if (databaseUrl.includes(':5432/')) {
+      databaseUrl = databaseUrl.replace(':5432/', ':6543/')
+      // Remove query string
+      const baseUrl = databaseUrl.split('?')[0]
+      databaseUrl = baseUrl
+      console.log('Used fallback method to configure connection string')
+    }
   }
 }
 
