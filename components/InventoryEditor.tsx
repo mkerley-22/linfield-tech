@@ -999,7 +999,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             {tags.map((tag) => (
               <div
                 key={tag.id}
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-all group ${
+                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-all group cursor-pointer ${
                   selectedTags.includes(tag.id)
                     ? 'text-white shadow-md border-2'
                     : 'bg-white border-[0.5px] border-blue-300 text-gray-700 hover:border-blue-400'
@@ -1016,7 +1016,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   }
                   toggleTag(tag.id)
                 }}
-                className="cursor-pointer"
               >
                 <span className="flex-1">
                   {tag.name}
