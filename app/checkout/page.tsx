@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
@@ -79,6 +79,7 @@ export default function CheckoutPage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [unreadMessageCounts, setUnreadMessageCounts] = useState<Map<string, number>>(new Map())
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     // Check authentication first with retry logic
@@ -198,6 +199,15 @@ export default function CheckoutPage() {
     // Use currentTab parameter or fall back to activeTab from closure
     const tabToUse = currentTab ?? activeTab
     
+    // Cancel any in-flight requests to prevent race conditions
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    
+    // Create new AbortController for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+    
     // Dispatch event to notify sidebar of request updates
     window.dispatchEvent(new CustomEvent('checkoutRequestUpdated'))
     setIsLoading(true)
@@ -205,7 +215,13 @@ export default function CheckoutPage() {
       // Always fetch all requests to calculate counts for all tabs
       const response = await fetch(`/api/checkout/request`, {
         credentials: 'include', // Ensure cookies are sent
+        signal: abortController.signal,
       })
+      
+      // Check if request was aborted
+      if (abortController.signal.aborted) {
+        return
+      }
       if (response.ok) {
         const data = await response.json()
         const allRequestsData = data.requests || []
@@ -287,10 +303,18 @@ export default function CheckoutPage() {
         setIsAuthenticated(false)
         router.push('/login?return=/checkout')
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore abort errors
+      if (error.name === 'AbortError') {
+        console.log('Request aborted')
+        return
+      }
       console.error('Failed to load requests:', error)
     } finally {
-      setIsLoading(false)
+      // Only update loading state if this request wasn't aborted
+      if (!abortController.signal.aborted) {
+        setIsLoading(false)
+      }
     }
   }
 
