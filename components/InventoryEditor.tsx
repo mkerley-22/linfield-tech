@@ -236,7 +236,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         body: JSON.stringify({
           name,
           description,
-          quantity: parseInt(String(quantity)) || 1,
+          quantity: locationBreakdowns.length > 0 
+            ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+            : parseInt(String(quantity)) || 1, // Calculate total from location breakdowns
           manufacturer,
           model,
           serialNumbers: serialNumbers.length > 0 ? JSON.stringify(serialNumbers) : null,
@@ -247,9 +249,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             : null, // Combine all usage notes from location breakdowns
           availableForCheckout: availableForCheckout || null,
           checkoutEnabled,
-          quantity: locationBreakdowns.length > 0 
-            ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
-            : quantity, // Calculate total from location breakdowns
           tagIds: selectedTags,
           imageUrl: imageUrl || null,
           documentationLinks: documentationLinks.length > 0 ? JSON.stringify(documentationLinks) : null,
