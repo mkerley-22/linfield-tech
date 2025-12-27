@@ -8,7 +8,10 @@ import { writeFile, unlink, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
 
-const USE_VERCEL_BLOB = process.env.BLOB_READ_WRITE_TOKEN && process.env.NODE_ENV === 'production'
+// Use Vercel Blob if token is available, or if we're in a serverless environment (Vercel)
+// In Vercel, we can't write to filesystem, so we must use Blob storage
+const IS_VERCEL = process.env.VERCEL === '1' || process.env.VERCEL_ENV
+const USE_VERCEL_BLOB = !!(process.env.BLOB_READ_WRITE_TOKEN) || IS_VERCEL
 
 export interface UploadResult {
   url: string
@@ -50,7 +53,12 @@ export async function uploadFile(
       path: blobResult.url, // Store full URL for Vercel Blob
     }
   } else {
-    // Use local file system (development)
+    // Use local file system (development only - not in Vercel)
+    // If we're in Vercel but don't have blob token, throw an error
+    if (IS_VERCEL) {
+      throw new Error('BLOB_READ_WRITE_TOKEN is required for file uploads in Vercel. Please set it in your environment variables.')
+    }
+    
     const uploadsDir = join(process.cwd(), 'public', folder)
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true })
