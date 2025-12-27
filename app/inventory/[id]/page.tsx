@@ -225,31 +225,29 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-6 relative">
             {/* 3-dot menu - top right, always visible, shows delete on hover */}
             <div className="absolute top-4 right-4 group">
-              <button
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="More options"
-              >
-                <MoreVertical className="w-5 h-5 text-gray-500" />
-              </button>
-              <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity">
+              <div className="relative">
                 <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    setShowDeleteConfirm(true)
-                  }}
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="More options"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
+                  <MoreVertical className="w-5 h-5 text-gray-500" />
                 </button>
+                {/* Invisible hover bridge to keep menu open when moving from button to dropdown */}
+                <div className="absolute right-0 top-8 w-40 h-4 opacity-0 pointer-events-none group-hover:pointer-events-auto"></div>
+                <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setShowDeleteConfirm(true)
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
-              {/* Invisible hover area to keep menu open when moving to dropdown */}
-              <div className="absolute right-0 top-0 w-40 h-32 opacity-0 pointer-events-none group-hover:pointer-events-auto"></div>
             </div>
 
             <div className="mb-6">
