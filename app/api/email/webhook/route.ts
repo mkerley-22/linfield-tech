@@ -129,22 +129,15 @@ export async function POST(request: NextRequest) {
         messageContent = typeof body === 'string' ? body : JSON.stringify(body)
         console.log('Found content in alternative field:', messageContent.substring(0, 100))
       } else if (data.email_id && process.env.RESEND_API_KEY) {
-        // Fetch email content from Resend API
+        // Fetch email content from Resend Receiving API
         try {
           console.log('Fetching email content from Resend API for email_id:', data.email_id)
           const resend = new Resend(process.env.RESEND_API_KEY)
           
-          // Resend Receiving API endpoint: GET /emails/{email_id}
-          const response = await fetch(`https://api.resend.com/emails/${data.email_id}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-          })
+          // Use Resend SDK to fetch email content
+          const emailData = await resend.emails.receiving.get(data.email_id)
           
-          if (response.ok) {
-            const emailData = await response.json()
+          if (emailData) {
             console.log('Fetched email from Resend API:', {
               hasText: !!emailData.text,
               hasHtml: !!emailData.html,
@@ -174,20 +167,22 @@ export async function POST(request: NextRequest) {
             
             if (messageContent) {
               console.log('Successfully fetched email content from Resend API:', messageContent.substring(0, 100))
+            } else {
+              console.warn('Email fetched from API but no text or html content found')
             }
-          } else {
-            const errorText = await response.text()
-            console.error('Failed to fetch email from Resend API:', {
-              status: response.status,
-              statusText: response.statusText,
-              error: errorText,
-            })
           }
         } catch (error: any) {
-          console.error('Error fetching email from Resend API:', error)
+          console.error('Error fetching email from Resend API:', {
+            error: error?.message || error,
+            emailId: data.email_id,
+          })
         }
       } else {
-        console.warn('Email body not found in webhook payload and email_id not available for API fetch')
+        if (!data.email_id) {
+          console.warn('Email body not found and email_id not available in webhook payload')
+        } else if (!process.env.RESEND_API_KEY) {
+          console.warn('Email body not found and RESEND_API_KEY not configured')
+        }
       }
     }
     
