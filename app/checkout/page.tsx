@@ -635,10 +635,14 @@ export default function CheckoutPage() {
               { 
                 key: 'ready', 
                 label: 'Ready for Pickup',
-                count: allRequests.filter((r) => r.status === 'approved' && r.readyForPickup && !r.pickedUp).length,
-                unreadMessages: allRequests.filter((r) => 
-                  r.status === 'approved' && r.readyForPickup && !r.pickedUp && (unreadMessageCounts.get(r.id) || 0) > 0
-                ).length
+                count: allRequests.filter((r) => {
+                  const isReady = Boolean(r.readyForPickup)
+                  return r.status === 'approved' && isReady && !r.pickedUp
+                }).length,
+                unreadMessages: allRequests.filter((r) => {
+                  const isReady = Boolean(r.readyForPickup)
+                  return r.status === 'approved' && isReady && !r.pickedUp && (unreadMessageCounts.get(r.id) || 0) > 0
+                }).length
               },
               { 
                 key: 'pickedup', 
