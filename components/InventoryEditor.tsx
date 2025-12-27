@@ -77,7 +77,45 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     loadTags()
   }, [])
 
-  // Auto-fetch resources when both manufacturer and model are filled
+  // Auto-fetch image when both manufacturer and model are filled (debounced)
+  useEffect(() => {
+    // Only fetch if we don't already have an image
+    if (imageUrl || !manufacturer.trim() || !model.trim()) {
+      return
+    }
+
+    // Debounce the fetch to avoid too many API calls
+    const timeoutId = setTimeout(async () => {
+      setFetchingResources(true)
+      try {
+        const response = await fetch('/api/inventory/fetch-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            manufacturer: manufacturer.trim(),
+            model: model.trim(),
+            productName: name.trim() || undefined,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.imageUrl) {
+            setImageUrl(data.imageUrl)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch image:', error)
+      } finally {
+        setFetchingResources(false)
+      }
+    }, 1000) // Wait 1 second after user stops typing
+
+    return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manufacturer, model, name])
+
+  // Auto-fetch all resources when both manufacturer and model are filled (for existing items)
   useEffect(() => {
     const shouldFetch = 
       itemId && 
