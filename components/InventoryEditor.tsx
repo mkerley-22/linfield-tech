@@ -238,20 +238,32 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
       const url = itemId ? `/api/inventory/${itemId}` : '/api/inventory'
       const method = itemId ? 'PUT' : 'POST'
 
+      // Calculate total quantity from location breakdowns
+      const calculatedQuantity = locationBreakdowns.length > 0 
+        ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+        : parseInt(String(quantity)) || 1
+
+      // Prepare locationBreakdowns for saving
+      const locationBreakdownsToSave = locationBreakdowns.length > 0 
+        ? JSON.stringify(locationBreakdowns) 
+        : null
+
+      console.log('Saving with locationBreakdowns:', locationBreakdowns)
+      console.log('Saving with calculated quantity:', calculatedQuantity)
+      console.log('Saving locationBreakdowns JSON:', locationBreakdownsToSave)
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           description,
-          quantity: locationBreakdowns.length > 0 
-            ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
-            : parseInt(String(quantity)) || 1, // Calculate total from location breakdowns
+          quantity: calculatedQuantity,
           manufacturer,
           model,
           serialNumbers: serialNumbers.length > 0 ? JSON.stringify(serialNumbers) : null,
           location: locationBreakdowns.length > 0 ? locationBreakdowns[0].location : location, // Keep for backward compatibility
-          locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
+          locationBreakdowns: locationBreakdownsToSave,
           usageNotes: locationBreakdowns.length > 0 
             ? locationBreakdowns.map(b => b.usage).filter(Boolean).join('; ') 
             : null, // Combine all usage notes from location breakdowns
@@ -313,10 +325,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
         if (itemId) {
           alert('Inventory item updated successfully!')
-          router.refresh()
+          // Navigate back to the detail page
+          router.push(`/inventory/${itemId}`)
         } else {
           // Redirect to inventory page with success message
-          router.push('/inventory?created=true')
+          router.push(`/inventory/${savedItemId}?created=true`)
         }
       } else {
         const error = await response.json()
