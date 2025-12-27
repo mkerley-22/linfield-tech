@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, Package, Tag as TagIcon, Calendar, User, MoreVertical, Edit, Trash2, X, Grid3x3, List, ArrowUpDown, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { Toast } from '@/components/ui/Toast'
 
 interface InventoryItem {
   id: string
