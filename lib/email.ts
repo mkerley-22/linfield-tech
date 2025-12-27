@@ -26,7 +26,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         emailFrom: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         to: options.to,
         subject: options.subject,
-        hasResendClass: !!Resend,
+        hasResendClass: !!ResendClass,
       })
       
       if (ResendClass) {
