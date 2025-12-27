@@ -598,10 +598,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Product Image
         </label>
-        {imageUrl ? (
+        {(imageUrl || pendingImagePreview) ? (
           <div className="group relative w-64 aspect-square bg-gray-200 rounded-2xl overflow-hidden border border-gray-300">
             <img
-              src={imageUrl}
+              src={pendingImagePreview || imageUrl}
               alt="Product"
               className="w-full h-full object-cover"
               onError={(e) => {
