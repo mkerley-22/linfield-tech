@@ -11,10 +11,16 @@ export async function getSession() {
       return null
     }
 
-    const session = await prisma.session.findUnique({
-      where: { token: sessionToken },
-      include: { User: true },
-    })
+    // Use a timeout to prevent hanging on connection pool exhaustion
+    const session = await Promise.race([
+      prisma.session.findUnique({
+        where: { token: sessionToken },
+        include: { User: true },
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      )
+    ]) as any
 
     if (!session) {
       console.log('Session not found in database for token:', sessionToken.substring(0, 10) + '...')
@@ -24,13 +30,22 @@ export async function getSession() {
     if (session.expiresAt < new Date()) {
       console.log('Session expired')
       // Session expired
-      await prisma.session.delete({ where: { id: session.id } })
+      await prisma.session.delete({ where: { id: session.id } }).catch(() => {
+        // Ignore errors when deleting expired session
+      })
       return null
     }
 
     return session
-  } catch (error) {
+  } catch (error: any) {
     // If cookies() fails (e.g., in client component), return null
+    // Also handle connection pool exhaustion gracefully
+    if (error.message?.includes('MaxClientsInSessionMode') || 
+        error.message?.includes('max clients reached') ||
+        error.message?.includes('timeout')) {
+      console.error('Database connection pool exhausted or timeout:', error.message)
+      return null
+    }
     console.error('Error getting session:', error)
     return null
   }
