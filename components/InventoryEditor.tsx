@@ -140,9 +140,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             // Create a File object from the blob
             const file = new File([blob], `pasted-image-${Date.now()}.png`, { type: blob.type })
             await processImageFile(file)
-            if (!itemId) {
-              alert('Image pasted! It will be uploaded when you save the item.')
-            }
           }
           break
         }
