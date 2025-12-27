@@ -52,6 +52,7 @@ GOOGLE_CLIENT_ID = your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET = your-client-secret
 LOGIN_REDIRECT_URI = https://your-app-name.vercel.app/api/auth/login/callback
 GOOGLE_REDIRECT_URI = https://your-app-name.vercel.app/api/auth/google/callback
+GOOGLE_CALENDAR_REDIRECT_URI = https://your-app-name.vercel.app/api/auth/google/calendar/callback
 ```
 
 ### File Storage (Required for File Uploads)
@@ -117,7 +118,10 @@ Or push a new commit to trigger a new deployment.
 ### "Redirect URI mismatch"
 - Make sure you added the correct redirect URIs in Google Cloud Console
 - The URIs must match exactly (including `https://` and no trailing slash)
-- Make sure `LOGIN_REDIRECT_URI` in Vercel matches what's in Google Cloud Console
+- Make sure all redirect URIs in Vercel match what's in Google Cloud Console:
+  - `LOGIN_REDIRECT_URI` → `/api/auth/login/callback`
+  - `GOOGLE_REDIRECT_URI` → `/api/auth/google/callback`
+  - `GOOGLE_CALENDAR_REDIRECT_URI` → `/api/auth/google/calendar/callback`
 
 ### Login button doesn't work
 - Check Vercel deployment logs for errors
@@ -137,7 +141,8 @@ Or push a new commit to trigger a new deployment.
 - [ ] `GOOGLE_CLIENT_SECRET` set
 - [ ] `LOGIN_REDIRECT_URI` set to `https://your-app.vercel.app/api/auth/login/callback`
 - [ ] `GOOGLE_REDIRECT_URI` set to `https://your-app.vercel.app/api/auth/google/callback`
-- [ ] Redirect URIs added in Google Cloud Console
+- [ ] `GOOGLE_CALENDAR_REDIRECT_URI` set to `https://your-app.vercel.app/api/auth/google/calendar/callback`
+- [ ] All redirect URIs added in Google Cloud Console
 - [ ] All variables set for **Production** environment
 - [ ] Redeployed after adding variables
 
