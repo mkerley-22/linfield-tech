@@ -112,28 +112,8 @@ export default function SchoolDudeIntegration() {
     }
   }
 
-  if (!calendarEnabled) {
-    return (
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm text-yellow-900 font-medium mb-1">
-              Google Calendar Integration Required
-            </p>
-            <p className="text-xs text-yellow-800 mb-3">
-              Enable Google Calendar Integration to sync events from School Dude. School Dude syncs events to Google Calendar, which we can then import.
-            </p>
-            <a href="/settings">
-              <Button variant="primary" size="sm">
-                Go to Settings
-              </Button>
-            </a>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Show warning but don't hide the component - let users see the integration status
+  const showWarning = !calendarEnabled
 
   return (
     <div className="space-y-4">

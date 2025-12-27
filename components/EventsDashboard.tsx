@@ -298,23 +298,9 @@ export default function EventsDashboard() {
     )
   }
 
-  if (!calendarEnabled) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Google Calendar Integration Required</h2>
-          <p className="text-gray-700 mb-4">
-            Enable Google Calendar Integration in Settings to import events from Google Calendar and manage tech events.
-          </p>
-          <Link href="/settings">
-            <Button variant="primary">
-              Go to Settings
-            </Button>
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  // Show events even if calendar integration isn't enabled
+  // Only require integration for importing NEW events from Google Calendar
+  const showIntegrationWarning = !calendarEnabled && events.length === 0
 
   const filteredEvents = getFilteredEvents()
 
