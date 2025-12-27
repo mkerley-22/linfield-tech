@@ -168,18 +168,26 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Return successful:', data)
+        
+        // Small delay to ensure database update is complete
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
         // Force reload the item to update checkout history and availability
         await loadItem(params.id)
+        
         // Dispatch event to refresh inventory list page
         window.dispatchEvent(new CustomEvent('inventoryUpdated'))
+        
         alert('Item marked as returned successfully!')
       } else {
         const errorData = await response.json()
+        console.error('Return failed:', errorData)
         alert(errorData.error || 'Failed to return item')
       }
     } catch (error) {
       console.error('Return error:', error)
-      alert('Failed to return item')
+      alert('Failed to return item. Please try again.')
     }
   }
 
