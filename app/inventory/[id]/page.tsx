@@ -260,14 +260,12 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
           </Link>
 
           <div className="bg-white rounded-lg border border-gray-200 p-8 mb-6">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{item.name}</h1>
-                {item.description && (
-                  <p className="text-lg text-gray-600">{item.description}</p>
-                )}
-              </div>
-              <div className="flex gap-2">
+            <div className="mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{item.name}</h1>
+              {item.description && (
+                <p className="text-lg text-gray-600 mb-4">{item.description}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="secondary"
                   onClick={() => router.push(`/inventory/${item.id}/edit`)}
