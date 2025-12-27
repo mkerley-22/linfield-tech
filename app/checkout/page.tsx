@@ -159,8 +159,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     // Only load data if authenticated
     if (isAuthenticated) {
-      loadRequests()
+      // Pass activeTab explicitly to avoid stale closure issues
+      loadRequests(activeTab)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, filter, isAuthenticated])
 
   const loadCheckouts = async () => {
@@ -192,7 +194,10 @@ export default function CheckoutPage() {
     }
   }
 
-  const loadRequests = async () => {
+  const loadRequests = async (currentTab?: typeof activeTab) => {
+    // Use currentTab parameter or fall back to activeTab from closure
+    const tabToUse = currentTab ?? activeTab
+    
     // Dispatch event to notify sidebar of request updates
     window.dispatchEvent(new CustomEvent('checkoutRequestUpdated'))
     setIsLoading(true)
@@ -208,22 +213,22 @@ export default function CheckoutPage() {
         
         let filteredRequests = allRequestsData
         
-        // Filter based on active tab
-        if (activeTab === 'requests') {
+        // Filter based on active tab (use tabToUse to avoid stale closure)
+        if (tabToUse === 'requests') {
           // New Requests: only unseen and seen (not approved/denied)
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.status === 'unseen' || r.status === 'seen'
           )
-        } else if (activeTab === 'approved') {
+        } else if (tabToUse === 'approved') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.status === 'approved' && !r.readyForPickup && !r.pickedUp && 
             (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned'))
           )
-        } else if (activeTab === 'denied') {
+        } else if (tabToUse === 'denied') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.status === 'denied'
           )
-        } else if (activeTab === 'ready') {
+        } else if (tabToUse === 'ready') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
             // Ensure readyForPickup is properly checked as boolean
             // Handle both boolean true and truthy values
@@ -237,16 +242,17 @@ export default function CheckoutPage() {
               readyForPickup: r.readyForPickup,
               readyForPickupType: typeof r.readyForPickup,
               pickedUp: r.pickedUp,
-              matches
+              matches,
+              tabUsed: tabToUse
             })
             return matches
           })
-          console.log('Ready for Pickup - Total requests:', allRequestsData.length, 'Filtered:', filteredRequests.length)
-        } else if (activeTab === 'pickedup') {
+          console.log('Ready for Pickup - Total requests:', allRequestsData.length, 'Filtered:', filteredRequests.length, 'Tab used:', tabToUse)
+        } else if (tabToUse === 'pickedup') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')
           )
-        } else if (activeTab === 'returned') {
+        } else if (tabToUse === 'returned') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.checkouts && r.checkouts.length > 0 && r.checkouts.every((c: any) => c.status === 'returned')
           )
