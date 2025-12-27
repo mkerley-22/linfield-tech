@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Package, Tag as TagIcon, Calendar, User, MoreVertical, Edit, Trash2, X, Grid3x3, List, ArrowUpDown } from 'lucide-react'
+import { Plus, Search, Package, Tag as TagIcon, Calendar, User, MoreVertical, Edit, Trash2, X, Grid3x3, List, ArrowUpDown, Heart, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface InventoryItem {
@@ -17,6 +17,7 @@ interface InventoryItem {
   location?: string
   lastUsedAt?: string
   lastUsedBy?: string
+  imageUrl?: string
   InventoryItemTag: Array<{ InventoryTag: { id: string; name: string; color: string } }>
   Checkout: Array<{ status: string }>
 }
@@ -395,83 +396,150 @@ export default function InventoryPage() {
                 return (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg border border-gray-200 p-6 hover:border-blue-300 hover:shadow-md transition-all relative flex flex-col"
+                    className="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden"
                   >
-                    {/* Menu Button - Outside Link */}
-                    <div className="absolute top-4 right-4 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
-                      <button
-                        onClick={(e) => handleMenuClick(e, item.id)}
-                        className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        aria-label="More options"
+                    {/* Image Section */}
+                    <div className="relative bg-gray-50 aspect-square flex items-center justify-center">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-full object-contain p-4"
+                          onError={(e) => {
+                            // Fallback to placeholder if image fails to load
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            const placeholder = target.nextElementSibling as HTMLElement
+                            if (placeholder) {
+                              placeholder.style.display = 'flex'
+                            }
+                          }}
+                        />
+                      ) : null}
+                      {/* No Photo Placeholder */}
+                      <div 
+                        className={`w-full h-full flex flex-col items-center justify-center p-4 ${item.imageUrl ? 'hidden' : ''}`}
+                        style={{ display: item.imageUrl ? 'none' : 'flex' }}
                       >
-                        <MoreVertical className="w-5 h-5 text-gray-500" />
-                      </button>
-                      {openMenuId === item.id && (
-                        <div className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                          <button
-                            onClick={(e) => handleEdit(e, item.id)}
-                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteClick(e, item)}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </button>
+                        <ImageIcon className="w-16 h-16 text-gray-300 mb-2" />
+                        <p className="text-xs text-gray-400 text-center">No Photo</p>
+                      </div>
+                      
+                      {/* Badge - Top Left */}
+                      {available === item.quantity && available > 0 && (
+                        <div className="absolute top-3 left-3 bg-white rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-900">
+                          In Stock
                         </div>
                       )}
+                      {isLowStock && !isOutOfStock && (
+                        <div className="absolute top-3 left-3 bg-yellow-100 rounded-md border border-yellow-200 px-2 py-1 text-xs font-medium text-yellow-800">
+                          Low Stock
+                        </div>
+                      )}
+                      {isOutOfStock && (
+                        <div className="absolute top-3 left-3 bg-red-100 rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-800">
+                          Out of Stock
+                        </div>
+                      )}
+                      
+                      {/* Heart Icon - Top Right */}
+                      <div className="absolute top-3 right-3 z-10">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            // Favorite functionality can be added later
+                          }}
+                          className="p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors"
+                          aria-label="Favorite"
+                        >
+                          <Heart className="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors" />
+                        </button>
+                      </div>
+                      
+                      {/* Menu Button - Top Right (below heart) */}
+                      <div className="absolute top-12 right-3 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleMenuClick(e, item.id)
+                          }}
+                          className="p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
+                          aria-label="More options"
+                        >
+                          <MoreVertical className="w-4 h-4 text-gray-500" />
+                        </button>
+                        {openMenuId === item.id && (
+                          <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleEdit(e, item.id)
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleDeleteClick(e, item)
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Pagination Dots - Bottom Center (placeholder for future multi-image support) */}
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                      </div>
                     </div>
 
-                    <Link
-                      href={`/inventory/${item.id}`}
-                      className="block flex flex-col h-full"
-                    >
-                      <div className="flex-1">
-                        <div className="mb-3 pr-8">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {item.name}
-                          </h3>
-                        </div>
-
-                        {item.description && (
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                            {item.description}
-                          </p>
-                        )}
-
-                        <div className="space-y-2 mb-3">
-                          {item.manufacturer && (
-                            <p className="text-xs text-gray-500">
-                              <strong>Manufacturer:</strong> {item.manufacturer}
-                              {item.model && ` - ${item.model}`}
-                            </p>
-                          )}
-                          {item.location && (
-                            <p className="text-xs text-gray-500">
-                              <strong>Location:</strong> {item.location}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-gray-200 mt-auto">
-                        <div
-                          className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap inline-block ${
-                            isOutOfStock
-                              ? 'bg-red-100 text-red-800'
-                              : isLowStock
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}
-                        >
-                          {available} / {item.quantity} available
-                        </div>
-                      </div>
-                    </Link>
+                    {/* Content Section */}
+                    <div className="p-4 flex flex-col flex-1">
+                      {/* Manufacturer/Brand */}
+                      {item.manufacturer && (
+                        <p className="text-sm text-green-600 mb-1 font-medium">
+                          {item.manufacturer}
+                        </p>
+                      )}
+                      
+                      {/* Product Name */}
+                      <Link
+                        href={`/inventory/${item.id}`}
+                        className="block"
+                      >
+                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+                          {item.name}
+                        </h3>
+                      </Link>
+                      
+                      {/* Availability/Quantity */}
+                      <p className="text-base font-semibold text-gray-900 mb-4">
+                        {available} / {item.quantity} Available
+                      </p>
+                      
+                      {/* View Details Button */}
+                      <Link
+                        href={`/inventory/${item.id}`}
+                        className="block"
+                      >
+                        <button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                          View Details
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 )
               })}
