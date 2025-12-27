@@ -231,47 +231,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file')
-      return
-    }
-
-    // If itemId exists, upload immediately
-    if (itemId) {
-      setUploadingImage(true)
-      try {
-        const formData = new FormData()
-        formData.append('image', file)
-
-        const response = await fetch(`/api/inventory/${itemId}/upload-image`, {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setImageUrl(data.imageUrl)
-          setPendingImageFile(null)
-          setPendingImagePreview('')
-          alert('Image uploaded successfully')
-        } else {
-          const error = await response.json()
-          alert(error.error || 'Failed to upload image')
-        }
-      } catch (error) {
-        console.error('Upload error:', error)
-        alert('Failed to upload image')
-      } finally {
-        setUploadingImage(false)
-        e.target.value = ''
-      }
-    } else {
-      // If no itemId, store file for later upload after saving
-      setPendingImageFile(file)
-      const previewUrl = URL.createObjectURL(file)
-      setPendingImagePreview(previewUrl)
-      e.target.value = ''
-    }
+    await processImageFile(file)
+    e.target.value = ''
   }
 
   const handleDeleteImage = async () => {
