@@ -2,6 +2,8 @@
 
 A modern, AI-powered knowledge base for Linfield Christian School in Temecula, CA. Built with Next.js 14, TypeScript, and Prisma.
 
+<!-- Deployment trigger -->
+
 ## Features
 
 - 📝 **Rich Text Editor** - Create and edit pages with a powerful WYSIWYG editor
