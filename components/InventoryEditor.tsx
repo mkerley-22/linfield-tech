@@ -508,51 +508,64 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           Product Image
         </label>
         {imageUrl ? (
-          <div className="mb-3">
-            <div className="relative w-full max-w-md h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-              <img
-                src={imageUrl}
-                alt="Product"
-                className="w-full h-full object-contain p-4"
-                onError={(e) => {
-                  const parent = e.currentTarget.parentElement
-                  if (parent) {
-                    parent.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">Image failed to load</div>'
-                  }
-                }}
-              />
-            </div>
+          <div className="group relative w-64 aspect-square bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+            <img
+              src={imageUrl}
+              alt="Product"
+              className="w-full h-full object-contain p-4"
+              onError={(e) => {
+                const parent = e.currentTarget.parentElement
+                if (parent) {
+                  parent.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">Image failed to load</div>'
+                }
+              }}
+            />
+            
+            {/* Hover Overlay with Replace and Delete buttons */}
             {itemId && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleDeleteImage}
-                className="mt-2"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Image
-              </Button>
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                <label className="px-4 py-2 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
+                  <ImageIcon className="w-4 h-4 inline mr-2" />
+                  <span className="text-sm font-medium text-gray-900">Replace</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={handleDeleteImage}
+                  className="px-4 py-2 bg-white rounded-lg hover:bg-red-50 transition-colors shadow-sm"
+                >
+                  <Trash2 className="w-4 h-4 inline mr-2 text-red-600" />
+                  <span className="text-sm font-medium text-red-600">Delete</span>
+                </button>
+              </div>
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 mb-2">No image uploaded</p>
-        )}
-        {itemId && (
-          <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors w-fit">
-            <ImageIcon className="w-4 h-4" />
-            <span className="text-sm">{imageUrl ? 'Replace Image' : 'Upload Image'}</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={uploadingImage}
-              className="hidden"
-            />
-          </label>
-        )}
-        {!itemId && (
-          <p className="text-sm text-gray-500">Save the equipment first to upload an image</p>
+          <div>
+            {itemId ? (
+              <label className="flex flex-col items-center justify-center w-64 aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-blue-400 hover:bg-gray-100 transition-colors">
+                <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
+                <span className="text-sm text-gray-600 font-medium">Upload Image</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="hidden"
+                />
+              </label>
+            ) : (
+              <div className="w-64 aspect-square bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
+                <p className="text-sm text-gray-500 text-center px-4">Save the equipment first to upload an image</p>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
