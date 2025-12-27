@@ -66,15 +66,20 @@ export async function createSession(userId: string) {
   const token = generateSessionToken()
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
 
-  const session = await prisma.session.create({
-    data: {
-      id: crypto.randomUUID(),
-      userId,
-      token,
-      expiresAt,
-    },
-    include: { User: true },
-  })
+  const session = await withRetry(
+    () =>
+      prisma.session.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          token,
+          expiresAt,
+        },
+        include: { User: true },
+      }),
+    3,
+    1000
+  )
 
   return session
 }

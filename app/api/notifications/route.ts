@@ -1,34 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function GET(request: NextRequest) {
   try {
     // Only show notifications for requests that are still in "New Requests" status
     // (unseen or seen). Once they move to approved, denied, or any other status,
     // they should disappear from notifications.
-    const unseenCheckoutRequests = await prisma.checkoutRequest.count({
-      where: {
-        status: {
-          in: ['unseen', 'seen'],
-        },
-      },
-    })
+    const unseenCheckoutRequests = await withRetry(
+      () =>
+        prisma.checkoutRequest.count({
+          where: {
+            status: {
+              in: ['unseen', 'seen'],
+            },
+          },
+        }),
+      3,
+      1000
+    )
 
     // Count requests with unread messages from requester
     // A request has unread messages if:
     // 1. It has at least one message from requester (senderType === 'requester')
     // 2. The latest message is from requester (not admin)
     // 3. The latest message is newer than when admin last viewed messages
-    const allRequests = await prisma.checkoutRequest.findMany({
-      include: {
-        CheckoutRequestMessage: {
-          orderBy: {
-            createdAt: 'desc',
+    const allRequests = await withRetry(
+      () =>
+        prisma.checkoutRequest.findMany({
+          include: {
+            CheckoutRequestMessage: {
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 1, // Only need the latest message
+            },
           },
-          take: 1, // Only need the latest message
-        },
-      },
-    })
+        }),
+      3,
+      1000
+    )
 
     const requestsWithUnreadMessages = allRequests.filter(req => {
       if (!req.CheckoutRequestMessage || req.CheckoutRequestMessage.length === 0) {
@@ -50,24 +61,29 @@ export async function GET(request: NextRequest) {
     const unreadMessageCount = requestsWithUnreadMessages.length
 
     // Get recent unseen/seen requests (last 5)
-    const recentUnseenRequests = await prisma.checkoutRequest.findMany({
-      where: {
-        status: {
-          in: ['unseen', 'seen'],
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 5,
-      select: {
-        id: true,
-        requesterName: true,
-        requesterEmail: true,
-        createdAt: true,
-        items: true,
-      },
-    })
+    const recentUnseenRequests = await withRetry(
+      () =>
+        prisma.checkoutRequest.findMany({
+          where: {
+            status: {
+              in: ['unseen', 'seen'],
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 5,
+          select: {
+            id: true,
+            requesterName: true,
+            requesterEmail: true,
+            createdAt: true,
+            items: true,
+          },
+        }),
+      3,
+      1000
+    )
 
     return NextResponse.json({
       unseenCheckoutRequests,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/auth'
+import { withRetry } from '@/lib/prisma-retry'
 
 // Use a separate redirect URI for user login (not Google Drive integration)
 // This MUST match what's configured in Google Cloud Console
@@ -72,9 +73,14 @@ export async function GET(request: NextRequest) {
     console.log('User email:', userInfo.email, 'Is admin email:', isAdminEmail)
     
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: userInfo.email },
-    })
+    const existingUser = await withRetry(
+      () =>
+        prisma.user.findUnique({
+          where: { email: userInfo.email },
+        }),
+      3,
+      1000
+    )
     
     let user
     if (existingUser) {
@@ -92,32 +98,47 @@ export async function GET(request: NextRequest) {
         console.log('Setting admin role for:', userInfo.email)
       }
       
-      user = await prisma.user.update({
-        where: { email: userInfo.email },
-        data: updateData,
-      })
+      user = await withRetry(
+        () =>
+          prisma.user.update({
+            where: { email: userInfo.email },
+            data: updateData,
+          }),
+        3,
+        1000
+      )
       
       // Double-check: if it's admin email but role isn't admin, force update
       if (isAdminEmail && user.role !== 'admin') {
         console.log('Force updating role to admin for:', userInfo.email)
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'admin' },
-        })
+        user = await withRetry(
+          () =>
+            prisma.user.update({
+              where: { id: user.id },
+              data: { role: 'admin' },
+            }),
+          3,
+          1000
+        )
       }
     } else {
       // Create new user
-      user = await prisma.user.create({
-        data: {
-          id: crypto.randomUUID(),
-          email: userInfo.email,
-          name: userInfo.name,
-          picture: userInfo.picture || null,
-          googleId: userInfo.id || null,
-          role: isAdminEmail ? 'admin' : 'viewer', // Set admin for mkerley@linfield.com, default to viewer for others
-          updatedAt: new Date(),
-        },
-      })
+      user = await withRetry(
+        () =>
+          prisma.user.create({
+            data: {
+              id: crypto.randomUUID(),
+              email: userInfo.email,
+              name: userInfo.name,
+              picture: userInfo.picture || null,
+              googleId: userInfo.id || null,
+              role: isAdminEmail ? 'admin' : 'viewer', // Set admin for mkerley@linfield.com, default to viewer for others
+              updatedAt: new Date(),
+            },
+          }),
+        3,
+        1000
+      )
       console.log('Created new user with role:', user.role)
     }
     
@@ -132,10 +153,15 @@ export async function GET(request: NextRequest) {
     }
     
     // Verify session was created in database
-    const verifySession = await prisma.session.findUnique({
-      where: { token: session.token },
-      include: { User: true },
-    })
+    const verifySession = await withRetry(
+      () =>
+        prisma.session.findUnique({
+          where: { token: session.token },
+          include: { User: true },
+        }),
+      3,
+      1000
+    )
     
     if (!verifySession) {
       console.error('ERROR: Session created but not found in database!')
