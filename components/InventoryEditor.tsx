@@ -79,10 +79,55 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     loadTags()
   }, [])
 
+  // Shared function to process image file (used by both file upload and paste)
+  const processImageFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // If itemId exists, upload immediately
+    if (itemId) {
+      setUploadingImage(true)
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
+
+        const response = await fetch(`/api/inventory/${itemId}/upload-image`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setImageUrl(data.imageUrl)
+          setPendingImageFile(null)
+          if (pendingImagePreview) {
+            URL.revokeObjectURL(pendingImagePreview)
+            setPendingImagePreview('')
+          }
+          alert('Image uploaded successfully')
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to upload image')
+        }
+      } catch (error) {
+        console.error('Upload error:', error)
+        alert('Failed to upload image')
+      } finally {
+        setUploadingImage(false)
+      }
+    } else {
+      // If no itemId, store file for later upload after saving
+      setPendingImageFile(file)
+      const previewUrl = URL.createObjectURL(file)
+      setPendingImagePreview(previewUrl)
+    }
+  }
+
   // Handle paste events for image upload
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
-      // Only handle paste if we're in the image upload area or form
       const items = e.clipboardData?.items
       if (!items) return
 
@@ -94,16 +139,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           if (blob) {
             // Create a File object from the blob
             const file = new File([blob], `pasted-image-${Date.now()}.png`, { type: blob.type })
-            
-            // Create a synthetic event to reuse existing upload logic
-            const syntheticEvent = {
-              target: {
-                files: [file],
-                value: '',
-              },
-            } as React.ChangeEvent<HTMLInputElement>
-            
-            await handleImageUpload(syntheticEvent)
+            await processImageFile(file)
+            if (!itemId) {
+              alert('Image pasted! It will be uploaded when you save the item.')
+            }
           }
           break
         }
@@ -116,7 +155,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     return () => {
       document.removeEventListener('paste', handlePaste)
     }
-  }, [itemId, pendingImageFile]) // Dependencies for handleImageUpload
+  }, [itemId, pendingImagePreview]) // Include dependencies
 
 
   const loadTags = async () => {
