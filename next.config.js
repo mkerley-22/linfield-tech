@@ -24,7 +24,7 @@ const nextConfig = {
     // your project has type errors. We'll fix these after deployment.
     ignoreBuildErrors: false,
   },
-  webpack: (config, { isServer }) {
+  webpack: (config, { isServer }) => {
     // Make optional email packages external to avoid build errors if not installed
     if (!isServer) {
       config.resolve.fallback = {
