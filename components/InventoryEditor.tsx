@@ -70,66 +70,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const [documents, setDocuments] = useState<Array<{ id: string; fileName: string; filePath: string; fileType: string }>>(
     initialData?.documents || []
   )
-  const [fetchingResources, setFetchingResources] = useState(false)
-  const [hasAutoFetched, setHasAutoFetched] = useState(false)
 
   useEffect(() => {
     loadTags()
   }, [])
 
-  // Auto-fetch image when both manufacturer and model are filled (debounced)
-  useEffect(() => {
-    // Only fetch if we don't already have an image
-    if (imageUrl || !manufacturer.trim() || !model.trim()) {
-      return
-    }
-
-    // Debounce the fetch to avoid too many API calls
-    const timeoutId = setTimeout(async () => {
-      setFetchingResources(true)
-      try {
-        const response = await fetch('/api/inventory/fetch-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            manufacturer: manufacturer.trim(),
-            model: model.trim(),
-            productName: name.trim() || undefined,
-          }),
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.imageUrl) {
-            setImageUrl(data.imageUrl)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch image:', error)
-      } finally {
-        setFetchingResources(false)
-      }
-    }, 1000) // Wait 1 second after user stops typing
-
-    return () => clearTimeout(timeoutId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manufacturer, model, name])
-
-  // Auto-fetch all resources when both manufacturer and model are filled (for existing items)
-  useEffect(() => {
-    const shouldFetch = 
-      itemId && 
-      manufacturer.trim() && 
-      model.trim() && 
-      !hasAutoFetched &&
-      !imageUrl && // Only fetch if we don't already have an image
-      !fetchingResources
-
-    if (shouldFetch) {
-      handleAutoFetchResources()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [manufacturer, model, itemId])
 
   const loadTags = async () => {
     try {
@@ -398,36 +343,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     }
   }
 
-  const handleAutoFetchResources = async () => {
-    if (!itemId || !manufacturer.trim() || !model.trim() || fetchingResources || hasAutoFetched) {
-      return
-    }
-
-    setFetchingResources(true)
-    setHasAutoFetched(true)
-
-    try {
-      const response = await fetch(`/api/inventory/${itemId}/fetch-resources`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.imageUrl) {
-          setImageUrl(data.imageUrl)
-        }
-        if (data.documentationLinks && Array.isArray(data.documentationLinks) && data.documentationLinks.length > 0) {
-          setDocumentationLinks(data.documentationLinks)
-        }
-      }
-      // Silently fail - don't show error to user for auto-fetch
-    } catch (error) {
-      console.error('Auto-fetch resources error:', error)
-      // Silently fail
-    } finally {
-      setFetchingResources(false)
-    }
-  }
 
   return (
     <div className="space-y-6">
