@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       // Common patterns that indicate the start of quoted content
       // These patterns match various email client reply formats
       const quoteStartPatterns = [
+        /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+.*?\d{1,2}[\s,]+.*?\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?<[^>]+@[^>]+>.*?wrote:/is, // "On Fri, Dec 26, 2025 at 9:55 PM <support@tech.linfieldtechhub.com> wrote:"
         /On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[\s,]+.*?\d{1,2}[\s,]+.*?\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?wrote:/is, // "On Fri, Dec 26, 2025 at 9:55 PM ... wrote:"
         /On\s+.*?\d{1,2}\/\d{1,2}\/\d{4}.*?at.*?\d{1,2}:\d{2}.*?(AM|PM).*?wrote:/is, // "On 12/26/2025 at 9:55 PM ... wrote:"
         /On\s+.*?wrote:/i, // Generic "On ... wrote:"
