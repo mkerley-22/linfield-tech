@@ -666,11 +666,12 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                       value={breakdown.quantity}
                       onChange={(e) => {
                         const updated = [...locationBreakdowns]
-                        updated[index].quantity = parseInt(e.target.value) || 1
+                        const newQuantity = parseInt(e.target.value) || 1
+                        updated[index].quantity = newQuantity
                         setLocationBreakdowns(updated)
-                        // Update total quantity
+                        // Quantity will be updated by useEffect, but update immediately for UI responsiveness
                         const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
-                        setQuantity(total)
+                        setQuantity(total || 1)
                       }}
                       onFocus={(e) => e.target.select()}
                       min="1"
