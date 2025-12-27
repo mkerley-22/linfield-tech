@@ -217,9 +217,12 @@ CRITICAL RULES:
 3. URLs must be valid HTTP/HTTPS web addresses (no file://, chrome-extension://, or other protocols)
 4. Focus on finding actual PDF documentation files hosted on manufacturer websites or official repositories
 5. Return direct download links to PDF files when available
-6. Only return URLs that are likely to still exist and be accessible
+6. ONLY return URLs that you are confident exist and are accessible - do not guess or make up URLs
+7. If the model number is very specific (like "K12.2"), search for the base model or product line if specific documentation isn't found
+8. Prefer general product documentation pages over model-specific pages if the exact model isn't found
+9. Return an empty array if you cannot find verified, accessible documentation URLs
 
-Search for official manufacturer documentation PDFs, product manuals, specifications sheets, and technical datasheets. Return direct PDF file URLs when possible. If you cannot find specific URLs, return an empty array.`,
+IMPORTANT: Only return URLs that you know exist. Do not return URLs that might be 404 errors. If documentation for the exact model isn't available, try the product line or general product documentation instead.`,
             },
             {
               role: 'user',
@@ -229,14 +232,22 @@ Manufacturer: ${item.manufacturer}
 Model: ${item.model}
 Product Name: ${item.name}
 
+IMPORTANT: 
+- If the model is very specific (like "K12.2"), also try searching for the base model (like "K12" or "K Series")
+- Only return URLs that you are confident exist and are accessible
+- If you cannot find documentation for the exact model, try the product line or general product documentation
+- Prefer official manufacturer websites
+- Do NOT return URLs that might result in 404 errors
+
 Provide direct PDF file URLs to official documentation. Prefer PDF files ending in .pdf hosted on manufacturer websites. Examples:
 - Good: https://www.manufacturer.com/resource-files/product-manual.pdf
 - Good: https://www.manufacturer.com/downloads/product-specs.pdf
 - Good: https://www.manufacturer.com/support/files/user-guide.pdf
 - Bad: chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://...
 - Bad: file:///path/to/file.pdf
+- Bad: URLs that might be 404 errors
 
-Return only valid HTTP/HTTPS URLs to PDF files.`,
+Return only valid HTTP/HTTPS URLs to PDF files that you know exist.`,
             },
           ],
           response_format: { type: 'json_object' },
@@ -247,8 +258,8 @@ Return only valid HTTP/HTTPS URLs to PDF files.`,
           const parsed = JSON.parse(responseContent)
           const rawLinks = parsed.documentationLinks || []
           
-          // Filter out invalid URLs (chrome-extension, file://, etc.) but keep PDFs
-          documentationLinks = rawLinks.filter((link: { url: string; title: string; type: string }) => {
+          // First filter out invalid URLs (chrome-extension, file://, etc.) but keep PDFs
+          const validFormatLinks = rawLinks.filter((link: { url: string; title: string; type: string }) => {
             const url = link.url?.toLowerCase() || ''
             // Reject chrome-extension URLs
             if (url.startsWith('chrome-extension://')) return false
@@ -258,6 +269,21 @@ Return only valid HTTP/HTTPS URLs to PDF files.`,
             if (!url.startsWith('http://') && !url.startsWith('https://')) return false
             return true
           })
+          
+          // Then validate that URLs are actually accessible (not 404)
+          console.log(`Validating ${validFormatLinks.length} documentation URLs...`)
+          const validationPromises = validFormatLinks.map(async (link: { url: string; title: string; type: string }) => {
+            const isValid = await validateDocumentationUrl(link.url)
+            if (!isValid) {
+              console.log(`Rejected invalid/404 URL: ${link.url}`)
+            }
+            return isValid ? link : null
+          })
+          
+          const validatedLinks = await Promise.all(validationPromises)
+          documentationLinks = validatedLinks.filter((link): link is { url: string; title: string; type: string } => link !== null)
+          
+          console.log(`Found ${documentationLinks.length} valid documentation URLs out of ${rawLinks.length} suggested`)
         }
       } catch (error) {
         console.error('AI documentation search error:', error)
