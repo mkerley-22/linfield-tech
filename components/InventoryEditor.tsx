@@ -31,7 +31,24 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const router = useRouter()
   const [name, setName] = useState(initialData?.name || '')
   const [description, setDescription] = useState(initialData?.description || '')
-  const [quantity, setQuantity] = useState(initialData?.quantity || 1)
+  // Calculate total quantity from location breakdowns, or use initial quantity
+  const [quantity, setQuantity] = useState(() => {
+    if (initialData?.locationBreakdowns) {
+      try {
+        let breakdowns: Array<{ quantity: number }> = []
+        if (typeof initialData.locationBreakdowns === 'string') {
+          breakdowns = JSON.parse(initialData.locationBreakdowns)
+        } else if (Array.isArray(initialData.locationBreakdowns)) {
+          breakdowns = initialData.locationBreakdowns
+        }
+        const total = breakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+        return total || initialData?.quantity || 1
+      } catch {
+        return initialData?.quantity || 1
+      }
+    }
+    return initialData?.quantity || 1
+  })
   const [manufacturer, setManufacturer] = useState(initialData?.manufacturer || '')
   const [model, setModel] = useState(initialData?.model || '')
   const [serialNumbers, setSerialNumbers] = useState<string[]>(() => {
@@ -48,18 +65,29 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   })
   const [newSerialNumber, setNewSerialNumber] = useState('')
   const [location, setLocation] = useState(initialData?.location || '')
-  const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number }>>(() => {
+  const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number; usage?: string }>>(() => {
     if (!initialData?.locationBreakdowns) return []
     try {
       if (typeof initialData.locationBreakdowns === 'string') {
-        return JSON.parse(initialData.locationBreakdowns)
+        const parsed = JSON.parse(initialData.locationBreakdowns)
+        // If old format (without usage), convert to new format
+        return Array.isArray(parsed) ? parsed.map((item: any) => ({
+          location: item.location || '',
+          quantity: item.quantity || 1,
+          usage: item.usage || item.usage || ''
+        })) : []
       }
-      return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns : []
+      return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns.map((item: any) => ({
+        location: item.location || '',
+        quantity: item.quantity || 1,
+        usage: item.usage || ''
+      })) : []
     } catch {
       return []
     }
   })
-  const [usageNotes, setUsageNotes] = useState(initialData?.usageNotes || '')
+  const [newRowQuantity, setNewRowQuantity] = useState(1) // Quantity for new row input
+  const [newRowUsage, setNewRowUsage] = useState('') // Usage for new row input
   const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
   const [checkoutEnabled, setCheckoutEnabled] = useState(initialData?.checkoutEnabled || false)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || [])
@@ -538,24 +566,24 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         <div className="space-y-3">
           {locationBreakdowns.length === 0 ? (
             <div className="flex items-end gap-2">
-              <div className="flex-1">
+              <div className="w-24">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                 <input
                   type="number"
-                  value={quantity}
+                  value={newRowQuantity}
                   onChange={(e) => {
                     const val = e.target.value
                     if (val === '') {
-                      setQuantity(1)
+                      setNewRowQuantity(1)
                     } else {
                       const num = parseInt(val)
-                      setQuantity(isNaN(num) ? 1 : num)
+                      setNewRowQuantity(isNaN(num) ? 1 : num)
                     }
                   }}
                   onFocus={(e) => e.target.select()}
                   min="1"
                   max="999"
-                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
                   placeholder="100"
                 />
               </div>
@@ -571,10 +599,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
                 <input
                   type="text"
-                  value={usageNotes}
-                  onChange={(e) => setUsageNotes(e.target.value)}
+                  value={newRowUsage}
+                  onChange={(e) => setNewRowUsage(e.target.value)}
                   placeholder="e.g., For basketball games"
-                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
                 />
               </div>
               <Button
@@ -582,11 +610,13 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 variant="primary"
                 size="sm"
                 onClick={() => {
-                  if (quantity > 0 && location) {
-                    setLocationBreakdowns([{ location, quantity, usage: usageNotes }])
+                  if (newRowQuantity > 0 && location) {
+                    const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
+                    setLocationBreakdowns([newBreakdown])
                     setLocation('')
-                    setUsageNotes('')
-                    setQuantity(1)
+                    setNewRowUsage('')
+                    setNewRowQuantity(1)
+                    setQuantity(newRowQuantity)
                   } else {
                     alert('Please enter quantity and location before adding')
                   }
@@ -666,14 +696,14 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                   <input
                     type="number"
-                    value={quantity}
+                    value={newRowQuantity}
                     onChange={(e) => {
                       const val = e.target.value
                       if (val === '') {
-                        setQuantity(1)
+                        setNewRowQuantity(1)
                       } else {
                         const num = parseInt(val)
-                        setQuantity(isNaN(num) ? 1 : num)
+                        setNewRowQuantity(isNaN(num) ? 1 : num)
                       }
                     }}
                     onFocus={(e) => e.target.select()}
@@ -695,8 +725,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
                   <input
                     type="text"
-                    value={usageNotes}
-                    onChange={(e) => setUsageNotes(e.target.value)}
+                    value={newRowUsage}
+                    onChange={(e) => setNewRowUsage(e.target.value)}
                     placeholder="e.g., For basketball games"
                     className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
                   />
@@ -706,11 +736,16 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   variant="primary"
                   size="sm"
                   onClick={() => {
-                    if (quantity > 0 && location) {
-                      setLocationBreakdowns([...locationBreakdowns, { location, quantity, usage: usageNotes }])
+                    if (newRowQuantity > 0 && location) {
+                      const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
+                      const updated = [...locationBreakdowns, newBreakdown]
+                      setLocationBreakdowns(updated)
                       setLocation('')
-                      setUsageNotes('')
-                      setQuantity(1)
+                      setNewRowUsage('')
+                      setNewRowQuantity(1)
+                      // Update total quantity
+                      const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
+                      setQuantity(total)
                     } else {
                       alert('Please enter quantity and location before adding')
                     }
@@ -725,7 +760,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
         {locationBreakdowns.length > 0 && (
           <p className="text-xs text-gray-500 mt-2">
-            Total Quantity: <span className="font-medium text-gray-700">{quantity}</span>
+            Total Quantity: <span className="font-medium text-gray-700">
+              {locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)}
+            </span>
           </p>
         )}
       </div>
