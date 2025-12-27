@@ -240,11 +240,16 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           manufacturer,
           model,
           serialNumbers: serialNumbers.length > 0 ? JSON.stringify(serialNumbers) : null,
-          location,
+          location: locationBreakdowns.length > 0 ? locationBreakdowns[0].location : location, // Keep for backward compatibility
           locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
-          usageNotes: usageNotes || null,
+          usageNotes: locationBreakdowns.length > 0 
+            ? locationBreakdowns.map(b => b.usage).filter(Boolean).join('; ') 
+            : null, // Combine all usage notes from location breakdowns
           availableForCheckout: availableForCheckout || null,
           checkoutEnabled,
+          quantity: locationBreakdowns.length > 0 
+            ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)
+            : quantity, // Calculate total from location breakdowns
           tagIds: selectedTags,
           imageUrl: imageUrl || null,
           documentationLinks: documentationLinks.length > 0 ? JSON.stringify(documentationLinks) : null,
