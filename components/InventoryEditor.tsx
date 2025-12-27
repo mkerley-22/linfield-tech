@@ -74,7 +74,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         return Array.isArray(parsed) ? parsed.map((item: any) => ({
           location: item.location || '',
           quantity: item.quantity || 1,
-          usage: item.usage || item.usage || ''
+          usage: item.usage || ''
         })) : []
       }
       return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns.map((item: any) => ({
