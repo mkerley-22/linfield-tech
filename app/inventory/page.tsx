@@ -395,9 +395,10 @@ export default function InventoryPage() {
                 const isOutOfStock = available === 0
 
                 return (
-                  <div
+                  <Link
                     key={item.id}
-                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden"
+                    href={`/inventory/${item.id}`}
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden cursor-pointer"
                   >
                     {/* Image Section */}
                     <div className="relative bg-gray-200 aspect-square flex items-center justify-center rounded-t-2xl overflow-hidden">
@@ -487,27 +488,18 @@ export default function InventoryPage() {
                       )}
                       
                       {/* Product Name */}
-                      <Link
-                        href={`/inventory/${item.id}`}
-                        className="block"
-                      >
-                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
-                          {item.name}
-                        </h3>
-                      </Link>
-                      
+                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {item.name}
+                      </h3>
                       
                       {/* View Details Button */}
-                      <Link
-                        href={`/inventory/${item.id}`}
-                        className="block"
-                      >
-                        <button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                      <div className="mt-auto">
+                        <div className="w-full bg-gray-800 group-hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center">
                           View Details
-                        </button>
-                      </Link>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
