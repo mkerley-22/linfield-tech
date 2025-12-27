@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { sendCheckoutRequestConfirmation } from '@/lib/email'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function POST(request: NextRequest) {
   try {
@@ -156,40 +157,73 @@ export async function GET(request: NextRequest) {
       where.pickedUp = true
     }
 
-    const requests = await prisma.checkoutRequest.findMany({
-      where,
-      include: {
-        CheckoutRequestMessage: {
-          orderBy: {
-            createdAt: 'desc', // Latest messages first
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-
-    // Get checkouts for each request
-    const requestsWithCheckouts = await Promise.all(
-      requests.map(async (req) => {
-        const checkouts = await prisma.checkout.findMany({
-          where: {
-            notes: {
-              contains: req.id,
+    // Fetch all requests
+    const requests = await withRetry(
+      () => prisma.checkoutRequest.findMany({
+        where,
+        include: {
+          CheckoutRequestMessage: {
+            orderBy: {
+              createdAt: 'desc', // Latest messages first
             },
           },
-          select: {
-            id: true,
-            status: true,
-            returnedAt: true,
-            dueDate: true,
-            checkedOutAt: true,
-          },
-        })
-        return { ...req, checkouts }
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
       })
     )
+
+    // Optimize: Fetch all checkouts in a single query instead of N+1 queries
+    const requestIds = requests.map(req => req.id)
+    const allCheckouts = requestIds.length > 0 
+      ? await withRetry(
+          () => prisma.checkout.findMany({
+            where: {
+              OR: requestIds.map(id => ({
+                notes: {
+                  contains: id,
+                },
+              })),
+            },
+            select: {
+              id: true,
+              status: true,
+              returnedAt: true,
+              dueDate: true,
+              checkedOutAt: true,
+              notes: true,
+            },
+          })
+        )
+      : []
+
+    // Group checkouts by request ID
+    const checkoutsByRequestId = new Map<string, typeof allCheckouts>()
+    allCheckouts.forEach(checkout => {
+      if (checkout.notes) {
+        // Find which request ID this checkout belongs to
+        const requestId = requestIds.find(id => checkout.notes?.includes(id))
+        if (requestId) {
+          if (!checkoutsByRequestId.has(requestId)) {
+            checkoutsByRequestId.set(requestId, [])
+          }
+          checkoutsByRequestId.get(requestId)!.push({
+            id: checkout.id,
+            status: checkout.status,
+            returnedAt: checkout.returnedAt,
+            dueDate: checkout.dueDate,
+            checkedOutAt: checkout.checkedOutAt,
+          })
+        }
+      }
+    })
+
+    // Map requests with their checkouts
+    const requestsWithCheckouts = requests.map(req => ({
+      ...req,
+      checkouts: checkoutsByRequestId.get(req.id) || [],
+    }))
 
     // Transform to match frontend expectations
     const transformedRequests = requestsWithCheckouts.map(req => ({
