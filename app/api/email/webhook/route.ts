@@ -23,24 +23,34 @@ export async function POST(request: NextRequest) {
     let requestId: string | null = null
 
     // Try to extract from reply-to header
+    // Ensure replyTo is a string
     const replyTo = headers?.['reply-to'] || headers?.['Reply-To'] || to
-    if (replyTo) {
-      const match = replyTo.match(/checkout-([a-f0-9-]+)@/)
+    const replyToStr = typeof replyTo === 'string' ? replyTo : (replyTo?.email || replyTo?.toString() || '')
+    if (replyToStr) {
+      const match = replyToStr.match(/checkout-([a-f0-9-]+)@/)
       if (match) {
         requestId = match[1]
       }
     }
 
     // If not found in reply-to, try subject line
-    if (!requestId && subject) {
-      const subjectMatch = subject.match(/\[Request\s+([a-f0-9-]+)\]/i)
+    // Ensure subject is a string
+    const subjectStr = typeof subject === 'string' ? subject : (subject?.toString() || '')
+    if (!requestId && subjectStr) {
+      const subjectMatch = subjectStr.match(/\[Request\s+([a-f0-9-]+)\]/i)
       if (subjectMatch) {
         requestId = subjectMatch[1]
       }
     }
 
     if (!requestId) {
-      console.log('Could not extract request ID from email:', { from, to, subject })
+      console.log('Could not extract request ID from email:', { 
+        from, 
+        to, 
+        subject: subjectStr,
+        replyTo: replyToStr,
+        headers: JSON.stringify(headers),
+      })
       return NextResponse.json({ received: true, error: 'No request ID found' })
     }
 
@@ -65,10 +75,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Extract message content (prefer text, fallback to HTML)
-    let messageContent = text || ''
-    if (!messageContent && html) {
+    // Ensure text and html are strings
+    const textStr = typeof text === 'string' ? text : (text?.toString() || '')
+    const htmlStr = typeof html === 'string' ? html : (html?.toString() || '')
+    let messageContent = textStr || ''
+    if (!messageContent && htmlStr) {
       // Simple HTML to text conversion (remove tags)
-      messageContent = html.replace(/<[^>]*>/g, '').trim()
+      messageContent = htmlStr.replace(/<[^>]*>/g, '').trim()
     }
 
     // Remove email signature/quoted text (common patterns)
