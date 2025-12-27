@@ -297,7 +297,12 @@ export default function CheckoutPage() {
           )
         }
         
+        console.log('Setting filtered requests:', filteredRequests.length, 'for tab:', tabToUse)
+        console.log('Filtered request IDs:', filteredRequests.map((r: CheckoutRequest) => r.id))
         setRequests(filteredRequests)
+        
+        // Force a re-render check
+        console.log('Requests state will be set to:', filteredRequests.length, 'items')
         
         // Calculate unread message counts for each request
         // A request has unread messages if the latest message is from requester
@@ -782,8 +787,13 @@ export default function CheckoutPage() {
                   <p className="text-gray-600">
                     {search
                       ? 'Try adjusting your search'
-                      : 'No checkout requests yet'}
+                      : `No checkout requests yet (Active tab: ${activeTab}, All requests: ${allRequests.length})`}
                   </p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Debug: requests.length={requests.length}, allRequests.length={allRequests.length}, activeTab={activeTab}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
