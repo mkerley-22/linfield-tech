@@ -10,22 +10,27 @@ import { format } from 'date-fns'
 export const dynamic = 'force-dynamic'
 
 async function getPages() {
-  const pages = await prisma.page.findMany({
-    where: {
-      parentId: null,
-      isPublished: true,
-    },
-    include: {
-      other_Page: {
-        where: { isPublished: true },
-        orderBy: { order: 'asc' },
+  try {
+    const pages = await prisma.page.findMany({
+      where: {
+        parentId: null,
+        isPublished: true,
       },
-      Attachment: true,
-      Category: true,
-    },
-    orderBy: { order: 'asc' },
-  })
-  return pages
+      include: {
+        other_Page: {
+          where: { isPublished: true },
+          orderBy: { order: 'asc' },
+        },
+        Attachment: true,
+        Category: true,
+      },
+      orderBy: { order: 'asc' },
+    })
+    return pages
+  } catch (error) {
+    console.error('Error fetching pages:', error)
+    return []
+  }
 }
 
 async function getCategories() {
