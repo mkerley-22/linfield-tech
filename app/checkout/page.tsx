@@ -217,8 +217,8 @@ export default function CheckoutPage() {
     const abortController = new AbortController()
     abortControllerRef.current = abortController
     
-    // Dispatch event to notify sidebar of request updates
-    window.dispatchEvent(new CustomEvent('checkoutRequestUpdated'))
+    // Don't dispatch event here - it will be dispatched after requests are set
+    // to avoid infinite loops
     setIsLoading(true)
     try {
       // Always fetch all requests to calculate counts for all tabs
