@@ -59,6 +59,7 @@ export default function SettingsPage() {
   // Check integration status after user is loaded
   useEffect(() => {
     if (user && !isLoading) {
+      // Always check integration status when user loads or tab changes
       checkIntegrationStatus()
 
       // Load AI preference from localStorage (this is just a UI toggle, not a connection)
@@ -72,36 +73,51 @@ export default function SettingsPage() {
     }
   }, [user, isLoading, activeTab])
 
+  // Also check integration status when switching to integrations tab
+  useEffect(() => {
+    if (user && !isLoading && activeTab === 'integrations') {
+      checkIntegrationStatus()
+    }
+  }, [activeTab, user, isLoading])
+
   const checkIntegrationStatus = async () => {
     // Only check if user is loaded
     if (!user) return
 
     // Check Google Drive connection status
     try {
-      const response = await fetch('/api/auth/google/status')
+      const response = await fetch('/api/auth/google/status', {
+        cache: 'no-store', // Always fetch fresh status
+      })
       if (response.ok) {
         const data = await response.json()
         setGoogleEnabled(data.connected || false)
       } else {
-        setGoogleEnabled(false)
+        // If status check fails, default to showing the UI (let GoogleAuth component handle it)
+        setGoogleEnabled(true)
       }
     } catch (error) {
       console.error('Failed to check Google status:', error)
-      setGoogleEnabled(false)
+      // On error, show the UI so user can see connection status
+      setGoogleEnabled(true)
     }
 
     // Check Google Calendar connection status
     try {
-      const response = await fetch('/api/auth/google/calendar/status')
+      const response = await fetch('/api/auth/google/calendar/status', {
+        cache: 'no-store', // Always fetch fresh status
+      })
       if (response.ok) {
         const data = await response.json()
         setCalendarEnabled(data.connected || false)
       } else {
-        setCalendarEnabled(false)
+        // If status check fails, default to showing the UI
+        setCalendarEnabled(true)
       }
     } catch (error) {
       console.error('Failed to check Calendar status:', error)
-      setCalendarEnabled(false)
+      // On error, show the UI so user can see connection status
+      setCalendarEnabled(true)
     }
   }
 
@@ -140,17 +156,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleGoogleToggle = (enabled: boolean) => {
-    setGoogleEnabled(enabled)
-    // Don't store in localStorage - connection status comes from database
-    // This toggle just shows/hides the connection UI
-  }
-
-  const handleCalendarToggle = (enabled: boolean) => {
-    setCalendarEnabled(enabled)
-    // Don't store in localStorage - connection status comes from database
-    // This toggle just shows/hides the connection UI
-  }
 
   const handleAIToggle = (enabled: boolean) => {
     setAiEnabled(enabled)
@@ -267,18 +272,7 @@ export default function SettingsPage() {
               </div>
               
               <div className="space-y-4">
-                <Toggle
-                  enabled={googleEnabled}
-                  onChange={handleGoogleToggle}
-                  label="Enable Google Drive"
-                  description="Connect to Google Drive for file syncing and document management"
-                />
-                
-                {googleEnabled && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <GoogleAuth />
-                  </div>
-                )}
+                <GoogleAuth />
               </div>
             </div>
 
@@ -295,18 +289,9 @@ export default function SettingsPage() {
               </div>
               
               <div className="space-y-4">
-                <Toggle
-                  enabled={calendarEnabled}
-                  onChange={handleCalendarToggle}
-                  label="Enable Google Calendar"
-                  description="Connect to Google Calendar to sync events and import from School Dude"
-                />
-                
-                {calendarEnabled && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <GoogleCalendarAuth />
-                  </div>
-                )}
+                <div className="pt-4">
+                  <GoogleCalendarAuth />
+                </div>
               </div>
             </div>
 
