@@ -637,6 +637,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Product Image
         </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Upload an image file or paste an image from your clipboard (Cmd+V / Ctrl+V)
+        </p>
         {(imageUrl || pendingImagePreview) ? (
           <div className="group relative w-64 aspect-square bg-gray-200 rounded-2xl overflow-hidden border border-gray-300">
             <img
