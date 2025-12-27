@@ -4,9 +4,15 @@ import { useState, useEffect } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Edit, ArrowLeft, Package, Calendar, User, Clock, CheckCircle, XCircle, Download, Plus, FileText, Image as ImageIcon, ExternalLink, Loader2, Trash2, X } from 'lucide-react'
+import { Edit, ArrowLeft, Package, Calendar, User, Clock, CheckCircle, XCircle, Download, FileText, Image as ImageIcon, ExternalLink, Loader2, Trash2, X, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { format } from 'date-fns'
+
+interface LocationBreakdown {
+  location: string
+  quantity: number
+  usage?: string
+}
 
 interface InventoryItem {
   id: string
@@ -17,6 +23,9 @@ interface InventoryItem {
   model?: string
   serialNumbers?: string | null
   location?: string
+  locationBreakdowns?: string | LocationBreakdown[] | null
+  usageNotes?: string | null
+  availableForCheckout?: number | null
   lastUsedAt?: string
   lastUsedBy?: string
   imageUrl?: string
@@ -47,30 +56,35 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
   const router = useRouter()
   const [item, setItem] = useState<InventoryItem | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showCheckout, setShowCheckout] = useState(false)
-  const [checkoutName, setCheckoutName] = useState('')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
-  const [checkoutQuantity, setCheckoutQuantity] = useState(1)
-  const [checkingOut, setCheckingOut] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   useEffect(() => {
     loadItem(params.id)
     
-    // Listen for checkout updates from other pages
-    const handleCheckoutUpdate = () => {
+    // Listen for inventory updates
+    const handleInventoryUpdate = () => {
       loadItem(params.id)
     }
-    window.addEventListener('checkoutRequestUpdated', handleCheckoutUpdate)
-    window.addEventListener('checkoutStatusUpdated', handleCheckoutUpdate)
+    window.addEventListener('inventoryUpdated', handleInventoryUpdate)
+    
+    // Close menu when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (showMenu && !target.closest('.relative')) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
     
     return () => {
-      window.removeEventListener('checkoutRequestUpdated', handleCheckoutUpdate)
-      window.removeEventListener('checkoutStatusUpdated', handleCheckoutUpdate)
+      window.removeEventListener('inventoryUpdated', handleInventoryUpdate)
+      document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [params.id])
+  }, [params.id, showMenu])
 
   const loadItem = async (id: string) => {
     if (!id) return
@@ -89,74 +103,6 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
     }
   }
 
-  const handleCheckout = async () => {
-    if (!checkoutName.trim()) {
-      alert('Please enter your name')
-      return
-    }
-
-    if (!fromDate || !toDate) {
-      alert('Please select both start and end dates')
-      return
-    }
-
-    if (checkoutQuantity < 1) {
-      alert('Please select a quantity of at least 1')
-      return
-    }
-
-    if (checkoutQuantity > available) {
-      alert(`Only ${available} items are available`)
-      return
-    }
-
-    setCheckingOut(true)
-    try {
-      // Create multiple checkouts if quantity > 1
-      const promises = []
-      for (let i = 0; i < checkoutQuantity; i++) {
-        promises.push(
-          fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              inventoryId: params.id,
-              checkedOutBy: checkoutName,
-              fromDate,
-              toDate,
-            }),
-          })
-        )
-      }
-
-      const responses = await Promise.all(promises)
-      const errors = []
-
-      for (const response of responses) {
-        if (!response.ok) {
-          const error = await response.json()
-          errors.push(error.error || 'Failed to checkout equipment')
-        }
-      }
-
-      if (errors.length > 0) {
-        alert(`Some checkouts failed: ${errors.join(', ')}`)
-      } else {
-        alert(`Successfully checked out ${checkoutQuantity} item(s)!`)
-        setShowCheckout(false)
-        setCheckoutName('')
-        setFromDate('')
-        setToDate('')
-        setCheckoutQuantity(1)
-        loadItem(params.id)
-      }
-    } catch (error) {
-      console.error('Checkout error:', error)
-      alert('Failed to checkout equipment')
-    } finally {
-      setCheckingOut(false)
-    }
-  }
 
   const handleReturn = async (checkoutId: string) => {
     if (!confirm('Mark this item as returned?')) return
@@ -290,7 +236,7 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
               {item.description && (
                 <p className="text-lg text-gray-600 mb-4">{item.description}</p>
               )}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="secondary"
                   onClick={() => router.push(`/inventory/${item.id}/edit`)}
@@ -298,23 +244,29 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
                 </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="!bg-pink-50 !border !border-red-300 !text-red-600 hover:!bg-red-600 hover:!text-white hover:!border-red-600"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-                {available > 0 && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowCheckout(true)}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="More options"
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Checkout
-                  </Button>
-                )}
+                    <MoreVertical className="w-5 h-5 text-gray-500" />
+                  </button>
+                  {showMenu && (
+                    <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          setShowDeleteConfirm(true)
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -383,7 +335,7 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500 mb-1">Total Quantity</p>
-                <p className="text-2xl font-bold text-gray-900">{item.quantity}</p>
+                <p className="text-2xl font-bold text-gray-900">{totalQuantity}</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-sm text-gray-500 mb-1">Available</p>
@@ -587,91 +539,6 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
             )}
           </div>
 
-          {showCheckout && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Checkout Equipment</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Your Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={checkoutName}
-                      onChange={(e) => setCheckoutName(e.target.value)}
-                      placeholder="Enter your name"
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Quantity *
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="number"
-                        min="1"
-                        max={available}
-                        value={checkoutQuantity}
-                        onChange={(e) => setCheckoutQuantity(Math.max(1, Math.min(available, parseInt(e.target.value) || 1)))}
-                        className="w-24 px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-                      />
-                      <span className="text-sm text-gray-600">
-                        of {available} available
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      From Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      To Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      min={fromDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    onClick={handleCheckout}
-                    disabled={checkingOut || !checkoutName.trim() || !fromDate || !toDate}
-                    variant="primary"
-                    className="flex-1"
-                  >
-                    {checkingOut ? 'Checking out...' : 'Checkout'}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowCheckout(false)
-                      setCheckoutName('')
-                      setFromDate('')
-                      setToDate('')
-                      setCheckoutQuantity(1)
-                    }}
-                    variant="secondary"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && item && (
