@@ -12,21 +12,25 @@
 6. Click **"Create"**
 
 Vercel will automatically create these environment variables:
-- `POSTGRES_URL` - For your application
-- `POSTGRES_PRISMA_URL` - For Prisma migrations
-- `POSTGRES_URL_NON_POOLING` - For direct connections
+- `POSTGRES_URL` - **Pooled connection URL** (use this for your app - handles connection pooling)
+- `POSTGRES_PRISMA_URL` - For Prisma migrations (includes connection pooling)
+- `POSTGRES_URL_NON_POOLING` - Direct connection (DO NOT use for app - causes max clients error)
 
 ### Step 2: Add DATABASE_URL Environment Variable
+
+**IMPORTANT:** Use the **pooled** connection URL to avoid "max clients reached" errors.
 
 1. Go to **Settings** → **Environment Variables**
 2. You should see `POSTGRES_URL` already there (added by Vercel)
 3. Click the **eye icon** next to `POSTGRES_URL` to reveal the value
-4. **Copy the entire value**
+4. **Copy the entire value** (this is the pooled connection URL)
 5. Click **"Add New"** to create a new variable:
    - **Name**: `DATABASE_URL`
-   - **Value**: Paste the value you copied from `POSTGRES_URL`
+   - **Value**: Paste the value you copied from `POSTGRES_URL` (the pooled URL)
    - **Environment**: Select **Production**, **Preview**, and **Development**
 6. Click **"Save"**
+
+**⚠️ Critical:** Make sure you're using `POSTGRES_URL` (pooled), NOT `POSTGRES_URL_NON_POOLING`. Using the non-pooling URL will cause "MaxClientsInSessionMode" errors.
 
 ### Step 3: Run Database Migrations
 
