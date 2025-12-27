@@ -609,10 +609,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
                 />
               </div>
-              <Button
+              <button
                 type="button"
-                variant="primary"
-                size="sm"
                 onClick={() => {
                   if (newRowQuantity > 0 && location) {
                     const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
@@ -625,10 +623,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                     alert('Please enter quantity and location before adding')
                   }
                 }}
-                className="mb-0"
+                className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors mb-0"
               >
-                <Plus className="w-4 h-4" />
-              </Button>
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
           ) : (
             <>
@@ -735,10 +733,8 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                     className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
                   />
                 </div>
-                <Button
+                <button
                   type="button"
-                  variant="primary"
-                  size="sm"
                   onClick={() => {
                     if (newRowQuantity > 0 && location) {
                       const newBreakdown = { location, quantity: newRowQuantity, usage: newRowUsage }
@@ -754,10 +750,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                       alert('Please enter quantity and location before adding')
                     }
                   }}
-                  className="mb-0"
+                  className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors mb-0"
                 >
-                  <Plus className="w-4 h-4" />
-                </Button>
+                  <Plus className="w-5 h-5" />
+                </button>
               </div>
             </>
           )}
