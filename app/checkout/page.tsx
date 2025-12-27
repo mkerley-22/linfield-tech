@@ -236,38 +236,30 @@ export default function CheckoutPage() {
             r.status === 'unseen' || r.status === 'seen'
           )
         } else if (tabToUse === 'approved') {
-          filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
-            r.status === 'approved' && !r.readyForPickup && !r.pickedUp && 
-            (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned'))
-          )
+          filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
+            const isReady = Boolean(r.readyForPickup)
+            const isPickedUp = Boolean(r.pickedUp)
+            return r.status === 'approved' && !isReady && !isPickedUp && 
+              (!r.checkouts || r.checkouts.length === 0 || !r.checkouts.every((c: any) => c.status === 'returned'))
+          })
         } else if (tabToUse === 'denied') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.status === 'denied'
           )
         } else if (tabToUse === 'ready') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
-            // Ensure readyForPickup is properly checked as boolean
+            // Ensure readyForPickup and pickedUp are properly checked as booleans
             // Handle both boolean true and truthy values
             const isReady = Boolean(r.readyForPickup)
-            const matches = r.status === 'approved' && isReady && !r.pickedUp
-            // Debug logging
-            console.log('Ready for Pickup filter check:', {
-              id: r.id,
-              requesterName: r.requesterName,
-              status: r.status,
-              readyForPickup: r.readyForPickup,
-              readyForPickupType: typeof r.readyForPickup,
-              pickedUp: r.pickedUp,
-              matches,
-              tabUsed: tabToUse
-            })
+            const isPickedUp = Boolean(r.pickedUp)
+            const matches = r.status === 'approved' && isReady && !isPickedUp
             return matches
           })
-          console.log('Ready for Pickup - Total requests:', allRequestsData.length, 'Filtered:', filteredRequests.length, 'Tab used:', tabToUse)
         } else if (tabToUse === 'pickedup') {
-          filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
-            r.pickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')
-          )
+          filteredRequests = allRequestsData.filter((r: CheckoutRequest) => {
+            const isPickedUp = Boolean(r.pickedUp)
+            return isPickedUp && r.checkouts && r.checkouts.length > 0 && !r.checkouts.every((c: any) => c.status === 'returned')
+          })
         } else if (tabToUse === 'returned') {
           filteredRequests = allRequestsData.filter((r: CheckoutRequest) => 
             r.checkouts && r.checkouts.length > 0 && r.checkouts.every((c: any) => c.status === 'returned')
