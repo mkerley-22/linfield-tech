@@ -16,9 +16,9 @@ interface InventoryEditorProps {
     model?: string
     serialNumbers?: string | string[]  // Can be string (JSON) or array
     location?: string
-    // locationBreakdowns?: string | Array<{ location: string; quantity: number }> // Uncomment after running migration
-    // usageNotes?: string // Uncomment after running migration
-    // availableForCheckout?: number | null // Uncomment after running migration
+    locationBreakdowns?: string | Array<{ location: string; quantity: number }>
+    usageNotes?: string
+    availableForCheckout?: number | null
     checkoutEnabled?: boolean
     tagIds?: string[]
     imageUrl?: string
@@ -48,20 +48,19 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   })
   const [newSerialNumber, setNewSerialNumber] = useState('')
   const [location, setLocation] = useState(initialData?.location || '')
-  // Uncomment after running migration:
-  // const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number }>>(() => {
-  //   if (!initialData?.locationBreakdowns) return []
-  //   try {
-  //     if (typeof initialData.locationBreakdowns === 'string') {
-  //       return JSON.parse(initialData.locationBreakdowns)
-  //     }
-  //     return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns : []
-  //   } catch {
-  //     return []
-  //   }
-  // })
-  // const [usageNotes, setUsageNotes] = useState(initialData?.usageNotes || '')
-  // const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
+  const [locationBreakdowns, setLocationBreakdowns] = useState<Array<{ location: string; quantity: number }>>(() => {
+    if (!initialData?.locationBreakdowns) return []
+    try {
+      if (typeof initialData.locationBreakdowns === 'string') {
+        return JSON.parse(initialData.locationBreakdowns)
+      }
+      return Array.isArray(initialData.locationBreakdowns) ? initialData.locationBreakdowns : []
+    } catch {
+      return []
+    }
+  })
+  const [usageNotes, setUsageNotes] = useState(initialData?.usageNotes || '')
+  const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
   const [checkoutEnabled, setCheckoutEnabled] = useState(initialData?.checkoutEnabled || false)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || [])
   const [tags, setTags] = useState<Array<{ id: string; name: string; color: string }>>([])
@@ -95,6 +94,15 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   useEffect(() => {
     loadTags()
   }, [])
+
+  // Clean up pending image preview URL when component unmounts or image changes
+  useEffect(() => {
+    return () => {
+      if (pendingImagePreview) {
+        URL.revokeObjectURL(pendingImagePreview)
+      }
+    }
+  }, [pendingImagePreview])
 
   // Shared function to process image file (used by both file upload and paste)
   const processImageFile = async (file: File) => {
@@ -169,8 +177,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     return () => {
       document.removeEventListener('paste', handlePaste)
     }
-  }, [itemId, pendingImagePreview]) // Include dependencies
-
+  }, [itemId, pendingImagePreview])
 
   const loadTags = async () => {
     try {
@@ -206,10 +213,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           model,
           serialNumbers: serialNumbers.length > 0 ? JSON.stringify(serialNumbers) : null,
           location,
-          // Uncomment after running migration:
-          // locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
-          // usageNotes: usageNotes || null,
-          // availableForCheckout: availableForCheckout || null,
+          locationBreakdowns: locationBreakdowns.length > 0 ? JSON.stringify(locationBreakdowns) : null,
+          usageNotes: usageNotes || null,
+          availableForCheckout: availableForCheckout || null,
           checkoutEnabled,
           tagIds: selectedTags,
           imageUrl: imageUrl || null,
@@ -256,7 +262,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               })
               if (docResponse.ok) {
                 const docData = await docResponse.json()
-                setDocuments([...documents, docData.document])
+                setDocuments(prev => [...prev, docData.document])
               }
             }
             setPendingDocuments([])
@@ -289,7 +295,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     if (!file) return
 
     await processImageFile(file)
-    e.target.value = ''
+    e.target.value = '' // Clear the input so the same file can be selected again
   }
 
   const handleDeleteImage = async () => {
@@ -349,6 +355,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     const file = e.target.files?.[0]
     if (!file) return
 
+    if (!file.type) {
+      alert('Could not determine file type. Please select a valid document.')
+      return
+    }
+
     // If itemId exists, upload immediately
     if (itemId) {
       setUploading(true)
@@ -378,19 +389,13 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
       }
     } else {
       // If no itemId, store file for later upload after saving
-      setPendingDocuments([...pendingDocuments, file])
+      setPendingDocuments(prev => [...prev, file])
+      alert(`Document "${file.name}" added! It will be uploaded when you save the item.`)
       e.target.value = ''
     }
   }
 
-  const handleDeleteDocument = async (docId: string, index?: number) => {
-    // If it's a pending document (no docId), just remove from array
-    if (index !== undefined && !docId) {
-      setPendingDocuments(pendingDocuments.filter((_, i) => i !== index))
-      return
-    }
-
-    // If saved document, delete from server
+  const handleDeleteDocument = async (docId: string) => {
     if (!itemId || !confirm('Delete this document?')) return
 
     try {
@@ -410,6 +415,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     }
   }
 
+  const handleDeletePendingDocument = (index: number) => {
+    setPendingDocuments(pendingDocuments.filter((_, i) => i !== index))
+    alert('Pending document removed')
+  }
+
   const toggleTag = (tagId: string) => {
     setSelectedTags((prev) =>
       prev.includes(tagId)
@@ -423,22 +433,18 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
       alert('Tag name is required')
       return
     }
-
     setCreatingTag(true)
     try {
       const response = await fetch('/api/inventory/tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newTagName.trim().toLowerCase(),
-          color: newTagColor,
-        }),
+        body: JSON.stringify({ name: newTagName.trim().toLowerCase(), color: newTagColor }),
       })
 
       if (response.ok) {
         const data = await response.json()
-        setTags([...tags, data.tag])
-        setSelectedTags([...selectedTags, data.tag.id])
+        setTags((prev) => [...prev, data.tag])
+        setSelectedTags((prev) => [...prev, data.tag.id])
         setNewTagName('')
         setNewTagColor('#2563eb')
         setShowNewTag(false)
@@ -555,10 +561,111 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       </div>
 
-      {/* Location Breakdown, Usage Notes, and Available for Checkout features
-          are temporarily disabled until database migration is run.
-          See ADD_INVENTORY_COLUMNS.sql for migration SQL.
-          Uncomment the code below after running the migration. */}
+      {/* Location Breakdown */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Location Breakdown
+        </label>
+        <p className="text-xs text-gray-500 mb-3">
+          Specify quantities at different locations (e.g., 5 in Tech Storage, 1 in Gym)
+        </p>
+        <div className="space-y-2 mb-3">
+          {locationBreakdowns.map((breakdown, index) => (
+            <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={breakdown.location}
+                  onChange={(e) => {
+                    const updated = [...locationBreakdowns]
+                    updated[index].location = e.target.value
+                    setLocationBreakdowns(updated)
+                  }}
+                  placeholder="Location"
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                />
+                <input
+                  type="number"
+                  value={breakdown.quantity}
+                  onChange={(e) => {
+                    const updated = [...locationBreakdowns]
+                    updated[index].quantity = parseInt(e.target.value) || 1
+                    setLocationBreakdowns(updated)
+                  }}
+                  min="1"
+                  placeholder="Quantity"
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setLocationBreakdowns(locationBreakdowns.filter((_, i) => i !== index))}
+                className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                title="Remove location"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setLocationBreakdowns([...locationBreakdowns, { location: '', quantity: 1 }])}
+          className="w-full md:w-auto"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Location
+        </Button>
+      </div>
+
+      {/* Usage Notes */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Usage Notes
+        </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Describe what these items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
+        </p>
+        <textarea
+          value={usageNotes}
+          onChange={(e) => setUsageNotes(e.target.value)}
+          placeholder="e.g., For basketball games, Talkback Mic for SQ7"
+          rows={3}
+          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+        />
+      </div>
+
+      {/* Available for Checkout */}
+      {checkoutEnabled && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Available for Checkout
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Number of items available for checkout (leave empty to use total quantity: {quantity})
+          </p>
+          <input
+            type="number"
+            value={availableForCheckout ?? ''}
+            onChange={(e) => {
+              const val = e.target.value
+              if (val === '') {
+                setAvailableForCheckout(null)
+              } else {
+                const num = parseInt(val)
+                setAvailableForCheckout(isNaN(num) ? null : Math.min(num, quantity))
+              }
+            }}
+            onFocus={(e) => e.target.select()}
+            min="1"
+            max={quantity}
+            placeholder={`Default: ${quantity} (all items)`}
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -737,7 +844,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </p>
 
         {/* Existing Documentation */}
-        {(documents.length > 0 || documentationLinks.length > 0) && (
+        {(documents.length > 0 || documentationLinks.length > 0 || pendingDocuments.length > 0) && (
           <div className="space-y-2 mb-4">
             {/* Uploaded Documents */}
             {documents.map((doc) => (
@@ -754,25 +861,46 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   href={doc.filePath}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1 text-green-600 hover:text-green-700 hover:bg-green-100 rounded transition-colors"
-                  title="Open file"
+                  className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors"
+                  title="Open document"
                 >
                   <ExternalLink className="w-4 h-4" />
                 </a>
-                {itemId && (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDocument(doc.id)}
-                    className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                    title="Delete file"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteDocument(doc.id)}
+                  className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                  title="Delete document"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
 
-            {/* External Links */}
+            {/* Pending Documents */}
+            {pendingDocuments.map((file, index) => (
+              <div
+                key={`pending-${index}`}
+                className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+              >
+                <Upload className="w-5 h-5 text-yellow-600" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                  <p className="text-xs text-gray-600">{`${(file.size / 1024).toFixed(2)} KB`}</p>
+                  <p className="text-xs text-yellow-800">Pending upload</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeletePendingDocument(index)}
+                  className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                  title="Remove pending document"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+
+            {/* Documentation Links */}
             {documentationLinks.map((doc, index) => (
               <div
                 key={index}
@@ -830,11 +958,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 Uploading...
               </div>
             )}
-            {!itemId && pendingDocuments.length > 0 && (
-              <p className="text-sm text-blue-600 mt-2">
-                {pendingDocuments.length} document(s) will be uploaded after saving
-              </p>
-            )}
           </div>
 
           {/* Add External Link */}
@@ -844,37 +967,46 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               <h4 className="text-sm font-medium text-gray-900">Add External Link</h4>
             </div>
             <div className="space-y-2">
-              <input
-                type="url"
-                value={newDocUrl}
-                onChange={(e) => setNewDocUrl(e.target.value)}
-                placeholder="Documentation URL (e.g., https://example.com/manual.pdf)"
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-900"
-              />
-              <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="newDocUrl" className="sr-only">URL</label>
+                <input
+                  type="url"
+                  id="newDocUrl"
+                  value={newDocUrl}
+                  onChange={(e) => setNewDocUrl(e.target.value)}
+                  placeholder="Documentation URL (e.g., https://example.com/manual.pdf)"
+                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="newDocTitle" className="sr-only">Title</label>
                 <input
                   type="text"
+                  id="newDocTitle"
                   value={newDocTitle}
                   onChange={(e) => setNewDocTitle(e.target.value)}
                   placeholder="Title (e.g., User Manual)"
-                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-900"
+                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 />
+              </div>
+              <div>
+                <label htmlFor="newDocType" className="sr-only">Type</label>
                 <select
+                  id="newDocType"
                   value={newDocType}
                   onChange={(e) => setNewDocType(e.target.value)}
-                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-900"
+                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 >
                   <option value="manual">Manual</option>
-                  <option value="spec">Specification</option>
+                  <option value="spec">Specifications</option>
                   <option value="datasheet">Datasheet</option>
-                  <option value="support">Linfield AV Support</option>
                   <option value="guide">Guide</option>
+                  <option value="support">Support Page</option>
+                  <option value="link">Other Link</option>
                 </select>
               </div>
               <Button
                 type="button"
-                variant="secondary"
-                size="sm"
                 onClick={handleAddDocumentationLink}
                 disabled={!newDocUrl.trim()}
                 className="w-full"
@@ -887,10 +1019,9 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       </div>
 
+      {/* Tags */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tags
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
         {tags.length === 0 ? (
           <p className="text-sm text-gray-500 mb-3">
             No tags available. Create your first tag below.
@@ -943,81 +1074,53 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           </div>
         )}
 
-        {!showNewTag ? (
-          <button
-            type="button"
-            onClick={() => setShowNewTag(true)}
-            className="px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
-          >
-            + Create New Tag
-          </button>
-        ) : (
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Tag Name
-              </label>
-              <input
-                type="text"
-                value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
-                placeholder="e.g., lighting, audio, video"
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm text-gray-900"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleCreateTag()
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Color
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {predefinedColors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setNewTagColor(color)}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all ${
-                      newTagColor === color
-                        ? 'border-gray-900 scale-110'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleCreateTag}
-                disabled={creatingTag || !newTagName.trim()}
-                className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {creatingTag ? 'Creating...' : 'Create Tag'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowNewTag(false)
-                  setNewTagName('')
-                  setNewTagColor('#2563eb')
-                }}
-                className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+        {showNewTag && (
+          <div className="flex flex-col sm:flex-row gap-2 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <input
+              type="text"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              placeholder="New tag name"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <input
+              type="color"
+              value={newTagColor}
+              onChange={(e) => setNewTagColor(e.target.value)}
+              className="w-10 h-10 p-1 border border-gray-300 rounded-lg cursor-pointer"
+              title="Choose tag color"
+            />
+            <Button
+              type="button"
+              onClick={handleCreateTag}
+              disabled={creatingTag || !newTagName.trim()}
+              className="flex-shrink-0"
+            >
+              {creatingTag ? 'Creating...' : 'Create Tag'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowNewTag(false)}
+              className="flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         )}
-        <p className="text-xs text-gray-500 mt-2">
-          Click tags to select/deselect. Selected tags will be applied to this equipment.
-        </p>
+
+        {!showNewTag && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowNewTag(!showNewTag)}
+            className="flex items-center gap-1"
+          >
+            <Plus className="w-4 h-4" />
+            New Tag
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200">
@@ -1051,4 +1154,3 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     </div>
   )
 }
-

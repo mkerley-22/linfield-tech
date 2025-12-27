@@ -116,9 +116,9 @@ export async function PUT(
       model,
       serialNumbers,
       location,
-      // locationBreakdowns, // Uncomment after running migration
-      // usageNotes, // Uncomment after running migration
-      // availableForCheckout, // Uncomment after running migration
+      locationBreakdowns,
+      usageNotes,
+      availableForCheckout,
       checkoutEnabled,
       tagIds = [],
       imageUrl,
@@ -153,9 +153,9 @@ export async function PUT(
         model,
         serialNumbers: serialNumbersValue,
         location,
-        // locationBreakdowns: locationBreakdowns !== undefined ? locationBreakdowns : undefined, // Uncomment after running migration
-        // usageNotes: usageNotes !== undefined ? usageNotes : undefined, // Uncomment after running migration
-        // availableForCheckout: availableForCheckout !== undefined ? availableForCheckout : undefined, // Uncomment after running migration
+        locationBreakdowns: locationBreakdowns !== undefined ? locationBreakdowns : undefined,
+        usageNotes: usageNotes !== undefined ? usageNotes : undefined,
+        availableForCheckout: availableForCheckout !== undefined ? availableForCheckout : undefined,
         checkoutEnabled: checkoutEnabled !== undefined ? checkoutEnabled : undefined,
         imageUrl: imageUrl !== undefined ? imageUrl : undefined,
         documentationLinks: documentationLinks !== undefined ? documentationLinks : undefined,
