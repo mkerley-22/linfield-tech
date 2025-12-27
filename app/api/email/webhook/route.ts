@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
     // We no longer include request ID in subject line for user-friendliness
 
     if (!requestId) {
+      // Ensure subject is a string for logging
+      const subjectStr = typeof subject === 'string' ? subject : (subject?.toString() || '')
       console.log('Could not extract request ID from email:', { 
         from, 
         to, 
