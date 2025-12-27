@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,9 +10,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const preferences = await prisma.userPreferences.findUnique({
-      where: { userId: user.id },
-    })
+    const preferences = await withRetry(
+      () => prisma.userPreferences.findUnique({
+        where: { userId: user.id },
+      })
+    )
 
     return NextResponse.json({
       preferences: preferences || {
@@ -38,19 +41,21 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { schoolDudeCalendarId, schoolDudeDaysInAdvance } = body
 
-    const preferences = await prisma.userPreferences.upsert({
-      where: { userId: user.id },
-      update: {
-        schoolDudeCalendarId: schoolDudeCalendarId !== undefined ? schoolDudeCalendarId : undefined,
-        schoolDudeDaysInAdvance: schoolDudeDaysInAdvance !== undefined ? schoolDudeDaysInAdvance : undefined,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId: user.id,
-        schoolDudeCalendarId: schoolDudeCalendarId || 'primary',
-        schoolDudeDaysInAdvance: schoolDudeDaysInAdvance || 365,
-      },
-    })
+    const preferences = await withRetry(
+      () => prisma.userPreferences.upsert({
+        where: { userId: user.id },
+        update: {
+          schoolDudeCalendarId: schoolDudeCalendarId !== undefined ? schoolDudeCalendarId : undefined,
+          schoolDudeDaysInAdvance: schoolDudeDaysInAdvance !== undefined ? schoolDudeDaysInAdvance : undefined,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId: user.id,
+          schoolDudeCalendarId: schoolDudeCalendarId || 'primary',
+          schoolDudeDaysInAdvance: schoolDudeDaysInAdvance || 365,
+        },
+      })
+    )
 
     return NextResponse.json({ preferences })
   } catch (error: any) {

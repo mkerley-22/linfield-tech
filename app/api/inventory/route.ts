@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withRetry } from '@/lib/prisma-retry'
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,25 +28,27 @@ export async function GET(request: NextRequest) {
       ]
     }
     
-    const items = await prisma.inventoryItem.findMany({
-      where,
-      include: {
-        InventoryItemTag: {
-          include: {
-            InventoryTag: true,
+    const items = await withRetry(
+      () => prisma.inventoryItem.findMany({
+        where,
+        include: {
+          InventoryItemTag: {
+            include: {
+              InventoryTag: true,
+            },
+          },
+          InventoryDocument: true,
+          Checkout: {
+            where: {
+              status: 'checked_out',
+            },
           },
         },
-        InventoryDocument: true,
-        Checkout: {
-          where: {
-            status: 'checked_out',
-          },
+        orderBy: {
+          name: 'asc',
         },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    })
+      })
+    )
     
     return NextResponse.json({ items })
   } catch (error: any) {

@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { prisma } from './prisma'
+import { withRetry } from './prisma-retry'
 
 export async function getSession() {
   try {
@@ -11,14 +12,19 @@ export async function getSession() {
       return null
     }
 
-    // Use a timeout to prevent hanging on connection pool exhaustion
+    // Use retry wrapper with timeout to handle connection pool exhaustion
     const session = await Promise.race([
-      prisma.session.findUnique({
-        where: { token: sessionToken },
-        include: { User: true },
-      }),
+      withRetry(
+        () =>
+          prisma.session.findUnique({
+            where: { token: sessionToken },
+            include: { User: true },
+          }),
+        3, // 3 retries
+        1000 // 1 second base delay
+      ),
       new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+        setTimeout(() => reject(new Error('Database query timeout')), 10000)
       )
     ]) as any
 
