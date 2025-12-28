@@ -117,7 +117,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
       onClick={onClose}
     >
       <div 
-        className="bg-white md:rounded-lg shadow-xl max-w-2xl w-full h-[calc(100vh-4rem)] md:h-auto md:max-h-[90vh] overflow-y-auto md:animate-none animate-slide-up"
+        className="bg-white md:rounded-lg shadow-xl max-w-2xl w-full h-[calc(100vh-4rem)] md:h-auto md:max-h-[90vh] overflow-hidden md:overflow-y-auto flex flex-col md:animate-none animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {isLoading ? (
@@ -126,9 +126,9 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
           </div>
         ) : item ? (
           <>
-            {/* Image Section */}
+            {/* Image Section - Fills available space */}
             {item.imageUrl && (
-              <div className="relative w-full h-48 md:aspect-square md:h-auto bg-gray-100 md:rounded-t-lg overflow-hidden">
+              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
                 {/* Close Button */}
                 <button
                   onClick={onClose}
@@ -144,7 +144,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
             {!item.imageUrl && (
-              <div className="relative w-full h-48 md:aspect-square md:h-auto bg-gray-100 md:rounded-t-lg overflow-hidden">
+              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
                 {/* Close Button */}
                 <button
                   onClick={onClose}
@@ -155,7 +155,8 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
 
-            <div className="p-3 md:p-6 flex flex-col h-[calc(100vh-4rem-12rem)] md:h-auto">
+            {/* Content Section - Fixed at bottom */}
+            <div className="p-3 md:p-6 flex flex-col bg-white flex-shrink-0">
               {/* Title and Actions */}
               <div className="flex items-start justify-between mb-3 md:mb-6">
                 <h1 className="text-lg md:text-2xl font-bold text-gray-900 pr-2 md:pr-4 flex-1">{item.name}</h1>
