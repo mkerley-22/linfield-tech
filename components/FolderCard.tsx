@@ -20,18 +20,9 @@ export default function FolderCard({
   subfolderCount = 0,
   description 
 }: FolderCardProps) {
-  // Lighten the color for the tab
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 37, g: 99, b: 235 }
-  }
-
-  const rgb = hexToRgb(color)
-  const lighterColor = `rgb(${Math.min(255, rgb.r + 40)}, ${Math.min(255, rgb.g + 40)}, ${Math.min(255, rgb.b + 40)})`
+  const folderIcon = fileCount > 0 
+    ? '/folder-icons/folder-files.svg'
+    : '/folder-icons/folder-empty.svg'
 
   return (
     <Link
@@ -41,24 +32,11 @@ export default function FolderCard({
       <div className="relative bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
         {/* Folder Icon Container */}
         <div className="relative h-32 mb-4 flex items-center justify-center">
-          {/* Simple Folder Shape */}
-          <div className="relative">
-            {/* Main folder body */}
-            <div
-              className="relative w-24 h-20 rounded-lg shadow-sm"
-              style={{
-                backgroundColor: color,
-              }}
-            >
-              {/* Folder tab (top-left) */}
-              <div
-                className="absolute -top-2 left-2 w-10 h-4 rounded-t"
-                style={{
-                  backgroundColor: lighterColor,
-                }}
-              />
-            </div>
-          </div>
+          <img
+            src={folderIcon}
+            alt={fileCount > 0 ? 'Folder with files' : 'Empty folder'}
+            className="w-32 h-24 object-contain"
+          />
         </div>
 
         {/* Folder Name and Info */}
