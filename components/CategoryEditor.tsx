@@ -50,23 +50,6 @@ export default function CategoryEditor({
     }
     loadCategories()
   }, [categoryId])
-    const loadCategories = async () => {
-      try {
-        const response = await fetch('/api/categories')
-        if (response.ok) {
-          const data = await response.json()
-          // Filter out current category if editing
-          const filtered = categoryId 
-            ? data.filter((cat: any) => cat.id !== categoryId)
-            : data
-          setCategories(filtered)
-        }
-      } catch (error) {
-        console.error('Failed to load categories:', error)
-      }
-    }
-    loadCategories()
-  })
 
   const handleSave = async () => {
     if (!name.trim()) {
