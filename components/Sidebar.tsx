@@ -101,7 +101,7 @@ export default function Sidebar() {
     <>
       {/* Knowledge Base Secondary Nav - Only on desktop when Knowledge Base is active */}
       {isKnowledgeBaseActive && (
-        <div className="hidden lg:block fixed left-64 top-0 bottom-0 z-30">
+        <div className="hidden lg:block fixed left-64 top-0 bottom-0 z-30 overflow-hidden" style={{ willChange: 'transform' }}>
           <KnowledgeBaseNav />
         </div>
       )}

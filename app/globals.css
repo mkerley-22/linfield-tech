@@ -32,6 +32,16 @@ body.knowledge-base-active main {
   }
 }
 
+/* Ensure Knowledge Base nav stays fixed when scrolling */
+body.knowledge-base-active {
+  position: relative;
+}
+
+body.knowledge-base-active > div[class*="fixed"][class*="left-64"] {
+  position: fixed !important;
+  transform: none !important;
+}
+
 /* Rich text editor styles */
 .ProseMirror {
   outline: none;
