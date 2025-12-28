@@ -735,15 +735,15 @@ export default function KnowledgeBaseNav() {
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900">Knowledge Base</h2>
+          <h2 className="font-semibold text-gray-900 flex-1">Knowledge Base</h2>
           <div 
-            className="relative" 
+            className="relative flex-shrink-0" 
             ref={dropdownRef}
             onMouseEnter={() => setShowDropdown(true)}
             onMouseLeave={() => setShowDropdown(false)}
           >
             <button
-              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors flex-shrink-0"
+              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors"
               title="Add New"
             >
               <Plus className="w-4 h-4 text-gray-600" />
