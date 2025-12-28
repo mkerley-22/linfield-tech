@@ -6,7 +6,6 @@ import { Save, ArrowLeft, Loader2 } from 'lucide-react'
 import RichTextEditor from './RichTextEditor'
 import AIAssistant from './AIAssistant'
 import FileUpload from './FileUpload'
-import DriveIntegration from './DriveIntegration'
 import { Button } from './ui/Button'
 import { slugify } from '@/lib/utils'
 import { useIntegration } from '@/hooks/useIntegration'
@@ -54,13 +53,6 @@ export default function PageEditor({
   const [uploadingHeaderImage, setUploadingHeaderImage] = useState(false)
   const [saving, setSaving] = useState(false)
   const { enabled: aiEnabled } = useIntegration('ai')
-  const { enabled: googleEnabled } = useIntegration('google')
-
-  const loadDriveFiles = async () => {
-    if (!currentPageId) return
-    // Reload page to show new Drive files
-    window.location.reload()
-  }
 
   useEffect(() => {
     // Fetch categories
@@ -493,19 +485,6 @@ export default function PageEditor({
             onDelete={handleFileDelete}
           />
         </div>
-
-        {currentPageId && googleEnabled && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Google Drive Files
-            </label>
-            <DriveIntegration
-              pageId={currentPageId}
-              categoryId={categoryId || undefined}
-              onFilesLinked={loadDriveFiles}
-            />
-          </div>
-        )}
       </div>
     </div>
   )

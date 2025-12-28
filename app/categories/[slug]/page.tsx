@@ -3,7 +3,6 @@ import Sidebar from '@/components/Sidebar'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Edit, ArrowLeft, FileText, Plus } from 'lucide-react'
-import DriveIntegrationWrapper from '@/components/DriveIntegrationWrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,10 +77,6 @@ export default async function CategoryView({ params }: { params: { slug: string 
                 </Link>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <DriveIntegrationWrapper categoryId={category.id} />
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
