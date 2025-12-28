@@ -153,16 +153,11 @@ export async function GET(request: NextRequest) {
     // Suggest optimal quantities
     const quantitySuggestions = items
       .map(item => {
-        const maxCheckedOut = Math.max(
-          ...checkouts
-            .filter(c => c.inventoryId === item.id)
-            .map(c => c.quantity || 1),
-          0
-        )
-        const avgCheckedOut = checkouts
-          .filter(c => c.inventoryId === item.id)
-          .reduce((sum, c) => sum + (c.quantity || 1), 0) / 
-          Math.max(checkouts.filter(c => c.inventoryId === item.id).length, 1)
+        // Checkout doesn't have quantity field, each checkout is typically 1 item
+        // But we can look at how many times an item was checked out
+        const checkoutCount = checkouts.filter(c => c.inventoryId === item.id).length
+        const maxCheckedOut = Math.max(checkoutCount, 0)
+        const avgCheckedOut = checkoutCount / Math.max(checkouts.filter(c => c.inventoryId === item.id).length, 1)
 
         return {
           itemId: item.id,
