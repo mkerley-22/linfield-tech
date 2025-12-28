@@ -7,7 +7,6 @@ import Sidebar from '@/components/Sidebar'
 import { Settings as SettingsIcon, Sparkles, Cloud, Zap, Calendar, Users, Globe } from 'lucide-react'
 import GoogleAuth from '@/components/GoogleAuth'
 import GoogleCalendarAuth from '@/components/GoogleCalendarAuth'
-import AIConfig from '@/components/AIConfig'
 import SchoolDudeIntegration from '@/components/SchoolDudeIntegration'
 import UsersManagement from '@/components/UsersManagement'
 import Toggle from '@/components/ui/Toggle'
@@ -22,7 +21,6 @@ export default function SettingsPage() {
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [aiEnabled, setAiEnabled] = useState(false)
 
   useEffect(() => {
     // Check authentication and load user
@@ -57,25 +55,6 @@ export default function SettingsPage() {
   // Load settings after user is loaded
   useEffect(() => {
     if (user && !isLoading) {
-      // AI is now automatically enabled if API key is configured
-      // Check if API key exists
-      const checkAIStatus = async () => {
-        try {
-          const response = await fetch('/api/ai/status')
-          if (response.ok) {
-            const data = await response.json()
-            setAiEnabled(data.configured || localStorage.getItem('ai_configured') === 'true')
-          } else {
-            // Fallback: check localStorage
-            setAiEnabled(localStorage.getItem('ai_configured') === 'true')
-          }
-        } catch (error) {
-          // Fallback: check localStorage
-          setAiEnabled(localStorage.getItem('ai_configured') === 'true')
-        }
-      }
-      checkAIStatus()
-
       // Load public site settings
       if (activeTab === 'public-site') {
         loadPublicSiteSettings()
@@ -250,45 +229,6 @@ export default function SettingsPage() {
                 <div className="pt-4">
                   <GoogleCalendarAuth />
                 </div>
-              </div>
-            </div>
-
-            {/* AI Configuration */}
-            <div className="bg-white rounded-lg border border-gray-200 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-6 h-6 text-blue-600" />
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">AI Configuration</h2>
-                    <p className="text-sm text-gray-500">AI-powered content generation</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {aiEnabled ? (
-                  <>
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-800">
-                        ✓ AI features are enabled. You can use the AI Writing Assistant when creating pages.
-                      </p>
-                    </div>
-                    <div className="pt-4 border-t border-gray-200">
-                      <AIConfig />
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-sm text-yellow-800">
-                        AI features require an OpenAI API key. Configure your API key below to enable AI-powered content generation.
-                      </p>
-                    </div>
-                    <div className="pt-4 border-t border-gray-200">
-                      <AIConfig />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
