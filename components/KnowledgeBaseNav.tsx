@@ -16,10 +16,20 @@ interface Category {
   children?: Category[]
 }
 
+interface PageTag {
+  id: string
+  name: string
+  color?: string
+  _count?: {
+    PageTag: number
+  }
+}
+
 export default function KnowledgeBaseNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<PageTag[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'folders' | 'tags'>('folders')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
@@ -30,10 +40,27 @@ export default function KnowledgeBaseNav() {
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null)
   const [dragOverCategoryId, setDragOverCategoryId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [showTagModal, setShowTagModal] = useState(false)
+  const [editingTag, setEditingTag] = useState<PageTag | null>(null)
+  const [tagName, setTagName] = useState('')
+  const [tagColor, setTagColor] = useState('#2563eb')
 
   useEffect(() => {
     fetchCategories()
+    fetchTags()
   }, [])
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch('/api/tags')
+      if (response.ok) {
+        const data = await response.json()
+        setTags(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch tags:', error)
+    }
+  }
 
   // Detect selected category from pathname
   useEffect(() => {
@@ -322,6 +349,75 @@ export default function KnowledgeBaseNav() {
     }
   }
 
+  const handleNewTag = () => {
+    setShowDropdown(false)
+    setEditingTag(null)
+    setTagName('')
+    setTagColor('#2563eb')
+    setShowTagModal(true)
+  }
+
+  const handleSaveTag = async () => {
+    if (!tagName.trim()) {
+      alert('Tag name is required')
+      return
+    }
+
+    try {
+      const url = editingTag ? `/api/tags/${editingTag.id}` : '/api/tags'
+      const method = editingTag ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tagName.trim(), color: tagColor }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to save tag')
+      }
+
+      await fetchTags()
+      setShowTagModal(false)
+      setEditingTag(null)
+      setTagName('')
+      setTagColor('#2563eb')
+    } catch (error: any) {
+      console.error('Failed to save tag:', error)
+      alert(error.message || 'Failed to save tag. Please try again.')
+    }
+  }
+
+  const handleDeleteTag = async (tagId: string) => {
+    if (!confirm('Are you sure you want to delete this tag? It will be removed from all pages.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/tags/${tagId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete tag')
+      }
+
+      await fetchTags()
+    } catch (error: any) {
+      console.error('Failed to delete tag:', error)
+      alert(error.message || 'Failed to delete tag. Please try again.')
+    }
+  }
+
+  const handleEditTag = (tag: PageTag) => {
+    setEditingTag(tag)
+    setTagName(tag.name)
+    setTagColor(tag.color || '#2563eb')
+    setShowTagModal(true)
+  }
+
   const renderCategory = (category: Category, level: number = 0) => {
     const isExpanded = expandedCategories.has(category.id)
     const pageCount = getPageCount(category)
@@ -474,6 +570,13 @@ export default function KnowledgeBaseNav() {
                   <FileText className="w-4 h-4" />
                   New Page
                 </button>
+                <button
+                  onClick={handleNewTag}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <Tag className="w-4 h-4" />
+                  New Tag
+                </button>
               </div>
             )}
           </div>
@@ -558,12 +661,158 @@ export default function KnowledgeBaseNav() {
             )}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <Tag className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Tags coming soon</p>
+          <div className="space-y-1">
+            {tags.length > 0 ? (
+              tags
+                .filter(tag => {
+                  if (!searchQuery) return true
+                  return tag.name.toLowerCase().includes(searchQuery.toLowerCase())
+                })
+                .map((tag) => {
+                  const pageCount = tag._count?.PageTag || 0
+                  return (
+                    <div
+                      key={tag.id}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors group hover:bg-gray-50"
+                    >
+                      <Link
+                        href={`/pages?tag=${tag.id}`}
+                        className="flex items-center gap-2 flex-1 min-w-0"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: tag.color || '#2563eb' }}
+                        />
+                        <span className="truncate flex-1 text-gray-700">{tag.name}</span>
+                        {pageCount > 0 && (
+                          <span className="text-xs text-gray-500 flex-shrink-0">{pageCount}</span>
+                        )}
+                      </Link>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleEditTag(tag)
+                          }}
+                          className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-gray-600"
+                          title="Edit tag"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleDeleteTag(tag.id)
+                          }}
+                          className="w-6 h-6 flex items-center justify-center hover:bg-red-100 rounded text-red-600"
+                          title="Delete tag"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+            ) : (
+              <div className="text-center py-8">
+                <Tag className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">
+                  {searchQuery ? 'No tags found' : 'No tags yet'}
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={handleNewTag}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    Create your first tag
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Tag Modal */}
+      {showTagModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingTag ? 'Edit Tag' : 'New Tag'}
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tag Name
+                </label>
+                <input
+                  type="text"
+                  value={tagName}
+                  onChange={(e) => setTagName(e.target.value)}
+                  placeholder="e.g., microphone, beginner, gym"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveTag()
+                    } else if (e.key === 'Escape') {
+                      setShowTagModal(false)
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={tagColor}
+                    onChange={(e) => setTagColor(e.target.value)}
+                    className="w-12 h-10 border border-gray-200 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={tagColor}
+                    onChange={(e) => setTagColor(e.target.value)}
+                    placeholder="#2563eb"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 font-mono text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowTagModal(false)
+                  setEditingTag(null)
+                  setTagName('')
+                  setTagColor('#2563eb')
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveTag}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                {editingTag ? 'Update' : 'Create'} Tag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -7,12 +7,22 @@ import { Button } from '@/components/ui/Button'
 
 export const dynamic = 'force-dynamic'
 
-async function getPages() {
+async function getPages(tagId?: string) {
+  const where: any = {
+    parentId: null,
+    // Show all pages, not just published ones (for admin view)
+  }
+
+  if (tagId) {
+    where.PageTag = {
+      some: {
+        tagId,
+      },
+    }
+  }
+
   const pages = await prisma.page.findMany({
-    where: {
-      parentId: null,
-      // Show all pages, not just published ones (for admin view)
-    },
+    where,
     include: {
       other_Page: {
         where: { isPublished: true },
@@ -20,14 +30,36 @@ async function getPages() {
       },
       Attachment: true,
       Category: true,
+      PageTag: {
+        include: {
+          Tag: true,
+        },
+      },
     },
     orderBy: { order: 'asc' },
   })
   return pages
 }
 
-export default async function PagesPage() {
-  const pages = await getPages()
+async function getTag(tagId: string) {
+  try {
+    const tag = await prisma.tag.findUnique({
+      where: { id: tagId },
+    })
+    return tag
+  } catch {
+    return null
+  }
+}
+
+export default async function PagesPage({
+  searchParams,
+}: {
+  searchParams: { tag?: string }
+}) {
+  const tagId = searchParams.tag
+  const pages = await getPages(tagId)
+  const tag = tagId ? await getTag(tagId) : null
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -37,11 +69,19 @@ export default async function PagesPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 lg:mb-8 gap-4">
             <div>
               <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">
-                Pages
+                {tag ? `Pages tagged "${tag.name}"` : 'Pages'}
               </h1>
               <p className="text-sm lg:text-base text-gray-600">
-                All knowledge base pages
+                {tag ? `All pages with the ${tag.name} tag` : 'All knowledge base pages'}
               </p>
+              {tag && (
+                <Link
+                  href="/pages"
+                  className="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-700"
+                >
+                  ← View all pages
+                </Link>
+              )}
             </div>
             <NewDropdown />
           </div>
