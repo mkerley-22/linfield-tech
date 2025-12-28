@@ -57,12 +57,26 @@ export async function GET(request: NextRequest) {
       include: {
         Page: {
           where: { isPublished: true },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            categoryId: true,
+          },
           orderBy: { order: 'asc' },
         },
         children: {
           include: {
             Page: {
               where: { isPublished: true },
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                description: true,
+                categoryId: true,
+              },
               orderBy: { order: 'asc' },
             },
           },

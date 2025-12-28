@@ -3,8 +3,16 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Plus, ChevronRight, ChevronDown, Folder, Tag, FileText } from 'lucide-react'
+import { Search, Plus, ChevronRight, ChevronDown, Folder, Tag, FileText, GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+interface Page {
+  id: string
+  title: string
+  slug: string
+  description?: string | null
+  categoryId?: string | null
+}
 
 interface Category {
   id: string
@@ -12,7 +20,7 @@ interface Category {
   slug: string
   color?: string
   parentId?: string | null
-  Page: Array<{ id: string }>
+  Page: Page[]
   children?: Category[]
 }
 
@@ -40,6 +48,9 @@ export default function KnowledgeBaseNav() {
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null)
   const [dragOverCategoryId, setDragOverCategoryId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [draggedPageId, setDraggedPageId] = useState<string | null>(null)
+  const [dragOverPageTargetId, setDragOverPageTargetId] = useState<string | null>(null)
+  const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
   const [showTagModal, setShowTagModal] = useState(false)
   const [editingTag, setEditingTag] = useState<PageTag | null>(null)
   const [tagName, setTagName] = useState('')
@@ -123,6 +134,14 @@ export default function KnowledgeBaseNav() {
                   next.add(cat.id)
                   return next
                 })
+                // Also expand pages for this category
+                if (cat.Page && cat.Page.length > 0) {
+                  setExpandedPages(prev => {
+                    const next = new Set(prev)
+                    next.add(cat.id)
+                    return next
+                  })
+                }
                 if (cat.parentId) {
                   expandCategory(cats)
                 }
@@ -147,11 +166,88 @@ export default function KnowledgeBaseNav() {
       const next = new Set(prev)
       if (next.has(categoryId)) {
         next.delete(categoryId)
+        // Also collapse pages
+        setExpandedPages(prevPages => {
+          const nextPages = new Set(prevPages)
+          nextPages.delete(categoryId)
+          return nextPages
+        })
       } else {
         next.add(categoryId)
       }
       return next
     })
+  }
+
+  const togglePages = (categoryId: string) => {
+    setExpandedPages(prev => {
+      const next = new Set(prev)
+      if (next.has(categoryId)) {
+        next.delete(categoryId)
+      } else {
+        next.add(categoryId)
+      }
+      return next
+    })
+  }
+
+  const handlePageDragStart = (e: React.DragEvent, pageId: string) => {
+    setDraggedPageId(pageId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', pageId)
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5'
+    }
+  }
+
+  const handlePageDragEnd = (e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1'
+    }
+    setDraggedPageId(null)
+    setDragOverPageTargetId(null)
+  }
+
+  const handlePageDragOver = (e: React.DragEvent, categoryId: string | null) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverPageTargetId(categoryId)
+  }
+
+  const handlePageDragLeave = () => {
+    setDragOverPageTargetId(null)
+  }
+
+  const handlePageDrop = async (e: React.DragEvent, targetCategoryId: string | null) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!draggedPageId) return
+
+    try {
+      const response = await fetch(`/api/pages/${draggedPageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryId: targetCategoryId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to move page')
+      }
+
+      // Refresh categories to show updated structure
+      await fetchCategories()
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to move page:', error)
+      alert('Failed to move page. Please try again.')
+    } finally {
+      setDraggedPageId(null)
+      setDragOverPageTargetId(null)
+    }
   }
 
   const getPageCount = (category: Category): number => {
@@ -420,11 +516,15 @@ export default function KnowledgeBaseNav() {
 
   const renderCategory = (category: Category, level: number = 0) => {
     const isExpanded = expandedCategories.has(category.id)
+    const pagesExpanded = expandedPages.has(category.id)
     const pageCount = getPageCount(category)
+    const directPageCount = category.Page?.length || 0
     const isActive = pathname === `/categories/${category.slug}` || pathname?.startsWith(`/categories/${category.slug}/`)
     const hasChildren = category.children && category.children.length > 0
+    const hasPages = directPageCount > 0
     const isDragged = draggedCategoryId === category.id
     const isDragOver = dragOverCategoryId === category.id
+    const isPageDragOver = dragOverPageTargetId === category.id
     const canDrop = draggedCategoryId && 
                     draggedCategoryId !== category.id && 
                     !isDescendant(draggedCategoryId, category.id, categories)
@@ -442,16 +542,33 @@ export default function KnowledgeBaseNav() {
           draggable
           onDragStart={(e) => handleDragStart(e, category.id)}
           onDragEnd={handleDragEnd}
-          onDragOver={(e) => handleDragOver(e, category.id)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, category.id)}
+          onDragOver={(e) => {
+            handleDragOver(e, category.id)
+            if (draggedPageId) {
+              handlePageDragOver(e, category.id)
+            }
+          }}
+          onDragLeave={(e) => {
+            handleDragLeave(e)
+            if (draggedPageId) {
+              handlePageDragLeave()
+            }
+          }}
+          onDrop={(e) => {
+            if (draggedCategoryId) {
+              handleDrop(e, category.id)
+            } else if (draggedPageId) {
+              handlePageDrop(e, category.id)
+            }
+          }}
           className={cn(
             'flex items-center gap-2 px-3 py-1.5 rounded-md transition-all cursor-move group',
             isActive
               ? 'bg-blue-50 text-blue-700'
               : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
             isDragged && 'opacity-50',
-            isDragOver && canDrop && 'bg-blue-100 border-2 border-blue-400 border-dashed',
+            (isDragOver && canDrop) && 'bg-blue-100 border-2 border-blue-400 border-dashed',
+            (isPageDragOver && draggedPageId) && 'bg-blue-100 border-2 border-blue-400 border-dashed',
             isDragging && !isDragged && canDrop && 'hover:bg-blue-50'
           )}
           style={{ paddingLeft: `${12 + level * 16}px` }}
@@ -461,7 +578,7 @@ export default function KnowledgeBaseNav() {
             }
           }}
         >
-          {hasChildren ? (
+          {(hasChildren || hasPages) ? (
             <button
               onClick={(e) => {
                 e.preventDefault()
@@ -509,9 +626,87 @@ export default function KnowledgeBaseNav() {
             )}
           </Link>
         </div>
-        {hasChildren && isExpanded && (
+        {isExpanded && (
           <div>
-            {category.children?.map(child => renderCategory(child, level + 1))}
+            {/* Render pages for this category */}
+            {hasPages && (
+              <div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    togglePages(category.id)
+                  }}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors w-full',
+                    'ml-4'
+                  )}
+                  style={{ paddingLeft: `${12 + (level + 1) * 16}px` }}
+                >
+                  {pagesExpanded ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" />
+                  )}
+                  <span>Pages ({directPageCount})</span>
+                </button>
+                {pagesExpanded && category.Page && category.Page.length > 0 && (
+                  <div>
+                    {category.Page.map((page, index) => {
+                      const isLast = index === category.Page.length - 1
+                      const isPageDragged = draggedPageId === page.id
+                      return (
+                        <div
+                          key={page.id}
+                          draggable
+                          onDragStart={(e) => handlePageDragStart(e, page.id)}
+                          onDragEnd={handlePageDragEnd}
+                          className={cn(
+                            'flex items-center gap-2 px-3 py-1 rounded-md transition-colors cursor-move group',
+                            'hover:bg-gray-50',
+                            isPageDragged && 'opacity-50'
+                          )}
+                          style={{ paddingLeft: `${12 + (level + 2) * 16}px` }}
+                        >
+                          <div className="w-4 h-4 flex items-center justify-center relative flex-shrink-0">
+                            {isLast ? (
+                              <>
+                                <div className="w-0.5 h-4 bg-gray-300 absolute top-0"></div>
+                                <div className="w-2 h-0.5 bg-gray-300 absolute left-0"></div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-0.5 h-full bg-gray-300 absolute top-0"></div>
+                                <div className="w-2 h-0.5 bg-gray-300 absolute left-0"></div>
+                              </>
+                            )}
+                          </div>
+                          <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                          <Link
+                            href={`/pages/${page.slug}`}
+                            className="flex items-center gap-2 flex-1 min-w-0"
+                            onClick={(e) => {
+                              if (isDragging || draggedPageId) {
+                                e.preventDefault()
+                              }
+                            }}
+                          >
+                            <FileText className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                            <span className="truncate text-sm text-gray-700">{page.title}</span>
+                          </Link>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Render child categories */}
+            {hasChildren && (
+              <div>
+                {category.children?.map(child => renderCategory(child, level + 1))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -633,8 +828,22 @@ export default function KnowledgeBaseNav() {
             onDragOver={(e) => {
               e.preventDefault()
               e.dataTransfer.dropEffect = 'move'
+              if (draggedPageId) {
+                handlePageDragOver(e, null)
+              }
             }}
-            onDrop={handleDropOnRoot}
+            onDragLeave={(e) => {
+              if (draggedPageId) {
+                handlePageDragLeave()
+              }
+            }}
+            onDrop={(e) => {
+              if (draggedCategoryId) {
+                handleDropOnRoot(e)
+              } else if (draggedPageId) {
+                handlePageDrop(e, null)
+              }
+            }}
           >
             {topLevelCategories.length > 0 ? (
               topLevelCategories.map(category => renderCategory(category))
@@ -654,11 +863,18 @@ export default function KnowledgeBaseNav() {
               </div>
             )}
             {/* Drop zone indicator at the bottom when dragging */}
-            {isDragging && draggedCategoryId && (
-              <div className="mt-2 p-2 border-2 border-dashed border-blue-300 rounded-md bg-blue-50 text-center">
-                <p className="text-xs text-blue-600">Drop here to move to root level</p>
+            {(isDragging && draggedCategoryId) || (draggedPageId && dragOverPageTargetId === null) ? (
+              <div className={cn(
+                "mt-2 p-2 border-2 border-dashed rounded-md text-center transition-colors",
+                dragOverPageTargetId === null && draggedPageId
+                  ? "border-blue-400 bg-blue-100"
+                  : "border-blue-300 bg-blue-50"
+              )}>
+                <p className="text-xs text-blue-600">
+                  {draggedPageId ? 'Drop here to move page to root' : 'Drop here to move to root level'}
+                </p>
               </div>
-            )}
+            ) : null}
           </div>
         ) : (
           <div className="space-y-1">
