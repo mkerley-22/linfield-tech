@@ -113,11 +113,11 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center md:p-4 bg-black bg-opacity-70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black bg-opacity-70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div 
-        className="bg-white md:rounded-lg shadow-xl max-w-2xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto md:animate-none animate-slide-up"
+        className="bg-white md:rounded-lg shadow-xl max-w-2xl w-full h-[calc(100vh-4rem)] md:h-auto md:max-h-[90vh] overflow-y-auto md:animate-none animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {isLoading ? (
