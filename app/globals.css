@@ -42,6 +42,13 @@ body.knowledge-base-active > div[class*="fixed"][class*="left-64"] {
   transform: none !important;
 }
 
+/* Prevent form containers from affecting fixed positioning */
+body.knowledge-base-active .bg-white.rounded-lg {
+  position: relative;
+  transform: none;
+  will-change: auto;
+}
+
 /* Rich text editor styles */
 .ProseMirror {
   outline: none;

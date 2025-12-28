@@ -353,7 +353,18 @@ export default function PageEditor({
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-8 space-y-6">
+      <div 
+        className="bg-white rounded-lg border border-gray-200 p-8 space-y-6" 
+        style={{ position: 'relative', transform: 'none' }}
+        onWheel={(e) => {
+          // Prevent scroll events from affecting fixed navigation
+          e.stopPropagation()
+        }}
+        onTouchMove={(e) => {
+          // Prevent touch scroll events from affecting fixed navigation
+          e.stopPropagation()
+        }}
+      >
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Page Title *
