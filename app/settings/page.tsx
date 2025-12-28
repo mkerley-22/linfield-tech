@@ -119,10 +119,6 @@ export default function SettingsPage() {
   }
 
 
-  const handleAIToggle = (enabled: boolean) => {
-    setAiEnabled(enabled)
-    localStorage.setItem('integration_ai_enabled', String(enabled))
-  }
 
   if (isLoading) {
     return (
