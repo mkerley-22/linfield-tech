@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { Toast } from '@/components/ui/Toast'
 import InventoryDetailModal from '@/components/InventoryDetailModal'
+import InventoryAssistant from '@/components/InventoryAssistant'
 
 interface InventoryItem {
   id: string
@@ -790,6 +791,9 @@ export default function InventoryPage() {
         }}
         onDelete={handleModalDelete}
       />
+
+      {/* Inventory Assistant */}
+      <InventoryAssistant />
     </div>
   )
 }
