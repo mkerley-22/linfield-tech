@@ -539,35 +539,31 @@ export default function KnowledgeBaseNav() {
         {/* Curved connecting lines */}
         {level > 0 && (
           <div className="absolute pointer-events-none" style={{ left: `${lineLeft}px`, top: 0, bottom: 0, width: '20px' }}>
+            {/* Vertical trunk line - continues if not last or has expanded children/pages */}
+            {(!isLast || (hasChildren && isExpanded) || (hasPages && pagesExpanded)) && (
+              <div 
+                className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300"
+                style={{ transform: 'translateX(-50%)' }}
+              />
+            )}
+            {/* Curved horizontal branch to folder - smooth organic curve */}
             <svg
               className="absolute"
               style={{
                 left: '0',
-                top: '0',
+                top: '12px',
                 width: '20px',
-                height: '100%',
+                height: '12px',
                 overflow: 'visible',
               }}
-              viewBox="0 0 20 1000"
-              preserveAspectRatio="none"
+              viewBox="0 0 20 12"
             >
-              {/* Vertical trunk line - continues if not last or has expanded children/pages */}
-              {(!isLast || (hasChildren && isExpanded) || (hasPages && pagesExpanded)) && (
-                <line
-                  x1="8"
-                  y1="0"
-                  x2="8"
-                  y2="1000"
-                  stroke="#d1d5db"
-                  strokeWidth="1"
-                />
-              )}
-              {/* Curved horizontal branch to folder - smooth organic curve at item center (around 18px from top) */}
               <path
-                d="M 8 18 Q 10 16 16 18"
+                d="M 8 6 Q 12 2 16 6"
                 stroke="#d1d5db"
                 strokeWidth="1"
                 fill="none"
+                strokeLinecap="round"
               />
             </svg>
           </div>
@@ -738,35 +734,31 @@ export default function KnowledgeBaseNav() {
                         >
                           {/* Curved connecting line for page */}
                           <div className="absolute pointer-events-none" style={{ left: `${pageLineLeft}px`, top: 0, bottom: 0, width: '20px' }}>
+                            {/* Vertical line - continues if not last */}
+                            {!isPageLast && (
+                              <div 
+                                className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300"
+                                style={{ transform: 'translateX(-50%)' }}
+                              />
+                            )}
+                            {/* Curved horizontal branch to page - smooth organic curve */}
                             <svg
                               className="absolute"
                               style={{
                                 left: '0',
-                                top: '0',
+                                top: '12px',
                                 width: '20px',
-                                height: '100%',
+                                height: '12px',
                                 overflow: 'visible',
                               }}
-                              viewBox="0 0 20 1000"
-                              preserveAspectRatio="none"
+                              viewBox="0 0 20 12"
                             >
-                              {/* Vertical line - continues if not last */}
-                              {!isPageLast && (
-                                <line
-                                  x1="8"
-                                  y1="0"
-                                  x2="8"
-                                  y2="1000"
-                                  stroke="#d1d5db"
-                                  strokeWidth="1"
-                                />
-                              )}
-                              {/* Curved horizontal branch to page - smooth organic curve at item center (around 18px from top) */}
                               <path
-                                d="M 8 18 Q 10 16 16 18"
+                                d="M 8 6 Q 12 2 16 6"
                                 stroke="#d1d5db"
                                 strokeWidth="1"
                                 fill="none"
+                                strokeLinecap="round"
                               />
                             </svg>
                           </div>
