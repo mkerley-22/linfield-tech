@@ -252,7 +252,7 @@ export default function InventoryDetailPage({ params }: { params: { id: string }
 
             <div className="mb-6">
               <div className="flex items-center gap-4 mb-2">
-                <h1 className="text-4xl font-bold text-gray-900">{item.name}</h1>
+                <h1 className="text-2xl lg:text-4xl font-bold text-gray-900">{item.name}</h1>
                 <Button
                   variant="secondary"
                   onClick={() => router.push(`/inventory/${item.id}/edit`)}

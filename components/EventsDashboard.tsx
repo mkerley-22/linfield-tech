@@ -329,11 +329,10 @@ export default function EventsDashboard() {
         }}
       />
       
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Upcoming Events</h2>
-          <p className="text-xs lg:text-sm text-gray-600 mt-1">Tech events and meetings</p>
-        </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Upcoming Events</h2>
+            </div>
         <div className="flex items-center gap-2 flex-wrap">
           {calendars.length > 0 && (
             <>

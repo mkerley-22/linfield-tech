@@ -77,7 +77,7 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
             <ArrowLeft className="w-4 h-4" />
             Back to Equipment
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">Edit Equipment</h1>
+          <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">Edit Equipment</h1>
           <div className="bg-white rounded-lg border border-gray-200 p-8">
             <InventoryEditor
               itemId={params.id}
