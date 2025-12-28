@@ -38,7 +38,7 @@ export default function EditEventPage() {
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-8">
+          <div className="max-w-4xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <Loader2 className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
@@ -56,7 +56,7 @@ export default function EditEventPage() {
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-8">
+          <div className="max-w-4xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-red-900 mb-2">Error</h2>
               <p className="text-red-700">{error || 'Event not found'}</p>
@@ -77,9 +77,9 @@ export default function EditEventPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Edit Event</h1>
+        <div className="max-w-4xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
+          <div className="mb-2">
+            <h1 className="text-2xl lg:text-4xl font-bold text-gray-900">Edit Event</h1>
             <p className="text-gray-600 mt-1">Update event details</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
