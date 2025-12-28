@@ -287,10 +287,25 @@ model Page {
   Page        Page?        @relation("PageToPage", fields: [parentId], references: [id], onDelete: Cascade)
   other_Page  Page[]       @relation("PageToPage")
   PageTag     PageTag[]
+  RelatedPagesFrom RelatedPage[] @relation("PageFrom")
+  RelatedPagesTo   RelatedPage[] @relation("PageTo")
 
   @@index([categoryId])
   @@index([parentId])
   @@index([slug])
+}
+
+model RelatedPage {
+  id        String   @id @default(cuid())
+  fromPageId String
+  toPageId   String
+  createdAt DateTime @default(now())
+  FromPage  Page     @relation("PageFrom", fields: [fromPageId], references: [id], onDelete: Cascade)
+  ToPage    Page     @relation("PageTo", fields: [toPageId], references: [id], onDelete: Cascade)
+
+  @@unique([fromPageId, toPageId])
+  @@index([fromPageId])
+  @@index([toPageId])
 }
 
 model PageTag {

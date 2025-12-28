@@ -11,9 +11,11 @@ async function getPage(slug: string) {
   const page = await prisma.page.findUnique({
     where: { slug },
     include: {
-      other_Page: {
-        where: { isPublished: true },
-        orderBy: { order: 'asc' },
+      RelatedPagesTo: {
+        include: {
+          ToPage: true,
+        },
+        orderBy: { createdAt: 'desc' },
       },
       Attachment: true,
       PageTag: {
@@ -26,6 +28,12 @@ async function getPage(slug: string) {
       DriveFile: true,
     },
   })
+  
+  // Filter related pages to only include published ones
+  if (page && page.RelatedPagesTo) {
+    page.RelatedPagesTo = page.RelatedPagesTo.filter((rp) => rp.ToPage.isPublished)
+  }
+  
   return page
 }
 
@@ -148,59 +156,40 @@ export default async function PageView({ params }: { params: { slug: string } })
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Subpages {page.other_Page && page.other_Page.length > 0 && `(${page.other_Page.length})`}
+          {page.RelatedPagesTo && page.RelatedPagesTo.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Related Pages {page.RelatedPagesTo.length > 0 && `(${page.RelatedPagesTo.length})`}
               </h2>
-            </div>
-            {page.other_Page && page.other_Page.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {page.other_Page.map((child) => (
-                  <Link
-                    key={child.id}
-                    href={`/pages/${child.slug}`}
-                    className="group p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all bg-white"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                {page.RelatedPagesTo
+                  .filter((rp) => rp.ToPage)
+                  .map((relatedPage) => (
+                    <Link
+                      key={relatedPage.id}
+                      href={`/pages/${relatedPage.ToPage.slug}`}
+                      className="group p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all bg-white"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
+                            {relatedPage.ToPage.title}
+                          </h3>
+                          {relatedPage.ToPage.description && (
+                            <p className="text-sm text-gray-600 line-clamp-2">
+                              {relatedPage.ToPage.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
-                          {child.title}
-                        </h3>
-                        {child.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {child.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <FileText className="w-16 h-16 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No subpages yet
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Add a subpage to organize related content
-                </p>
-                <Link
-                  href={`/pages/new?parentId=${page.id}`}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add a Subpage
-                </Link>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {page.Attachment && page.Attachment.length > 0 && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">

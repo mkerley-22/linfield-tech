@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, ArrowLeft, Loader2 } from 'lucide-react'
+import { Save, ArrowLeft, Loader2, X, Plus } from 'lucide-react'
 import RichTextEditor from './RichTextEditor'
 import AIAssistant from './AIAssistant'
 import FileUpload from './FileUpload'
@@ -50,6 +50,9 @@ export default function PageEditor({
   const [files, setFiles] = useState(initialFiles)
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
   const [parentPages, setParentPages] = useState<Array<{ id: string; title: string; parentId: string | null }>>([])
+  const [relatedPages, setRelatedPages] = useState<Array<{ id: string; ToPage: { id: string; title: string; slug: string } }>>([])
+  const [availablePages, setAvailablePages] = useState<Array<{ id: string; title: string }>>([])
+  const [selectedPageId, setSelectedPageId] = useState('')
   const [uploadingHeaderImage, setUploadingHeaderImage] = useState(false)
   const [saving, setSaving] = useState(false)
   const { enabled: aiEnabled } = useIntegration('ai')
@@ -120,6 +123,34 @@ export default function PageEditor({
         setParentPages([])
       })
   }, [currentPageId, initialParentId])
+
+  // Fetch related pages separately to avoid dependency issues
+  useEffect(() => {
+    if (currentPageId) {
+      fetch(`/api/pages/${currentPageId}/related`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setRelatedPages(data)
+            // Fetch available pages after related pages are loaded
+            fetch('/api/pages')
+              .then((res) => res.json())
+              .then((pagesData) => {
+                if (Array.isArray(pagesData)) {
+                  const relatedIds = data.map((rp: any) => rp.ToPage.id)
+                  setAvailablePages(pagesData.filter((p: any) => p.id !== currentPageId && !relatedIds.includes(p.id)))
+                }
+              })
+              .catch((err) => {
+                console.error('Failed to fetch available pages:', err)
+              })
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch related pages:', err)
+        })
+    }
+  }, [currentPageId])
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -485,6 +516,115 @@ export default function PageEditor({
             onDelete={handleFileDelete}
           />
         </div>
+
+        {currentPageId && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Related Pages
+            </label>
+            <p className="text-sm text-gray-500 mb-3">
+              Attach similar pages that are related to this one. These will appear at the bottom of the page.
+            </p>
+            
+            <div className="flex gap-2 mb-4">
+              <select
+                value={selectedPageId}
+                onChange={(e) => setSelectedPageId(e.target.value)}
+                className="flex-1 px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+              >
+                <option value="">Select a page to add...</option>
+                {availablePages
+                  .filter((p) => !relatedPages.some((rp) => rp.ToPage.id === p.id))
+                  .map((page) => (
+                    <option key={page.id} value={page.id}>
+                      {page.title}
+                    </option>
+                  ))}
+              </select>
+              <button
+                onClick={async () => {
+                  if (!selectedPageId || !currentPageId) return
+                  
+                  try {
+                    const response = await fetch(`/api/pages/${currentPageId}/related`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ toPageId: selectedPageId }),
+                    })
+
+                    if (!response.ok) {
+                      const error = await response.json()
+                      throw new Error(error.error || 'Failed to add related page')
+                    }
+
+                    const newRelated = await response.json()
+                    setRelatedPages([...relatedPages, newRelated])
+                    setSelectedPageId('')
+                    
+                    // Refresh available pages
+                    const pagesRes = await fetch('/api/pages')
+                    const pagesData = await pagesRes.json()
+                    if (Array.isArray(pagesData)) {
+                      const relatedIds = [...relatedPages, newRelated].map((rp) => rp.ToPage.id)
+                      setAvailablePages(pagesData.filter((p: any) => p.id !== currentPageId && !relatedIds.includes(p.id)))
+                    }
+                  } catch (error: any) {
+                    alert(error.message || 'Failed to add related page')
+                  }
+                }}
+                disabled={!selectedPageId}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </button>
+            </div>
+
+            {relatedPages.length > 0 && (
+              <div className="space-y-2">
+                {relatedPages.map((rp) => (
+                  <div
+                    key={rp.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                  >
+                    <span className="text-gray-900">{rp.ToPage.title}</span>
+                    <button
+                      onClick={async () => {
+                        if (!currentPageId) return
+                        
+                        try {
+                          const response = await fetch(`/api/pages/${currentPageId}/related?toPageId=${rp.ToPage.id}`, {
+                            method: 'DELETE',
+                          })
+
+                          if (!response.ok) {
+                            throw new Error('Failed to remove related page')
+                          }
+
+                          setRelatedPages(relatedPages.filter((p) => p.id !== rp.id))
+                          
+                          // Refresh available pages
+                          const pagesRes = await fetch('/api/pages')
+                          const pagesData = await pagesRes.json()
+                          if (Array.isArray(pagesData)) {
+                            const updatedRelated = relatedPages.filter((p) => p.id !== rp.id)
+                            const relatedIds = updatedRelated.map((rp) => rp.ToPage.id)
+                            setAvailablePages(pagesData.filter((p: any) => p.id !== currentPageId && !relatedIds.includes(p.id)))
+                          }
+                        } catch (error: any) {
+                          alert(error.message || 'Failed to remove related page')
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-700 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
