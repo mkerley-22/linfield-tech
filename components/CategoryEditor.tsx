@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from './ui/Button'
@@ -12,6 +12,7 @@ interface CategoryEditorProps {
   initialDescription?: string
   initialColor?: string
   initialIcon?: string
+  initialParentId?: string
 }
 
 export default function CategoryEditor({
@@ -20,12 +21,52 @@ export default function CategoryEditor({
   initialDescription = '',
   initialColor = '#2563eb',
   initialIcon = '',
+  initialParentId = '',
 }: CategoryEditorProps) {
   const router = useRouter()
   const [name, setName] = useState(initialName)
   const [description, setDescription] = useState(initialDescription)
   const [color, setColor] = useState(initialColor)
+  const [parentId, setParentId] = useState(initialParentId)
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
   const [saving, setSaving] = useState(false)
+
+  // Load categories for parent selection
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        if (response.ok) {
+          const data = await response.json()
+          // Filter out current category if editing and only show top-level categories as parents
+          const filtered = categoryId 
+            ? data.filter((cat: any) => cat.id !== categoryId && !cat.parentId)
+            : data.filter((cat: any) => !cat.parentId)
+          setCategories(filtered)
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error)
+      }
+    }
+    loadCategories()
+  }, [categoryId])
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        if (response.ok) {
+          const data = await response.json()
+          // Filter out current category if editing
+          const filtered = categoryId 
+            ? data.filter((cat: any) => cat.id !== categoryId)
+            : data
+          setCategories(filtered)
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error)
+      }
+    }
+    loadCategories()
+  })
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -42,6 +83,7 @@ export default function CategoryEditor({
           name,
           description,
           color,
+          parentId: parentId || null,
         }),
       })
 
@@ -102,6 +144,27 @@ export default function CategoryEditor({
             placeholder="e.g., Audio, Video, Networking..."
             className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg text-gray-900"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Parent Category (Optional)
+          </label>
+          <select
+            value={parentId}
+            onChange={(e) => setParentId(e.target.value)}
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+          >
+            <option value="">None (Top-level category)</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-sm text-gray-500 mt-2">
+            Select a parent category to make this a subcategory
+          </p>
         </div>
 
         <div>

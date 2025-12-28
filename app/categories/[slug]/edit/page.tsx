@@ -28,6 +28,7 @@ export default async function EditCategoryPage({ params }: { params: { slug: str
           initialName={category.name}
           initialDescription={category.description || ''}
           initialColor={category.color || '#2563eb'}
+          initialParentId={category.parentId || ''}
         />
       </main>
     </div>

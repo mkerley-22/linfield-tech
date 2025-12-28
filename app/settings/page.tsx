@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
 import { Settings as SettingsIcon, Sparkles, Cloud, Zap, Calendar, Users, Globe } from 'lucide-react'
-import GoogleAuth from '@/components/GoogleAuth'
 import GoogleCalendarAuth from '@/components/GoogleCalendarAuth'
 import SchoolDudeIntegration from '@/components/SchoolDudeIntegration'
 import UsersManagement from '@/components/UsersManagement'
@@ -196,23 +195,6 @@ export default function SettingsPage() {
 
           {activeTab === 'integrations' && (
             <div className="space-y-6">
-            {/* Google Drive Integration */}
-            <div className="bg-white rounded-lg border border-gray-200 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Cloud className="w-6 h-6 text-blue-600" />
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Google Drive Integration</h2>
-                    <p className="text-sm text-gray-500">Sync Drive files and folders</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <GoogleAuth />
-              </div>
-            </div>
-
             {/* Google Calendar Integration */}
             <div className="bg-white rounded-lg border border-gray-200 p-8">
               <div className="flex items-center justify-between mb-6">

@@ -37,7 +37,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const { name, description, color, icon } = body
+    const { name, description, color, icon, parentId } = body
 
     const category = await prisma.category.update({
       where: { id: params.id },
@@ -47,6 +47,7 @@ export async function PUT(
         description: description !== undefined ? description : undefined,
         color: color || undefined,
         icon: icon !== undefined ? icon : undefined,
+        parentId: parentId !== undefined ? (parentId || null) : undefined,
       },
     })
 

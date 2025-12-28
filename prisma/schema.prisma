@@ -29,15 +29,19 @@ model Category {
   color       String?      @default("#2563eb")
   icon        String?
   order       Int          @default(0)
+  parentId    String?      // Parent category for subcategories
   createdAt   DateTime     @default(now())
   updatedAt   DateTime
-  DriveFile   DriveFile[]
+  DriveFile  DriveFile[]
   DriveFolder DriveFolder?
   Event       Event[]
   Page        Page[]
+  parent      Category?    @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Category[]   @relation("CategoryToCategory")
 
   @@index([name])
   @@index([slug])
+  @@index([parentId])
 }
 
 model Checkout {

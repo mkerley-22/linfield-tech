@@ -5,7 +5,7 @@ import { slugify } from '@/lib/utils'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, description, color, icon } = body
+    const { name, description, color, icon, parentId } = body
 
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         color: color || '#2563eb',
         icon: icon || null,
+        parentId: parentId || null,
         updatedAt: new Date(),
       },
     })
@@ -56,6 +57,15 @@ export async function GET(request: NextRequest) {
       include: {
         Page: {
           where: { isPublished: true },
+          orderBy: { order: 'asc' },
+        },
+        children: {
+          include: {
+            Page: {
+              where: { isPublished: true },
+              orderBy: { order: 'asc' },
+            },
+          },
           orderBy: { order: 'asc' },
         },
       },
