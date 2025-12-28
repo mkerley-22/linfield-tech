@@ -6,12 +6,12 @@ import { useState, useEffect } from 'react'
 import { Home, BookOpen, Settings, Folder, Calendar, Package, ShoppingCart, ChevronDown, ChevronRight, Database, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import UserMenu from './UserMenu'
+import KnowledgeBaseNav from './KnowledgeBaseNav'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const [unseenCheckoutRequests, setUnseenCheckoutRequests] = useState(0)
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
-  const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -99,6 +99,13 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Knowledge Base Secondary Nav - Only on desktop when Knowledge Base is active */}
+      {isKnowledgeBaseActive && (
+        <div className="hidden lg:block fixed left-64 top-0 bottom-0 z-30">
+          <KnowledgeBaseNav />
+        </div>
+      )}
+
       {/* Mobile Header - Always visible on mobile */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
         {/* Hamburger Menu Button */}
@@ -217,48 +224,19 @@ export default function Sidebar() {
           
           {/* Knowledge Base Section */}
           <li className="mt-2">
-            <button
-              onClick={() => setIsKnowledgeBaseOpen(!isKnowledgeBaseOpen)}
+            <Link
+              href="/categories"
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
                 isKnowledgeBaseActive
                   ? 'bg-blue-50 text-blue-700 font-medium'
                   : 'text-gray-700 hover:bg-gray-50'
               )}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               <Database className="w-5 h-5" />
               <span className="flex-1 text-left">Knowledge Base</span>
-              {isKnowledgeBaseOpen ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </button>
-            {isKnowledgeBaseOpen && (
-              <ul className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-2">
-                {knowledgeBaseItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
-                          isActive
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        )}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+            </Link>
           </li>
         </ul>
       </nav>

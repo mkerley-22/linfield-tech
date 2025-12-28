@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import KnowledgeBaseLayout from '@/components/KnowledgeBaseLayout'
 
 export const metadata: Metadata = {
   title: 'Linfield AV Hub',
@@ -35,7 +36,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className="h-full antialiased bg-gray-50">{children}</body>
+      <body className="h-full antialiased bg-gray-50">
+        <KnowledgeBaseLayout>{children}</KnowledgeBaseLayout>
+      </body>
     </html>
   )
 }

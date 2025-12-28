@@ -21,6 +21,17 @@ body {
   }
 }
 
+/* Knowledge Base secondary nav layout adjustments */
+body.knowledge-base-active main {
+  margin-left: 256px !important; /* 64 * 4px = 256px for the secondary nav */
+}
+
+@media (max-width: 1024px) {
+  body.knowledge-base-active main {
+    margin-left: 0 !important;
+  }
+}
+
 /* Rich text editor styles */
 .ProseMirror {
   outline: none;
