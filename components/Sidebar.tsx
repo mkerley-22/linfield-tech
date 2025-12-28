@@ -99,17 +99,36 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center border border-gray-200"
-      >
-        {isMobileMenuOpen ? (
-          <X className="w-5 h-5 text-gray-700" />
-        ) : (
-          <Menu className="w-5 h-5 text-gray-700" />
-        )}
-      </button>
+      {/* Mobile Header - Always visible on mobile */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
+        {/* Hamburger Menu Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="w-10 h-10 flex items-center justify-center"
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? (
+            <X className="w-6 h-6 text-gray-700" />
+          ) : (
+            <Menu className="w-6 h-6 text-gray-700" />
+          )}
+        </button>
+
+        {/* Centered Logo */}
+        <Link href="/dashboard" className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+            <img 
+              src="/lc-logo.svg" 
+              alt="Linfield Christian School" 
+              className="w-full h-full object-contain p-1"
+            />
+          </div>
+          <span className="font-bold text-gray-900 text-lg">Linfield AV Hub</span>
+        </Link>
+
+        {/* Right side spacer for centering */}
+        <div className="w-10"></div>
+      </header>
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
@@ -119,14 +138,16 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Full screen on mobile, normal on desktop */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-40
-        w-64 bg-white border-r border-gray-200 flex flex-col
+        fixed lg:static inset-y-0 left-0 z-50 lg:z-40
+        w-full lg:w-64 bg-white border-r border-gray-200 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        lg:translate-x-0
       `}>
-      <div className="p-6 border-b border-gray-200">
+      {/* Desktop Header - Only visible on desktop */}
+      <div className="hidden lg:block p-6 border-b border-gray-200">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
             <img 
@@ -139,6 +160,29 @@ export default function Sidebar() {
             <h2 className="font-bold text-gray-900">Linfield AV Hub</h2>
           </div>
         </Link>
+      </div>
+      
+      {/* Mobile Menu Header - Only visible when menu is open on mobile */}
+      <div className="lg:hidden p-6 border-b border-gray-200 pt-20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+              <img 
+                src="/lc-logo.svg" 
+                alt="Linfield Christian School" 
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+            <h2 className="font-bold text-gray-900">Linfield AV Hub</h2>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="w-6 h-6 text-gray-700" />
+          </button>
+        </div>
       </div>
       <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-1">
