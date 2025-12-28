@@ -735,9 +735,9 @@ export default function KnowledgeBaseNav() {
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900 flex-1">Knowledge Base</h2>
+          <h2 className="font-semibold text-gray-900">Knowledge Base</h2>
           <div 
-            className="relative flex-shrink-0" 
+            className="relative ml-auto" 
             ref={dropdownRef}
             onMouseEnter={() => setShowDropdown(true)}
             onMouseLeave={() => setShowDropdown(false)}
