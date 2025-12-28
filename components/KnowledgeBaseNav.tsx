@@ -514,7 +514,7 @@ export default function KnowledgeBaseNav() {
     setShowTagModal(true)
   }
 
-  const renderCategory = (category: Category, level: number = 0) => {
+  const renderCategory = (category: Category, level: number = 0, isLast: boolean = false, parentHasMore: boolean = false) => {
     const isExpanded = expandedCategories.has(category.id)
     const pagesExpanded = expandedPages.has(category.id)
     const pageCount = getPageCount(category)
@@ -529,13 +529,53 @@ export default function KnowledgeBaseNav() {
                     draggedCategoryId !== category.id && 
                     !isDescendant(draggedCategoryId, category.id, categories)
 
+    // Calculate line positions
+    const lineLeft = 12 + level * 16
+    const iconLeft = lineLeft + 16
+    const lineWidth = 16
+
     return (
-      <div key={category.id}>
+      <div key={category.id} className="relative">
+        {/* Curved connecting line */}
+        {level > 0 && (
+          <svg
+            className="absolute pointer-events-none"
+            style={{
+              left: `${lineLeft}px`,
+              top: '0',
+              width: `${lineWidth + 4}px`,
+              height: '100%',
+              overflow: 'visible',
+            }}
+          >
+            {/* Vertical trunk line - continues if not last or has children */}
+            {(!isLast || (hasChildren && isExpanded) || (hasPages && pagesExpanded)) && (
+              <line
+                x1={lineWidth / 2}
+                y1="0"
+                x2={lineWidth / 2}
+                y2="100%"
+                stroke="#d1d5db"
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
+            {/* Curved horizontal branch to folder - smooth curve */}
+            <path
+              d={`M ${lineWidth / 2} 12 Q ${lineWidth / 2 + 4} 12 ${lineWidth} 12`}
+              stroke="#d1d5db"
+              strokeWidth="1"
+              fill="none"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        )}
+
         {/* Drop indicator line above */}
         {isDragOver && canDrop && (
           <div 
             className="h-0.5 bg-blue-500 mx-3 my-1 rounded-full"
-            style={{ marginLeft: `${12 + level * 16 + 16}px` }}
+            style={{ marginLeft: `${iconLeft}px` }}
           />
         )}
         <div
@@ -562,7 +602,7 @@ export default function KnowledgeBaseNav() {
             }
           }}
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-md transition-all cursor-move group',
+            'flex items-center gap-2 px-3 py-1.5 rounded-md transition-all cursor-move group relative z-10',
             isActive
               ? 'bg-blue-50 text-blue-700'
               : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
@@ -571,7 +611,7 @@ export default function KnowledgeBaseNav() {
             (isPageDragOver && draggedPageId) && 'bg-blue-100 border-2 border-blue-400 border-dashed',
             isDragging && !isDragged && canDrop && 'hover:bg-blue-50'
           )}
-          style={{ paddingLeft: `${12 + level * 16}px` }}
+          style={{ paddingLeft: `${iconLeft}px` }}
           onClick={() => {
             if (isActive) {
               setSelectedCategoryId(category.id)
@@ -618,7 +658,7 @@ export default function KnowledgeBaseNav() {
           >
             <Folder
               className="w-4 h-4 flex-shrink-0"
-              style={{ color: category.color || '#2563eb' }}
+              style={{ color: isActive ? (category.color || '#2563eb') : (category.color || '#9ca3af') }}
             />
             <span className="truncate flex-1">{category.name}</span>
             {pageCount > 0 && (
@@ -627,10 +667,10 @@ export default function KnowledgeBaseNav() {
           </Link>
         </div>
         {isExpanded && (
-          <div>
+          <div className="relative">
             {/* Render pages for this category */}
             {hasPages && (
-              <div>
+              <div className="relative">
                 <button
                   onClick={(e) => {
                     e.preventDefault()
@@ -638,23 +678,46 @@ export default function KnowledgeBaseNav() {
                     togglePages(category.id)
                   }}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors w-full',
-                    'ml-4'
+                    'flex items-center gap-2 px-3 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors w-full relative z-10'
                   )}
-                  style={{ paddingLeft: `${12 + (level + 1) * 16}px` }}
+                  style={{ paddingLeft: `${iconLeft + 16}px` }}
                 >
+                  {/* Vertical line for pages section */}
+                  <svg
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `${lineLeft + 16}px`,
+                      top: '0',
+                      width: '16px',
+                      height: '100%',
+                      overflow: 'visible',
+                    }}
+                  >
+                    <line
+                      x1="8"
+                      y1="0"
+                      x2="8"
+                      y2="100%"
+                      stroke="#d1d5db"
+                      strokeWidth="1"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
                   {pagesExpanded ? (
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown className="w-3 h-3 relative z-10" />
                   ) : (
-                    <ChevronRight className="w-3 h-3" />
+                    <ChevronRight className="w-3 h-3 relative z-10" />
                   )}
-                  <span>Pages ({directPageCount})</span>
+                  <span className="relative z-10">Pages ({directPageCount})</span>
                 </button>
                 {pagesExpanded && category.Page && category.Page.length > 0 && (
-                  <div>
+                  <div className="relative">
                     {category.Page.map((page, index) => {
-                      const isLast = index === category.Page.length - 1
+                      const isPageLast = index === category.Page.length - 1
                       const isPageDragged = draggedPageId === page.id
+                      const pageLineLeft = lineLeft + 32
+                      const pageIconLeft = pageLineLeft + 16
+                      
                       return (
                         <div
                           key={page.id}
@@ -662,29 +725,48 @@ export default function KnowledgeBaseNav() {
                           onDragStart={(e) => handlePageDragStart(e, page.id)}
                           onDragEnd={handlePageDragEnd}
                           className={cn(
-                            'flex items-center gap-2 px-3 py-1 rounded-md transition-colors cursor-move group',
+                            'flex items-center gap-2 px-3 py-1 rounded-md transition-colors cursor-move group relative z-10',
                             'hover:bg-gray-50',
                             isPageDragged && 'opacity-50'
                           )}
-                          style={{ paddingLeft: `${12 + (level + 2) * 16}px` }}
+                          style={{ paddingLeft: `${pageIconLeft}px` }}
                         >
-                          <div className="w-4 h-4 flex items-center justify-center relative flex-shrink-0">
-                            {isLast ? (
-                              <>
-                                <div className="w-0.5 h-4 bg-gray-300 absolute top-0"></div>
-                                <div className="w-2 h-0.5 bg-gray-300 absolute left-0"></div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-0.5 h-full bg-gray-300 absolute top-0"></div>
-                                <div className="w-2 h-0.5 bg-gray-300 absolute left-0"></div>
-                              </>
+                          {/* Curved connecting line for page */}
+                          <svg
+                            className="absolute pointer-events-none"
+                            style={{
+                              left: `${pageLineLeft}px`,
+                              top: '0',
+                              width: '20px',
+                              height: '100%',
+                              overflow: 'visible',
+                            }}
+                          >
+                            {/* Vertical line - continues if not last */}
+                            {!isPageLast && (
+                              <line
+                                x1="8"
+                                y1="0"
+                                x2="8"
+                                y2="100%"
+                                stroke="#d1d5db"
+                                strokeWidth="1"
+                                vectorEffect="non-scaling-stroke"
+                              />
                             )}
-                          </div>
-                          <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                            {/* Curved horizontal branch to page - smooth curve */}
+                            <path
+                              d={`M 8 12 Q 10 12 16 12`}
+                              stroke="#d1d5db"
+                              strokeWidth="1"
+                              fill="none"
+                              vectorEffect="non-scaling-stroke"
+                            />
+                          </svg>
+                          <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0 relative z-10" />
                           <Link
                             href={`/pages/${page.slug}`}
-                            className="flex items-center gap-2 flex-1 min-w-0"
+                            className="flex items-center gap-2 flex-1 min-w-0 relative z-10"
                             onClick={(e) => {
                               if (isDragging || draggedPageId) {
                                 e.preventDefault()
@@ -703,8 +785,12 @@ export default function KnowledgeBaseNav() {
             )}
             {/* Render child categories */}
             {hasChildren && (
-              <div>
-                {category.children?.map(child => renderCategory(child, level + 1))}
+              <div className="relative">
+                {category.children?.map((child, index) => {
+                  const childIsLast = index === (category.children?.length || 0) - 1
+                  const childHasMore = !childIsLast || (hasPages && pagesExpanded)
+                  return renderCategory(child, level + 1, childIsLast, childHasMore)
+                })}
               </div>
             )}
           </div>
@@ -846,7 +932,10 @@ export default function KnowledgeBaseNav() {
             }}
           >
             {topLevelCategories.length > 0 ? (
-              topLevelCategories.map(category => renderCategory(category))
+              topLevelCategories.map((category, index) => {
+                const isLast = index === topLevelCategories.length - 1
+                return renderCategory(category, 0, isLast, !isLast)
+              })
             ) : (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-500">
