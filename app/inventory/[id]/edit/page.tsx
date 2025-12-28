@@ -35,7 +35,7 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto p-8">
+          <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
             <div className="text-center py-12">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-pulse" />
               <p className="text-gray-500">Loading...</p>
@@ -51,7 +51,7 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
       <div className="flex h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto p-8">
+          <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
             <div className="text-center py-12">
               <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Equipment not found</h3>
@@ -69,7 +69,7 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-8">
+        <div className="max-w-4xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
           <Link
             href={`/inventory/${params.id}`}
             className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 mb-6"
