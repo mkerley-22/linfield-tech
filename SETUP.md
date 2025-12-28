@@ -115,3 +115,4 @@ npx prisma generate
 - **DigitalOcean** - Full control
 - **AWS** - Enterprise scale
 
+

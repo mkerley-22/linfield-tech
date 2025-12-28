@@ -139,3 +139,4 @@ GOOGLE_REDIRECT_URI="http://localhost:3000/api/auth/google/callback"
 - Only authorized users can access Drive and Calendar data
 - Consider implementing user authentication for production use
 
+

@@ -60,3 +60,4 @@ After updating environment variables:
 - [ ] Redeployed Vercel app
 - [ ] Tested login with custom domain
 
+

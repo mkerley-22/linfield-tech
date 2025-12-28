@@ -327,3 +327,4 @@ The email system is currently set to **log emails to the console** only. To enab
 - Review server logs for specific error messages
 - Test with a simple email first before using the full system
 
+

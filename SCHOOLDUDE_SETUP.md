@@ -104,3 +104,4 @@ For knowledge base integration issues, check:
 - Browser console for error messages
 - Server logs for API errors
 
+
