@@ -126,22 +126,32 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
           </div>
         ) : item ? (
           <>
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-
             {/* Image Section */}
             {item.imageUrl && (
-              <div className="w-full aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
+              <div className="relative w-full aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
+                {/* Close Button */}
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
                 <img
                   src={item.imageUrl}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
+              </div>
+            )}
+            {!item.imageUrl && (
+              <div className="relative w-full aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
+                {/* Close Button */}
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
               </div>
             )}
 
@@ -191,7 +201,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
 
               {/* Quantity and Availability Section */}
-              <div className="flex items-center gap-6 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="flex flex-col items-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
                     <Database className="w-6 h-6 text-blue-600" />
