@@ -57,9 +57,24 @@ export default function SettingsPage() {
   // Load settings after user is loaded
   useEffect(() => {
     if (user && !isLoading) {
-      // Load AI preference from localStorage (this is just a UI toggle, not a connection)
-      const aiPref = typeof window !== 'undefined' ? localStorage.getItem('integration_ai_enabled') : null
-      setAiEnabled(aiPref === 'true')
+      // AI is now automatically enabled if API key is configured
+      // Check if API key exists
+      const checkAIStatus = async () => {
+        try {
+          const response = await fetch('/api/ai/status')
+          if (response.ok) {
+            const data = await response.json()
+            setAiEnabled(data.configured || localStorage.getItem('ai_configured') === 'true')
+          } else {
+            // Fallback: check localStorage
+            setAiEnabled(localStorage.getItem('ai_configured') === 'true')
+          }
+        } catch (error) {
+          // Fallback: check localStorage
+          setAiEnabled(localStorage.getItem('ai_configured') === 'true')
+        }
+      }
+      checkAIStatus()
 
       // Load public site settings
       if (activeTab === 'public-site') {
@@ -255,16 +270,27 @@ export default function SettingsPage() {
               </div>
               
               <div className="space-y-4">
-                <Toggle
-                  enabled={aiEnabled}
-                  onChange={handleAIToggle}
-                  label="Enable AI Features"
-                  description="Use OpenAI to generate and assist with writing page content"
-                />
-                
-                {aiEnabled && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <AIConfig />
+                {aiEnabled ? (
+                  <>
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        ✓ AI features are enabled. You can use the AI Writing Assistant when creating pages.
+                      </p>
+                    </div>
+                    <div className="pt-4 border-t border-gray-200">
+                      <AIConfig />
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        AI features require an OpenAI API key. Configure your API key below to enable AI-powered content generation.
+                      </p>
+                    </div>
+                    <div className="pt-4 border-t border-gray-200">
+                      <AIConfig />
+                    </div>
                   </div>
                 )}
               </div>
