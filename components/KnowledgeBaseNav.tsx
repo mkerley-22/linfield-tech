@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Search, Plus, ChevronRight, ChevronDown, Folder, Tag, LayoutGrid } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Search, Plus, ChevronRight, ChevronDown, Folder, Tag, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Category {
@@ -18,15 +18,63 @@ interface Category {
 
 export default function KnowledgeBaseNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'folders' | 'tags'>('folders')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchCategories()
   }, [])
+
+  // Detect selected category from pathname
+  useEffect(() => {
+    if (pathname?.startsWith('/categories/')) {
+      const slug = pathname.split('/categories/')[1]?.split('/')[0]
+      if (slug) {
+        const findCategory = (cats: Category[]): Category | null => {
+          for (const cat of cats) {
+            if (cat.slug === slug) {
+              return cat
+            }
+            if (cat.children) {
+              const found = findCategory(cat.children)
+              if (found) return found
+            }
+          }
+          return null
+        }
+        const category = findCategory(categories)
+        if (category) {
+          setSelectedCategoryId(category.id)
+        }
+      }
+    } else {
+      setSelectedCategoryId(null)
+    }
+  }, [pathname, categories])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showDropdown])
 
   const fetchCategories = async () => {
     try {
@@ -82,6 +130,42 @@ export default function KnowledgeBaseNav() {
     return directPages + childPages
   }
 
+  const handleNewFolder = () => {
+    setShowDropdown(false)
+    router.push('/categories/new')
+  }
+
+  const handleNewSubfolder = () => {
+    if (!selectedCategoryId) return
+    setShowDropdown(false)
+    router.push(`/categories/new?parentId=${selectedCategoryId}`)
+  }
+
+  const handleNewPage = () => {
+    setShowDropdown(false)
+    if (selectedCategoryId) {
+      // Find the selected category to get its slug for the URL
+      const findCategory = (cats: Category[]): Category | null => {
+        for (const cat of cats) {
+          if (cat.id === selectedCategoryId) return cat
+          if (cat.children) {
+            const found = findCategory(cat.children)
+            if (found) return found
+          }
+        }
+        return null
+      }
+      const category = findCategory(categories)
+      if (category) {
+        router.push(`/pages/new?category=${category.slug}`)
+      } else {
+        router.push('/pages/new')
+      }
+    } else {
+      router.push('/pages/new')
+    }
+  }
+
   const renderCategory = (category: Category, level: number = 0) => {
     const isExpanded = expandedCategories.has(category.id)
     const pageCount = getPageCount(category)
@@ -98,6 +182,11 @@ export default function KnowledgeBaseNav() {
               : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
           )}
           style={{ paddingLeft: `${12 + level * 16}px` }}
+          onClick={() => {
+            if (isActive) {
+              setSelectedCategoryId(category.id)
+            }
+          }}
         >
           {hasChildren ? (
             <button
@@ -125,6 +214,7 @@ export default function KnowledgeBaseNav() {
               if ((e.target as HTMLElement).closest('button')) {
                 e.preventDefault()
               }
+              setSelectedCategoryId(category.id)
             }}
           >
             <Folder
@@ -165,20 +255,41 @@ export default function KnowledgeBaseNav() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-900">Knowledge Base</h2>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/pages/new"
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
               className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors"
-              title="Add Page"
+              title="Add New"
             >
               <Plus className="w-4 h-4 text-gray-600" />
-            </Link>
-            <button
-              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors"
-              title="View Options"
-            >
-              <LayoutGrid className="w-4 h-4 text-gray-600" />
             </button>
+            {showDropdown && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <button
+                  onClick={handleNewFolder}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <Folder className="w-4 h-4" />
+                  New Folder
+                </button>
+                {selectedCategoryId && (
+                  <button
+                    onClick={handleNewSubfolder}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <Folder className="w-4 h-4" />
+                    New Subfolder
+                  </button>
+                )}
+                <button
+                  onClick={handleNewPage}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <FileText className="w-4 h-4" />
+                  New Page
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
