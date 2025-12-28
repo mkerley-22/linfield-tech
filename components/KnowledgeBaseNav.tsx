@@ -536,15 +536,13 @@ export default function KnowledgeBaseNav() {
 
     return (
       <div key={category.id} className="relative">
-        {/* Simple connecting lines */}
+        {/* Vertical connecting lines */}
         {level > 0 && (
-          <div className="absolute pointer-events-none" style={{ left: `${lineLeft}px`, top: 0, bottom: 0, width: '16px' }}>
+          <div className="absolute pointer-events-none" style={{ left: `${lineLeft}px`, top: 0, bottom: 0, width: '1px' }}>
             {/* Vertical line - continues if not last or has expanded children/pages */}
             {(!isLast || (hasChildren && isExpanded) || (hasPages && pagesExpanded)) && (
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-300" />
             )}
-            {/* Horizontal line to folder icon */}
-            <div className="absolute left-1/2 top-3 w-2 h-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
           </div>
         )}
 
@@ -691,14 +689,12 @@ export default function KnowledgeBaseNav() {
                           )}
                           style={{ paddingLeft: `${pageIconLeft}px` }}
                         >
-                          {/* Simple vertical and horizontal lines for page */}
-                          <div className="absolute pointer-events-none" style={{ left: `${pageLineLeft}px`, top: 0, bottom: 0, width: '16px' }}>
+                          {/* Vertical line for page */}
+                          <div className="absolute pointer-events-none" style={{ left: `${pageLineLeft}px`, top: 0, bottom: 0, width: '1px' }}>
                             {/* Vertical line - continues if not last */}
                             {!isPageLast && (
-                              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
+                              <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-300" />
                             )}
-                            {/* Horizontal line to page icon */}
-                            <div className="absolute left-1/2 top-3 w-2 h-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
                           </div>
                           <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0 relative z-10" />
                           <Link
