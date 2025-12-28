@@ -44,7 +44,7 @@ export default function NewDropdown() {
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+        <div className="absolute left-0 lg:right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
           {menuItems.map((item) => {
             const Icon = item.icon
             return (
