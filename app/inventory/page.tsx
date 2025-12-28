@@ -8,6 +8,7 @@ import { Plus, Search, Package, Tag as TagIcon, Calendar, User, MoreVertical, Ed
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { Toast } from '@/components/ui/Toast'
+import InventoryDetailModal from '@/components/InventoryDetailModal'
 
 interface InventoryItem {
   id: string
@@ -48,6 +49,8 @@ export default function InventoryPage() {
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
   useEffect(() => {
@@ -198,6 +201,37 @@ export default function InventoryPage() {
 
   const handleDeleteCancel = () => {
     setDeleteConfirm({ show: false, itemId: null, itemName: '' })
+  }
+
+  const handleViewDetails = (e: React.MouseEvent, itemId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedItemId(itemId)
+    setIsModalOpen(true)
+  }
+
+  const handleModalDelete = async (itemId: string) => {
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/inventory/${itemId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        // Remove item from list
+        setItems(items.filter((item) => item.id !== itemId))
+        setIsModalOpen(false)
+        setSelectedItemId(null)
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to delete item')
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Failed to delete item')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const handleSelectItem = (itemId: string) => {
@@ -417,10 +451,9 @@ export default function InventoryPage() {
                 const isOutOfStock = available === 0
 
                 return (
-                  <Link
+                  <div
                     key={item.id}
-                    href={`/inventory/${item.id}`}
-                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden cursor-pointer"
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden"
                   >
                     {/* Image Section */}
                     <div className="relative bg-gray-200 aspect-square flex items-center justify-center rounded-t-2xl overflow-hidden">
@@ -516,12 +549,15 @@ export default function InventoryPage() {
                       
                       {/* View Details Button */}
                       <div className="mt-auto">
-                        <div className="w-full bg-gray-800 group-hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center">
+                        <button
+                          onClick={(e) => handleViewDetails(e, item.id)}
+                          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center"
+                        >
                           View Details
-                        </div>
+                        </button>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
@@ -670,6 +706,17 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+
+      {/* Inventory Detail Modal */}
+      <InventoryDetailModal
+        itemId={selectedItemId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedItemId(null)
+        }}
+        onDelete={handleModalDelete}
+      />
     </div>
   )
 }
