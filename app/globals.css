@@ -175,3 +175,17 @@ select {
   padding-right: 3rem !important; /* 48px total: 16px padding + 20px chevron + 12px spacing */
 }
 
+/* Modal slide-up animation for mobile */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
