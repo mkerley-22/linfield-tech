@@ -101,21 +101,6 @@ export default function KnowledgeBaseNav() {
   }, [pathname, categories])
 
   // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false)
-      }
-    }
-
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showDropdown])
 
   const fetchCategories = async () => {
     try {
@@ -751,10 +736,14 @@ export default function KnowledgeBaseNav() {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-900">Knowledge Base</h2>
-          <div className="relative" ref={dropdownRef}>
+          <div 
+            className="relative" 
+            ref={dropdownRef}
+            onMouseEnter={() => setShowDropdown(true)}
+            onMouseLeave={() => setShowDropdown(false)}
+          >
             <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors"
+              className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors flex-shrink-0"
               title="Add New"
             >
               <Plus className="w-4 h-4 text-gray-600" />
