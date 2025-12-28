@@ -19,10 +19,18 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        Event: true,
       },
       orderBy: {
         checkedOutAt: 'desc',
+      },
+      take: 1000,
+    })
+
+    // Get event inventory data separately for event-based predictions
+    const eventInventory = await prisma.eventInventory.findMany({
+      include: {
+        Event: true,
+        InventoryItem: true,
       },
       take: 1000,
     })
@@ -49,12 +57,14 @@ export async function GET(request: NextRequest) {
         }
       })
 
-      // Track by event type
-      if (checkout.Event) {
-        const eventTitle = checkout.Event.title.toLowerCase()
-        if (!eventTypeItems[eventTitle]) eventTypeItems[eventTitle] = {}
-        eventTypeItems[eventTitle][itemId] = (eventTypeItems[eventTitle][itemId] || 0) + 1
-      }
+    })
+
+    // Track items by event type from EventInventory
+    eventInventory.forEach(ei => {
+      const itemId = ei.inventoryId
+      const eventTitle = ei.Event.title.toLowerCase()
+      if (!eventTypeItems[eventTitle]) eventTypeItems[eventTitle] = {}
+      eventTypeItems[eventTitle][itemId] = (eventTypeItems[eventTitle][itemId] || 0) + ei.quantity
     })
 
     // Get current inventory
