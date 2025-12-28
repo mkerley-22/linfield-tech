@@ -263,7 +263,7 @@ export default function InventoryPage() {
           onClose={() => setShowToast(false)}
           type="success"
         />
-        <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-16 lg:pt-8">
+        <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 lg:mb-8 gap-4">
             <div>
               <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">Equipment Inventory</h1>
