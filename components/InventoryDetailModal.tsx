@@ -128,13 +128,13 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
           <>
             {/* Image Section */}
             {item.imageUrl && (
-              <div className="relative w-full aspect-square bg-gray-100 md:rounded-t-lg overflow-hidden">
+              <div className="relative w-full h-48 md:aspect-square md:h-auto bg-gray-100 md:rounded-t-lg overflow-hidden">
                 {/* Close Button */}
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
+                  className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
                 >
-                  <X className="w-5 h-5 text-gray-700" />
+                  <X className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
                 </button>
                 <img
                   src={item.imageUrl}
@@ -144,36 +144,36 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
             {!item.imageUrl && (
-              <div className="relative w-full aspect-square bg-gray-100 md:rounded-t-lg overflow-hidden">
+              <div className="relative w-full h-48 md:aspect-square md:h-auto bg-gray-100 md:rounded-t-lg overflow-hidden">
                 {/* Close Button */}
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
+                  className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
                 >
-                  <X className="w-5 h-5 text-gray-700" />
+                  <X className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
                 </button>
               </div>
             )}
 
-            <div className="p-6">
+            <div className="p-3 md:p-6 flex flex-col h-[calc(100vh-4rem-12rem)] md:h-auto">
               {/* Title and Actions */}
-              <div className="flex items-start justify-between mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 pr-4">{item.name}</h1>
-                <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-start justify-between mb-3 md:mb-6">
+                <h1 className="text-lg md:text-2xl font-bold text-gray-900 pr-2 md:pr-4 flex-1">{item.name}</h1>
+                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
                   <Button
                     variant="secondary"
                     onClick={handleEdit}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-1 md:py-2"
                   >
-                    <Edit className="w-4 h-4" />
-                    Edit
+                    <Edit className="w-3 h-3 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">Edit</span>
                   </Button>
                   <div className="relative">
                     <button
                       onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
-                      <MoreVertical className="w-5 h-5 text-gray-500" />
+                      <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
                     </button>
                     {showOptionsMenu && (
                       <>
@@ -201,68 +201,68 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
 
               {/* Quantity and Availability Section */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-6">
                 <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                    <Database className="w-6 h-6 text-blue-600" />
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1 md:mb-2">
+                    <Database className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">Total Quantity</p>
-                  <p className="text-lg font-semibold text-gray-900">{totalQuantity}</p>
+                  <p className="text-[10px] md:text-xs text-gray-600 mb-0.5 md:mb-1">Total Quantity</p>
+                  <p className="text-base md:text-lg font-semibold text-gray-900">{totalQuantity}</p>
                 </div>
                 <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-full flex items-center justify-center mb-1 md:mb-2">
+                    <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">Available</p>
-                  <p className="text-lg font-semibold text-gray-900">{available}</p>
+                  <p className="text-[10px] md:text-xs text-gray-600 mb-0.5 md:mb-1">Available</p>
+                  <p className="text-base md:text-lg font-semibold text-gray-900">{available}</p>
                 </div>
                 <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-2">
-                    <ArrowRight className="w-6 h-6 text-orange-600" />
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center mb-1 md:mb-2">
+                    <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">Checked Out</p>
-                  <p className="text-lg font-semibold text-gray-900">{checkedOut}</p>
+                  <p className="text-[10px] md:text-xs text-gray-600 mb-0.5 md:mb-1">Checked Out</p>
+                  <p className="text-base md:text-lg font-semibold text-gray-900">{checkedOut}</p>
                 </div>
               </div>
 
               {/* Metadata Section */}
-              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-3 gap-3 md:gap-6 pt-3 md:pt-6 border-t border-gray-200">
                 {item.manufacturer && (
                   <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Building2 className="w-5 h-5 text-gray-400" />
-                      <p className="text-xs text-gray-500">Manufacturer</p>
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                      <Building2 className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                      <p className="text-[10px] md:text-xs text-gray-500">Manufacturer</p>
                     </div>
-                    <p className="text-base font-semibold text-gray-900">{item.manufacturer}</p>
+                    <p className="text-sm md:text-base font-semibold text-gray-900 line-clamp-2">{item.manufacturer}</p>
                   </div>
                 )}
                 {item.location && (
                   <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="w-5 h-5 text-gray-400" />
-                      <p className="text-xs text-gray-500">Location</p>
+                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                      <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                      <p className="text-[10px] md:text-xs text-gray-500">Location</p>
                     </div>
-                    <p className="text-base font-semibold text-gray-900">{item.location}</p>
+                    <p className="text-sm md:text-base font-semibold text-gray-900 line-clamp-2">{item.location}</p>
                   </div>
                 )}
                 <div className="flex flex-col items-start">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TagIcon className="w-5 h-5 text-gray-400" />
-                    <p className="text-xs text-gray-500">Tags</p>
+                  <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
+                    <TagIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                    <p className="text-[10px] md:text-xs text-gray-500">Tags</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1 md:gap-2">
                     {item.tags && item.tags.length > 0 ? (
                       item.tags.map((itemTag) => (
                         <span
                           key={itemTag.tag.id}
-                          className="px-3 py-1 rounded-full text-xs font-medium text-white"
+                          className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium text-white"
                           style={{ backgroundColor: itemTag.tag.color }}
                         >
                           {itemTag.tag.name}
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-gray-400">No tags</span>
+                      <span className="text-xs md:text-sm text-gray-400">No tags</span>
                     )}
                   </div>
                 </div>
