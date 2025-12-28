@@ -33,7 +33,7 @@ export default async function CategoryView({ params }: { params: { slug: string 
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8">
+        <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
           <div className="mb-6">
             <Link
               href="/categories"
@@ -42,21 +42,21 @@ export default async function CategoryView({ params }: { params: { slug: string 
               <ArrowLeft className="w-4 h-4" />
               Back to Categories
             </Link>
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col lg:flex-row items-start justify-between mb-4 gap-4">
+              <div className="flex items-center gap-3 lg:gap-4">
                 <div
-                  className="w-16 h-16 rounded-lg flex items-center justify-center"
+                  className="w-12 h-12 lg:w-16 lg:h-16 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: `${category.color}20` }}
                 >
                   <FileText
-                    className="w-8 h-8"
+                    className="w-6 h-6 lg:w-8 lg:h-8"
                     style={{ color: category.color || '#2563eb' }}
                   />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{category.name}</h1>
+                  <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">{category.name}</h1>
                   {category.description && (
-                    <p className="text-lg text-gray-600">{category.description}</p>
+                    <p className="text-sm lg:text-lg text-gray-600">{category.description}</p>
                   )}
                 </div>
               </div>
