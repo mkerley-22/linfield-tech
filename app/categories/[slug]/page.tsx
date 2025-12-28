@@ -60,7 +60,8 @@ export default async function CategoryView({ params }: { params: { slug: string 
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              {/* Desktop buttons - hidden on mobile */}
+              <div className="hidden lg:flex gap-2">
                 <Link
                   href={`/categories/${category.slug}/edit`}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors"
@@ -126,6 +127,27 @@ export default async function CategoryView({ params }: { params: { slug: string 
           </div>
         </div>
       </main>
+      
+      {/* Mobile fixed bottom buttons */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40 flex gap-2">
+        <Link
+          href={`/categories/${category.slug}/edit`}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+        >
+          <Edit className="w-5 h-5" />
+          Edit
+        </Link>
+        <Link
+          href={`/pages/new?category=${category.id}`}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          <Plus className="w-5 h-5" />
+          Add Page
+        </Link>
+      </div>
+      
+      {/* Spacer for mobile bottom buttons */}
+      <div className="lg:hidden h-20" />
     </div>
   )
 }
