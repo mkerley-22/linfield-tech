@@ -113,7 +113,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div 
@@ -136,7 +136,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
 
             {/* Image Section */}
             {item.imageUrl && (
-              <div className="w-full h-64 bg-gray-100 rounded-t-lg overflow-hidden">
+              <div className="w-full aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
                 <img
                   src={item.imageUrl}
                   alt={item.name}
