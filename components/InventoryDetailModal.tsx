@@ -216,44 +216,44 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
 
               {/* Metadata Section */}
-              <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gray-200">
                 {item.manufacturer && (
-                  <div className="flex items-center gap-3">
-                    <Building2 className="w-5 h-5 text-gray-400" />
-                    <div>
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="w-5 h-5 text-gray-400" />
                       <p className="text-xs text-gray-500">Manufacturer</p>
-                      <p className="text-sm font-medium text-gray-900">{item.manufacturer}</p>
                     </div>
+                    <p className="text-base font-semibold text-gray-900">{item.manufacturer}</p>
                   </div>
                 )}
                 {item.location && (
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400" />
-                    <div>
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-5 h-5 text-gray-400" />
                       <p className="text-xs text-gray-500">Location</p>
-                      <p className="text-sm font-medium text-gray-900">{item.location}</p>
                     </div>
+                    <p className="text-base font-semibold text-gray-900">{item.location}</p>
                   </div>
                 )}
-                <div className="flex items-start gap-3">
-                  <TagIcon className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 mb-2">Tags</p>
-                    <div className="flex flex-wrap gap-2">
-                      {item.tags && item.tags.length > 0 ? (
-                        item.tags.map((itemTag) => (
-                          <span
-                            key={itemTag.tag.id}
-                            className="px-3 py-1 rounded-full text-xs font-medium text-white"
-                            style={{ backgroundColor: itemTag.tag.color }}
-                          >
-                            {itemTag.tag.name}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-400">No tags</span>
-                      )}
-                    </div>
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TagIcon className="w-5 h-5 text-gray-400" />
+                    <p className="text-xs text-gray-500">Tags</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {item.tags && item.tags.length > 0 ? (
+                      item.tags.map((itemTag) => (
+                        <span
+                          key={itemTag.tag.id}
+                          className="px-3 py-1 rounded-full text-xs font-medium text-white"
+                          style={{ backgroundColor: itemTag.tag.color }}
+                        >
+                          {itemTag.tag.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-gray-400">No tags</span>
+                    )}
                   </div>
                 </div>
               </div>
