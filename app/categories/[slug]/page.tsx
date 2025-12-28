@@ -98,6 +98,7 @@ export default async function CategoryView({ params }: { params: { slug: string 
             folderColor={category.color}
             subfolders={category.children || []}
             directPages={category.Page}
+            parentFolderId={category.id}
           />
         </div>
       </main>
