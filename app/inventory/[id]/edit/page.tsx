@@ -71,11 +71,11 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
           <Link
-            href={`/inventory/${params.id}`}
+            href="/inventory"
             className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Equipment
+            Back to Inventory
           </Link>
           <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">Edit Equipment</h1>
           <div className="bg-white rounded-lg border border-gray-200 p-8">

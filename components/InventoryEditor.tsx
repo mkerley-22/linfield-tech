@@ -349,11 +349,11 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
 
         if (itemId) {
           alert('Inventory item updated successfully!')
-          // Navigate back to the detail page
-          router.push(`/inventory/${itemId}`)
+          // Navigate back to the inventory page
+          router.push('/inventory')
         } else {
-          // Redirect to inventory page with success message
-          router.push(`/inventory/${savedItemId}?created=true`)
+          // Redirect to inventory page
+          router.push('/inventory')
         }
       } else {
         const error = await response.json()
@@ -1213,7 +1213,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           )}
         </Button>
         <Button
-          onClick={() => router.back()}
+          onClick={() => router.push('/inventory')}
           variant="secondary"
           className="w-full md:w-auto"
         >
