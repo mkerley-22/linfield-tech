@@ -55,6 +55,7 @@ export default function InventoryPage() {
   const [useSmartSearch, setUseSmartSearch] = useState(false)
   const [smartSearchResults, setSmartSearchResults] = useState<InventoryItem[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
   useEffect(() => {
