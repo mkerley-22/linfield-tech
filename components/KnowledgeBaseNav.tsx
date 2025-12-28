@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+// Knowledge Base navigation component
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Search, Plus, ChevronRight, ChevronDown, Folder, Tag, FileText, GripVertical } from 'lucide-react'
