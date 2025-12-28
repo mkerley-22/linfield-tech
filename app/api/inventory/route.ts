@@ -19,12 +19,26 @@ export async function GET(request: NextRequest) {
     }
     
     if (search) {
-      const searchLower = search.toLowerCase()
+      // Case-insensitive search across multiple fields
+      const searchMode = { mode: 'insensitive' as const }
       where.OR = [
-        { name: { contains: search } },
-        { description: { contains: search } },
-        { manufacturer: { contains: search } },
-        { model: { contains: search } },
+        { name: { contains: search, ...searchMode } },
+        { description: { contains: search, ...searchMode } },
+        { manufacturer: { contains: search, ...searchMode } },
+        { model: { contains: search, ...searchMode } },
+        { location: { contains: search, ...searchMode } },
+        { usageNotes: { contains: search, ...searchMode } },
+        { serialNumbers: { contains: search, ...searchMode } },
+        // Also search in tags
+        {
+          InventoryItemTag: {
+            some: {
+              InventoryTag: {
+                name: { contains: search, ...searchMode }
+              }
+            }
+          }
+        },
       ]
     }
     
