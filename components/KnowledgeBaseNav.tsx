@@ -536,36 +536,15 @@ export default function KnowledgeBaseNav() {
 
     return (
       <div key={category.id} className="relative">
-        {/* Curved connecting lines */}
+        {/* Simple connecting lines */}
         {level > 0 && (
-          <div className="absolute pointer-events-none" style={{ left: `${lineLeft}px`, top: 0, bottom: 0, width: '20px' }}>
-            {/* Vertical trunk line - continues if not last or has expanded children/pages */}
+          <div className="absolute pointer-events-none" style={{ left: `${lineLeft}px`, top: 0, bottom: 0, width: '16px' }}>
+            {/* Vertical line - continues if not last or has expanded children/pages */}
             {(!isLast || (hasChildren && isExpanded) || (hasPages && pagesExpanded)) && (
-              <div 
-                className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300"
-                style={{ transform: 'translateX(-50%)' }}
-              />
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
             )}
-            {/* Curved horizontal branch to folder - smooth organic curve */}
-            <svg
-              className="absolute"
-              style={{
-                left: '0',
-                top: '12px',
-                width: '20px',
-                height: '12px',
-                overflow: 'visible',
-              }}
-              viewBox="0 0 20 12"
-            >
-              <path
-                d="M 8 6 Q 12 2 16 6"
-                stroke="#d1d5db"
-                strokeWidth="1"
-                fill="none"
-                strokeLinecap="round"
-              />
-            </svg>
+            {/* Horizontal line to folder icon */}
+            <div className="absolute left-1/2 top-3 w-2 h-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
           </div>
         )}
 
@@ -682,27 +661,7 @@ export default function KnowledgeBaseNav() {
                 >
                   {/* Vertical line for pages section */}
                   <div className="absolute pointer-events-none" style={{ left: `${lineLeft + 16}px`, top: 0, bottom: 0, width: '16px' }}>
-                    <svg
-                      className="absolute"
-                      style={{
-                        left: '0',
-                        top: '0',
-                        width: '16px',
-                        height: '100%',
-                        overflow: 'visible',
-                      }}
-                      viewBox="0 0 16 1000"
-                      preserveAspectRatio="none"
-                    >
-                      <line
-                        x1="8"
-                        y1="0"
-                        x2="8"
-                        y2="1000"
-                        stroke="#d1d5db"
-                        strokeWidth="1"
-                      />
-                    </svg>
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
                   </div>
                   {pagesExpanded ? (
                     <ChevronDown className="w-3 h-3 relative z-10" />
@@ -732,35 +691,14 @@ export default function KnowledgeBaseNav() {
                           )}
                           style={{ paddingLeft: `${pageIconLeft}px` }}
                         >
-                          {/* Curved connecting line for page */}
-                          <div className="absolute pointer-events-none" style={{ left: `${pageLineLeft}px`, top: 0, bottom: 0, width: '20px' }}>
+                          {/* Simple vertical and horizontal lines for page */}
+                          <div className="absolute pointer-events-none" style={{ left: `${pageLineLeft}px`, top: 0, bottom: 0, width: '16px' }}>
                             {/* Vertical line - continues if not last */}
                             {!isPageLast && (
-                              <div 
-                                className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300"
-                                style={{ transform: 'translateX(-50%)' }}
-                              />
+                              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
                             )}
-                            {/* Curved horizontal branch to page - smooth organic curve */}
-                            <svg
-                              className="absolute"
-                              style={{
-                                left: '0',
-                                top: '12px',
-                                width: '20px',
-                                height: '12px',
-                                overflow: 'visible',
-                              }}
-                              viewBox="0 0 20 12"
-                            >
-                              <path
-                                d="M 8 6 Q 12 2 16 6"
-                                stroke="#d1d5db"
-                                strokeWidth="1"
-                                fill="none"
-                                strokeLinecap="round"
-                              />
-                            </svg>
+                            {/* Horizontal line to page icon */}
+                            <div className="absolute left-1/2 top-3 w-2 h-px bg-gray-300" style={{ transform: 'translateX(-50%)' }} />
                           </div>
                           <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0 relative z-10" />
                           <Link
