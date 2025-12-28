@@ -301,7 +301,7 @@ export default function PageEditor({
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
+    <div className="max-w-6xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
       <div className="flex items-center justify-between mb-6">
         <Button
           onClick={() => router.back()}
