@@ -89,7 +89,7 @@ export default function Sidebar() {
 
   const knowledgeBaseItems = [
     { href: '/pages', label: 'Pages', icon: BookOpen },
-    { href: '/categories', label: 'Categories', icon: Folder },
+    { href: '/categories', label: 'Folders', icon: Folder },
   ]
 
   // Check if any knowledge base item is active

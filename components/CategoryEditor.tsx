@@ -53,7 +53,7 @@ export default function CategoryEditor({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert('Please enter a category name')
+      alert('Please enter a folder name')
       return
     }
 
@@ -72,14 +72,14 @@ export default function CategoryEditor({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || `Failed to save category: ${response.statusText}`)
+        throw new Error(errorData.error || `Failed to save folder: ${response.statusText}`)
       }
 
       const data = await response.json()
       router.push(`/categories/${data.slug}`)
     } catch (error: any) {
       console.error('Save error:', error)
-      alert(error.message || 'Failed to save category. Please try again.')
+      alert(error.message || 'Failed to save folder. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -109,7 +109,7 @@ export default function CategoryEditor({
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Save Category
+              Save Folder
             </>
           )}
         </Button>
@@ -118,7 +118,7 @@ export default function CategoryEditor({
       <div className="bg-white rounded-lg border border-gray-200 p-8 space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category Name *
+            Folder Name *
           </label>
           <input
             type="text"
@@ -131,14 +131,14 @@ export default function CategoryEditor({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Parent Category (Optional)
+            Parent Folder (Optional)
           </label>
           <select
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
             className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
           >
-            <option value="">None (Top-level category)</option>
+            <option value="">None (Top-level folder)</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
@@ -146,7 +146,7 @@ export default function CategoryEditor({
             ))}
           </select>
           <p className="text-sm text-gray-500 mt-2">
-            Select a parent category to make this a subcategory
+            Select a parent folder to make this a subfolder
           </p>
         </div>
 

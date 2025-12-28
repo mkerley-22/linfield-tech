@@ -223,10 +223,10 @@ export default async function DashboardPage() {
             <EventsWidget />
           </div>
 
-          {/* Categories */}
+          {/* Folders */}
           {categories.length > 0 && (
             <div className="mt-8 mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Categories</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Folders</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                 {categories.map((category) => (
                   <Link

@@ -3,6 +3,7 @@ import Sidebar from '@/components/Sidebar'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Edit, ArrowLeft, FileText, Plus } from 'lucide-react'
+import FolderView from './FolderView'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +15,18 @@ async function getCategory(slug: string) {
         where: { isPublished: true },
         include: {
           Attachment: true,
+        },
+        orderBy: { order: 'asc' },
+      },
+      children: {
+        include: {
+          Page: {
+            where: { isPublished: true },
+            include: {
+              Attachment: true,
+            },
+            orderBy: { order: 'asc' },
+          },
         },
         orderBy: { order: 'asc' },
       },
@@ -40,7 +53,7 @@ export default async function CategoryView({ params }: { params: { slug: string 
               className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Categories
+              Back to Folders
             </Link>
             <div className="flex flex-col lg:flex-row items-start justify-between mb-4 gap-4">
               <div className="flex items-center gap-3 lg:gap-4">
@@ -80,51 +93,12 @@ export default async function CategoryView({ params }: { params: { slug: string 
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Pages in this Category ({category.Page.length})
-            </h2>
-            {category.Page.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {category.Page.map((page) => (
-                  <Link
-                    key={page.id}
-                    href={`/pages/${page.slug}`}
-                    className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                  >
-                    <h3 className="font-semibold text-gray-900 mb-1">{page.title}</h3>
-                    {page.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {page.description}
-                      </p>
-                    )}
-                    {page.Attachment && page.Attachment.length > 0 && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        {page.Attachment.length} attachment(s)
-                      </p>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No pages yet
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Add pages to this category to get started
-                </p>
-                <Link
-                  href={`/pages/new?category=${category.id}`}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Add First Page
-                </Link>
-              </div>
-            )}
-          </div>
+          <FolderView
+            folderName={category.name}
+            folderColor={category.color}
+            subfolders={category.children || []}
+            directPages={category.Page}
+          />
         </div>
       </main>
       
