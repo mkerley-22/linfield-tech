@@ -11,13 +11,14 @@ async function searchPages(query: string) {
     return []
   }
 
+  const searchMode = { mode: 'insensitive' as const }
   const pages = await prisma.page.findMany({
     where: {
       isPublished: true,
       OR: [
-        { title: { contains: query } },
-        { description: { contains: query } },
-        { content: { contains: query } },
+        { title: { contains: query, ...searchMode } },
+        { description: { contains: query, ...searchMode } },
+        { content: { contains: query, ...searchMode } },
       ],
     },
     include: {
