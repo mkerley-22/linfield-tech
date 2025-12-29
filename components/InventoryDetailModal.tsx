@@ -96,7 +96,11 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
   const maxAvailable = item ? (item.availableForCheckout ?? totalQuantity) : 0
   const available = Math.max(0, maxAvailable - checkedOut)
 
-  const handleEdit = () => {
+  const handleEdit = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     if (item) {
       router.push(`/inventory/${item.id}/edit`)
       onClose()
@@ -254,11 +258,18 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             </div>
 
             {/* Fixed Bottom Edit Button - Full width, black button with hover state */}
-            <div className="absolute md:relative bottom-0 left-0 right-0 z-10">
-              <div className="px-4 md:px-10 py-4">
+            <div 
+              className="absolute md:relative bottom-0 left-0 right-0 z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-4 md:px-10 py-4" onClick={(e) => e.stopPropagation()}>
                 <button
-                  onClick={handleEdit}
-                  className="w-full h-14 bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2 transition-colors rounded-l-2xl rounded-r-2xl"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleEdit(e)
+                  }}
+                  className="w-full h-14 bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2 transition-colors rounded-l-2xl rounded-r-2xl touch-manipulation"
                 >
                   <Edit className="w-5 h-5 md:w-5 md:h-5" />
                   <span>Edit</span>
