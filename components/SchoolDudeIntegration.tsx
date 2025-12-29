@@ -50,7 +50,15 @@ export default function SchoolDudeIntegration() {
       const response = await fetch('/api/events/import')
       if (response.ok) {
         const data = await response.json()
-        setCalendars(data.calendars || [])
+        // Filter to only show "LCS Sound needs" calendar
+        const filteredCalendars = (data.calendars || []).filter((cal: { id: string; summary: string }) => 
+          cal.summary.toLowerCase().includes('lcs sound needs')
+        )
+        setCalendars(filteredCalendars)
+        // Auto-select if only one calendar found
+        if (filteredCalendars.length === 1) {
+          setSelectedCalendar(filteredCalendars[0].id)
+        }
       }
     } catch (error) {
       console.error('Failed to load calendars:', error)
@@ -190,7 +198,6 @@ export default function SchoolDudeIntegration() {
               className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               disabled={isLoadingCalendars || isLoadingPreferences}
             >
-              <option value="primary">Primary Calendar</option>
               {calendars.map((cal) => (
                 <option key={cal.id} value={cal.id}>
                   {cal.summary}

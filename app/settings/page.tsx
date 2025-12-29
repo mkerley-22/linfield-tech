@@ -30,9 +30,9 @@ export default function SettingsPage() {
           const data = await response.json()
           if (data.user) {
             setUser(data.user)
-            // Only show Users tab if user is admin
-            if (data.user.role !== 'admin' && activeTab === 'users') {
-              setActiveTab('integrations')
+            // Only show Users/Integrations tabs if user is admin
+            if (data.user.role !== 'admin' && (activeTab === 'users' || activeTab === 'integrations')) {
+              setActiveTab('public-site')
             }
           } else {
             router.push('/login?return=/settings')
@@ -142,19 +142,21 @@ export default function SettingsPage() {
                 </div>
               </button>
             )}
-            <button
-              onClick={() => setActiveTab('integrations')}
-              className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                activeTab === 'integrations'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                Integrations
-              </div>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('integrations')}
+                className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                  activeTab === 'integrations'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Integrations
+                </div>
+              </button>
+            )}
             {isAdmin && (
               <>
                 <button
@@ -193,7 +195,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeTab === 'integrations' && (
+          {activeTab === 'integrations' && isAdmin && (
             <div className="space-y-6">
             {/* Google Calendar Integration */}
             <div className="bg-white rounded-lg border border-gray-200 p-8">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { listCalendarEvents, listCalendars } from '@/lib/google/calendar'
 import { getOrRefreshCalendarToken } from '@/lib/google/calendar-auth'
+import { getUser, isAdmin } from '@/lib/auth'
 
 /**
  * Sync events from Google Calendar
@@ -22,16 +23,36 @@ import { getOrRefreshCalendarToken } from '@/lib/google/calendar-auth'
  */
 export async function POST(request: NextRequest) {
   try {
-    // Optional: Add authentication/authorization check here
-    // For example, check for an API key or secret token
-    const authHeader = request.headers.get('authorization')
-    const expectedToken = process.env.SYNC_API_TOKEN
-    
-    if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+    // Only admins can sync events
+    const user = await getUser()
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
+    }
+    
+    const admin = await isAdmin()
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      )
+    }
+    
+    // Also allow API token for cron jobs
+    const authHeader = request.headers.get('authorization')
+    const expectedToken = process.env.SYNC_API_TOKEN
+    const isApiToken = expectedToken && authHeader === `Bearer ${expectedToken}`
+    
+    if (!isApiToken) {
+      // If not using API token, must be admin
+      if (!admin) {
+        return NextResponse.json(
+          { error: 'Forbidden - Admin access required' },
+          { status: 403 }
+        )
+      }
     }
 
     const accessToken = await getOrRefreshCalendarToken()
@@ -72,6 +93,20 @@ export async function POST(request: NextRequest) {
 
         for (const googleEvent of googleEvents) {
           if (!googleEvent.id || !googleEvent.summary) continue
+
+          // Filter for tech events - only sync tech-related events for everyone
+          // Events are shared/visible to all users, not per-person
+          const isTechEvent = 
+            googleEvent.summary.toLowerCase().includes('tech') ||
+            googleEvent.summary.toLowerCase().includes('it') ||
+            googleEvent.summary.toLowerCase().includes('technology') ||
+            googleEvent.description?.toLowerCase().includes('tech') ||
+            googleEvent.description?.toLowerCase().includes('it') ||
+            (calendar.summary || calendar.id || '').toLowerCase().includes('tech') ||
+            (calendar.summary || calendar.id || '').toLowerCase().includes('school dude')
+          
+          // Only sync tech-related events - skip personal/non-tech events
+          if (!isTechEvent) continue
 
           const start = googleEvent.start?.dateTime || googleEvent.start?.date
           const end = googleEvent.end?.dateTime || googleEvent.end?.date

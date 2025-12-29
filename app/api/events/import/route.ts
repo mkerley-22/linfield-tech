@@ -2,9 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { listCalendarEvents, listCalendars, parseRecurrenceRule } from '@/lib/google/calendar'
 import { getOrRefreshCalendarToken } from '@/lib/google/calendar-auth'
+import { getUser, isAdmin } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Only admins can import events
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+    
+    const admin = await isAdmin()
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      )
+    }
+    
     const body = await request.json()
     const { calendarId, categoryId, timeMin, timeMax } = body
     
@@ -21,8 +39,8 @@ export async function POST(request: NextRequest) {
     for (const googleEvent of googleEvents) {
       if (!googleEvent.id || !googleEvent.summary) continue
       
-      // Optional: Filter for tech events (you can customize this)
-      // For example, filter by title keywords, description, or calendar name
+      // Filter for tech events - only import tech-related events for everyone
+      // Events are shared/visible to all users, not per-person
       const isTechEvent = 
         googleEvent.summary.toLowerCase().includes('tech') ||
         googleEvent.summary.toLowerCase().includes('it') ||
@@ -32,8 +50,8 @@ export async function POST(request: NextRequest) {
         calendarId?.toLowerCase().includes('tech') ||
         calendarId?.toLowerCase().includes('school dude')
       
-      // Uncomment the line below to only import tech-related events
-      // if (!isTechEvent) continue
+      // Only import tech-related events - skip personal/non-tech events
+      if (!isTechEvent) continue
       
       // Check if already imported
       const existing = await prisma.event.findFirst({
@@ -110,6 +128,23 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Only admins can list calendars
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+    
+    const admin = await isAdmin()
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      )
+    }
+    
     const accessToken = await getOrRefreshCalendarToken()
     const calendars = await listCalendars(accessToken)
     
