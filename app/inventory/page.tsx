@@ -476,9 +476,9 @@ export default function InventoryPage() {
                     }}
                     onTouchMove={(e) => {
                       // Mark as moved if touch moved more than 10px (indicating scroll)
-                      if (touchStartRef.current[item.id]) {
+                      const start = touchStartRef.current[item.id]
+                      if (start) {
                         const touch = e.touches[0]
-                        const start = touchStartRef.current[item.id]
                         const deltaX = Math.abs(touch.clientX - start.x)
                         const deltaY = Math.abs(touch.clientY - start.y)
                         if (deltaX > 10 || deltaY > 10) {
@@ -619,9 +619,9 @@ export default function InventoryPage() {
                           }}
                           onTouchMove={(e) => {
                             // Mark as moved if touch moved more than 10px
-                            if (touchStartRef.current[`${item.id}-button`]) {
+                            const start = touchStartRef.current[`${item.id}-button`]
+                            if (start) {
                               const touch = e.touches[0]
-                              const start = touchStartRef.current[`${item.id}-button`]
                               const deltaX = Math.abs(touch.clientX - start.x)
                               const deltaY = Math.abs(touch.clientY - start.y)
                               if (deltaX > 10 || deltaY > 10) {
