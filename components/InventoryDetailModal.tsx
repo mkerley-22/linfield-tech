@@ -254,10 +254,10 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             </div>
 
             {/* Fixed Bottom Edit Button - Full width, 56px height */}
-            <div className="absolute md:relative bottom-0 left-0 right-0 bg-black md:bg-transparent md:border-t md:border-gray-200 md:px-10 md:py-4 z-10">
+            <div className="absolute md:relative bottom-0 left-0 right-0 bg-black md:bg-black md:px-10 md:py-4 z-10">
               <button
                 onClick={handleEdit}
-                className="w-full h-14 md:h-14 bg-white md:bg-gray-100 hover:bg-gray-50 md:hover:bg-gray-200 text-gray-900 font-semibold flex items-center justify-center gap-2 transition-colors"
+                className="w-full h-14 md:h-14 bg-gray-800 hover:bg-gray-900 text-white font-semibold flex items-center justify-center gap-2 transition-colors rounded-lg"
               >
                 <Edit className="w-5 h-5 md:w-5 md:h-5" />
                 <span>Edit</span>
