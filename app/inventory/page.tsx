@@ -462,7 +462,6 @@ export default function InventoryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {getSortedItems().map((item) => {
                 const available = getAvailableQuantity(item)
-                const isLowStock = available < item.quantity * 0.3
                 const isOutOfStock = available === 0
 
                 return (
@@ -539,7 +538,6 @@ export default function InventoryPage() {
                       <div className={cn(
                         "absolute top-3 left-3 rounded-lg border px-2 py-1 text-xs font-medium shadow-sm",
                         isOutOfStock ? "bg-red-100 text-red-800 border-red-200" :
-                        isLowStock ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
                         "bg-green-100 text-green-800 border-green-200"
                       )}>
                         {available} / {item.quantity} Available
@@ -664,7 +662,6 @@ export default function InventoryPage() {
               <div className="divide-y divide-gray-200">
                 {getSortedItems().map((item) => {
                   const available = getAvailableQuantity(item)
-                  const isLowStock = available < item.quantity * 0.3
                   const isOutOfStock = available === 0
                   const isSelected = selectedItems.has(item.id)
 
@@ -721,8 +718,6 @@ export default function InventoryPage() {
                               className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
                                 isOutOfStock
                                   ? 'bg-red-100 text-red-800'
-                                  : isLowStock
-                                  ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-green-100 text-green-800'
                               }`}
                             >
