@@ -117,7 +117,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
       onClick={onClose}
     >
       <div 
-        className="bg-white md:rounded-lg shadow-xl max-w-2xl w-full h-[calc(100vh-4rem)] md:h-auto md:max-h-[90vh] overflow-hidden md:overflow-y-auto flex flex-col md:animate-none animate-slide-up"
+        className="bg-white md:rounded-lg shadow-xl max-w-2xl w-full h-[calc(100vh-4rem)] md:h-auto md:max-h-[90vh] overflow-hidden md:overflow-y-auto flex flex-col md:animate-none animate-slide-up relative"
         onClick={(e) => e.stopPropagation()}
       >
         {isLoading ? (
