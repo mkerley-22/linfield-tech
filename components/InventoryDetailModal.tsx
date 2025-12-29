@@ -230,8 +230,8 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
                 </div>
               </div>
 
-              {/* Metadata Section - Manufacturer and Location in rows */}
-              <div className="flex flex-col gap-3 md:gap-4 pt-3 md:pt-6 border-t border-gray-200">
+              {/* Metadata Section - Manufacturer and Location in 2 columns */}
+              <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-6 border-t border-gray-200">
                 {item.manufacturer && (
                   <div className="flex items-center gap-2 md:gap-3">
                     <Building2 className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
@@ -253,12 +253,12 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             </div>
 
-            {/* Fixed Bottom Edit Button - Full width, 56px height, black bar with white button */}
-            <div className="absolute md:relative bottom-0 left-0 right-0 bg-black md:bg-black z-10">
-              <div className="px-4 md:px-10 py-4">
+            {/* Fixed Bottom Edit Button - Full width, black button with hover state */}
+            <div className="absolute md:relative bottom-0 left-0 right-0 z-10">
+              <div className="px-4 md:px-10 py-4 h-full">
                 <button
                   onClick={handleEdit}
-                  className="w-full h-14 md:h-14 bg-white hover:bg-gray-100 text-gray-900 font-semibold flex items-center justify-center gap-2 transition-colors rounded-lg"
+                  className="w-full h-full bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2 transition-colors rounded-lg"
                 >
                   <Edit className="w-5 h-5 md:w-5 md:h-5" />
                   <span>Edit</span>
