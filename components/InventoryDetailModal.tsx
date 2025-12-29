@@ -128,7 +128,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
           <>
             {/* Image Section - Fills available space */}
             {item.imageUrl && (
-              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
+              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden" style={{ marginBottom: '-24px' }}>
                 {/* Close Button */}
                 <button
                   onClick={onClose}
@@ -144,7 +144,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
             {!item.imageUrl && (
-              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
+              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden" style={{ marginBottom: '-24px' }}>
                 {/* Close Button */}
                 <button
                   onClick={onClose}
@@ -160,21 +160,21 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               {/* Title and Actions */}
               <div className="flex items-start justify-between mb-3 md:mb-6">
                 <h1 className="text-lg md:text-2xl font-bold text-gray-900 pr-2 md:pr-4 flex-1">{item.name}</h1>
-                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 md:gap-2 flex-shrink-0">
                   <Button
                     variant="secondary"
                     onClick={handleEdit}
-                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4 py-1 md:py-2"
+                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-3 md:px-4 min-h-[44px] md:min-h-0 md:py-2"
                   >
-                    <Edit className="w-3 h-3 md:w-4 md:h-4" />
+                    <Edit className="w-4 h-4 md:w-4 md:h-4" />
                     <span className="hidden sm:inline">Edit</span>
                   </Button>
                   <div className="relative">
                     <button
                       onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                      className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      className="w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
                     >
-                      <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                      <MoreVertical className="w-5 h-5 md:w-5 md:h-5 text-gray-500" />
                     </button>
                     {showOptionsMenu && (
                       <>
