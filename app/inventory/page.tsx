@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { Toast } from '@/components/ui/Toast'
 import InventoryDetailModal from '@/components/InventoryDetailModal'
-import InventoryAssistant from '@/components/InventoryAssistant'
 
 interface InventoryItem {
   id: string
@@ -52,10 +51,6 @@ export default function InventoryPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [useSmartSearch, setUseSmartSearch] = useState(false)
-  const [smartSearchResults, setSmartSearchResults] = useState<InventoryItem[] | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
   useEffect(() => {
@@ -148,58 +143,11 @@ export default function InventoryPage() {
   }
 
   // Sort items
-  const performSmartSearch = async (query: string) => {
-    if (!query.trim() || query.length < 3) {
-      setSmartSearchResults(null)
-      setUseSmartSearch(false)
-      return
-    }
-
-    // Check if query looks like natural language (has spaces, common words, etc.)
-    const isNaturalLanguage = query.includes(' ') || 
-                             query.toLowerCase().includes('show me') ||
-                             query.toLowerCase().includes('find') ||
-                             query.toLowerCase().includes('where') ||
-                             query.toLowerCase().includes('what')
-
-    if (isNaturalLanguage) {
-      setIsSearching(true)
-      setUseSmartSearch(true)
-      try {
-        const response = await fetch('/api/inventory/smart-search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query }),
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setSmartSearchResults(data.items)
-        } else {
-          // Fallback to regular search
-          setUseSmartSearch(false)
-          setSmartSearchResults(null)
-        }
-      } catch (error) {
-        console.error('Smart search error:', error)
-        setUseSmartSearch(false)
-        setSmartSearchResults(null)
-      } finally {
-        setIsSearching(false)
-      }
-    } else {
-      setUseSmartSearch(false)
-      setSmartSearchResults(null)
-    }
-  }
-
   const getSortedItems = () => {
-    const itemsToSort = useSmartSearch && smartSearchResults ? smartSearchResults : items
-    
     if (sortOrder === 'alphabetical') {
-      return [...itemsToSort].sort((a, b) => a.name.localeCompare(b.name))
+      return [...items].sort((a, b) => a.name.localeCompare(b.name))
     }
-    return itemsToSort
+    return items
   }
 
   const handleMenuClick = (e: React.MouseEvent, itemId: string) => {
@@ -371,34 +319,11 @@ export default function InventoryPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search equipment... (try natural language like 'show me all microphones')"
+                    placeholder="Search equipment..."
                     value={search}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setSearch(value)
-                      
-                      // Clear previous timeout
-                      if (searchTimeoutRef.current) {
-                        clearTimeout(searchTimeoutRef.current)
-                      }
-                      
-                      // Debounce smart search
-                      searchTimeoutRef.current = setTimeout(() => {
-                        performSmartSearch(value)
-                      }, 500)
-                    }}
+                    onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                   />
-                  {isSearching && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                    </div>
-                  )}
-                  {useSmartSearch && smartSearchResults && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">AI Search</span>
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -792,9 +717,6 @@ export default function InventoryPage() {
         }}
         onDelete={handleModalDelete}
       />
-
-      {/* Inventory Assistant */}
-      <InventoryAssistant />
     </div>
   )
 }

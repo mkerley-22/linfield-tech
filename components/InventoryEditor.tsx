@@ -123,8 +123,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     })() : []
   )
   const [uploadingImage, setUploadingImage] = useState(false)
-  const [analyzingImage, setAnalyzingImage] = useState(false)
-  const [aiAnalysisResult, setAiAnalysisResult] = useState<any>(null)
   const [newDocUrl, setNewDocUrl] = useState('')
   const [newDocTitle, setNewDocTitle] = useState('')
   const [newDocType, setNewDocType] = useState('manual')
@@ -160,73 +158,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
     }
   }, [pendingImagePreview])
 
-  // Analyze image with AI
-  const analyzeImageWithAI = async (imageUrl: string) => {
-    // Check if OpenAI is configured (we can't check server env vars in client, so we'll try and handle errors)
-    setAnalyzingImage(true)
-    try {
-      // Convert relative URL to absolute if needed
-      const fullImageUrl = imageUrl.startsWith('http') 
-        ? imageUrl 
-        : `${window.location.origin}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
-
-      const response = await fetch('/api/inventory/analyze-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: fullImageUrl }),
-      })
-
-      if (response.ok) {
-        const { analysis } = await response.json()
-        setAiAnalysisResult(analysis)
-
-        // Auto-fill form fields if they're empty
-        if (analysis.equipmentType && !name.trim()) {
-          setName(analysis.equipmentType)
-        }
-        if (analysis.brand && !manufacturer.trim()) {
-          setManufacturer(analysis.brand)
-        }
-        if (analysis.model && !model.trim()) {
-          setModel(analysis.model)
-        }
-        if (analysis.description && !description.trim()) {
-          setDescription(analysis.description)
-        }
-        if (analysis.serialNumbers && analysis.serialNumbers.length > 0 && serialNumbers.length === 0) {
-          setSerialNumbers(analysis.serialNumbers.filter((s: string) => s && s.trim()))
-        }
-
-        // Auto-select tags if suggested
-        if (analysis.suggestedTags && analysis.suggestedTags.length > 0) {
-          const tagNames = analysis.suggestedTags.map((t: string) => t.toLowerCase())
-          const matchingTags = tags.filter(tag => 
-            tagNames.some((name: string) => tag.name.toLowerCase().includes(name) || name.includes(tag.name.toLowerCase()))
-          )
-          if (matchingTags.length > 0 && selectedTags.length === 0) {
-            setSelectedTags(matchingTags.map(t => t.id))
-          }
-        }
-
-        // Show condition warning if needed
-        if (analysis.condition === 'poor' || analysis.condition === 'damaged') {
-          alert(`⚠️ Condition Alert: This item appears to be in ${analysis.condition} condition. ${analysis.conditionNotes || ''}`)
-        }
-      } else if (response.status === 500) {
-        const error = await response.json()
-        if (error.error?.includes('API key')) {
-          // AI not configured, silently skip
-          return
-        }
-      }
-    } catch (error) {
-      console.error('AI analysis error:', error)
-      // Don't show error to user, just continue without AI features
-    } finally {
-      setAnalyzingImage(false)
-    }
-  }
-
   // Shared function to process image file (used by both file upload and paste)
   const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -255,9 +186,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             setPendingImagePreview('')
           }
           alert('Image uploaded successfully')
-          
-          // Analyze image with AI
-          await analyzeImageWithAI(data.imageUrl)
         } else {
           const error = await response.json()
           alert(error.error || 'Failed to upload image')
@@ -927,46 +855,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         <p className="text-xs text-gray-500 mb-2">
           Upload an image file or paste an image from your clipboard (Cmd+V / Ctrl+V)
         </p>
-        {analyzingImage && (
-          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-            <span className="text-sm text-blue-700">Analyzing image with AI...</span>
-          </div>
-        )}
-        {aiAnalysisResult && !analyzingImage && (
-          <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-green-800">✨ AI Analysis Complete</span>
-              <button
-                type="button"
-                onClick={() => setAiAnalysisResult(null)}
-                className="text-green-600 hover:text-green-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="text-xs text-green-700 space-y-1">
-              {aiAnalysisResult.equipmentType && (
-                <p><strong>Type:</strong> {aiAnalysisResult.equipmentType}</p>
-              )}
-              {aiAnalysisResult.brand && (
-                <p><strong>Brand:</strong> {aiAnalysisResult.brand}</p>
-              )}
-              {aiAnalysisResult.model && (
-                <p><strong>Model:</strong> {aiAnalysisResult.model}</p>
-              )}
-              {aiAnalysisResult.condition && (
-                <p><strong>Condition:</strong> <span className="capitalize">{aiAnalysisResult.condition}</span></p>
-              )}
-              {aiAnalysisResult.suggestedTags && aiAnalysisResult.suggestedTags.length > 0 && (
-                <p><strong>Suggested Tags:</strong> {aiAnalysisResult.suggestedTags.join(', ')}</p>
-              )}
-              {aiAnalysisResult.serialNumbers && aiAnalysisResult.serialNumbers.length > 0 && (
-                <p><strong>Serial Numbers Found:</strong> {aiAnalysisResult.serialNumbers.join(', ')}</p>
-              )}
-            </div>
-          </div>
-        )}
         {(imageUrl || pendingImagePreview) ? (
           <div className="group relative w-64 aspect-square bg-gray-200 rounded-2xl overflow-hidden border border-gray-300">
             <img
@@ -980,19 +868,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 }
               }}
             />
-            {imageUrl && !analyzingImage && !aiAnalysisResult && (process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY) && (
-              <div className="absolute bottom-2 right-2">
-                <button
-                  type="button"
-                  onClick={() => analyzeImageWithAI(imageUrl)}
-                  className="px-3 py-1.5 bg-white hover:bg-gray-50 rounded-lg shadow-sm text-xs font-medium text-gray-700 flex items-center gap-1"
-                >
-                  <ImageIcon className="w-3 h-3" />
-                  Analyze with AI
-                </button>
-              </div>
-            )}
-            
             {/* Hover Overlay with Replace and Delete buttons */}
             {(itemId || pendingImageFile) && (
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
