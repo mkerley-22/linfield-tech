@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Edit, MoreVertical, Trash2, Database, CheckCircle, ArrowRight, Building2, MapPin, Tag as TagIcon, Plus } from 'lucide-react'
+import { X, Edit, MoreVertical, Trash2, Database, CheckCircle, ArrowRight, Building2, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface LocationBreakdown {
@@ -156,53 +156,14 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             )}
 
             {/* Content Section - Always visible */}
-            <div className="px-6 pb-6 md:px-10 md:pb-10 flex flex-col bg-white flex-shrink-0 overflow-y-auto">
-              {/* Title and Actions */}
-              <div className="flex items-start justify-between mb-3 md:mb-6 gap-2">
-                <h1 className="text-lg md:text-2xl font-bold text-gray-900 flex-1 min-w-0 break-words">{item.name}</h1>
-                <div className="flex items-center gap-2 md:gap-2 flex-shrink-0">
-                  <Button
-                    variant="secondary"
-                    onClick={handleEdit}
-                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-3 md:px-4 min-h-[44px] md:min-h-0 md:py-2"
-                  >
-                    <Edit className="w-4 h-4 md:w-4 md:h-4" />
-                    <span className="hidden sm:inline">Edit</span>
-                  </Button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                      className="w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
-                    >
-                      <MoreVertical className="w-5 h-5 md:w-5 md:h-5 text-gray-500" />
-                    </button>
-                    {showOptionsMenu && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-10"
-                          onClick={() => setShowOptionsMenu(false)}
-                        />
-                        <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setShowDeleteConfirm(true)
-                              setShowOptionsMenu(false)
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+            <div className="px-6 pb-20 md:pb-6 md:px-10 flex flex-col bg-white flex-shrink-0 overflow-y-auto">
+              {/* Product Name - Below image */}
+              <div className="mb-4 md:mb-6">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900">{item.name}</h1>
               </div>
 
               {/* Quantity and Availability Section */}
-              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-6">
+              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1 md:mb-2">
                     <Database className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
@@ -226,8 +187,8 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
                 </div>
               </div>
 
-              {/* Metadata Section */}
-              <div className="grid grid-cols-3 gap-3 md:gap-6 pt-3 md:pt-6 border-t border-gray-200">
+              {/* Metadata Section - Manufacturer and Location only */}
+              <div className="grid grid-cols-2 gap-4 md:gap-6 pt-3 md:pt-6 border-t border-gray-200">
                 {item.manufacturer && (
                   <div className="flex flex-col items-start">
                     <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
@@ -246,28 +207,18 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
                     <p className="text-sm md:text-base font-semibold text-gray-900 line-clamp-2">{item.location}</p>
                   </div>
                 )}
-                <div className="flex flex-col items-start">
-                  <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                    <TagIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-                    <p className="text-[10px] md:text-xs text-gray-500">Tags</p>
-                  </div>
-                  <div className="flex flex-wrap gap-1 md:gap-2">
-                    {item.tags && item.tags.length > 0 ? (
-                      item.tags.map((itemTag) => (
-                        <span
-                          key={itemTag.tag.id}
-                          className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-medium text-white"
-                          style={{ backgroundColor: itemTag.tag.color }}
-                        >
-                          {itemTag.tag.name}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs md:text-sm text-gray-400">No tags</span>
-                    )}
-                  </div>
-                </div>
               </div>
+            </div>
+
+            {/* Fixed Bottom Edit Button - Full width, 56px height */}
+            <div className="fixed md:relative bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto bg-black md:bg-transparent md:border-t md:border-gray-200 md:px-10 md:py-4">
+              <button
+                onClick={handleEdit}
+                className="w-full h-14 md:h-14 bg-white md:bg-gray-100 hover:bg-gray-50 md:hover:bg-gray-200 text-gray-900 font-semibold flex items-center justify-center gap-2 transition-colors"
+              >
+                <Edit className="w-5 h-5 md:w-5 md:h-5" />
+                <span>Edit</span>
+              </button>
             </div>
           </>
         ) : null}
