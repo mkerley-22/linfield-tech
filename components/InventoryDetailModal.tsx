@@ -156,7 +156,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             )}
 
             {/* Content Section - Fixed at bottom */}
-            <div className="p-3 md:p-6 flex flex-col bg-white flex-shrink-0">
+            <div className="px-6 pb-6 md:px-10 md:pb-10 flex flex-col bg-white flex-shrink-0">
               {/* Title and Actions */}
               <div className="flex items-start justify-between mb-3 md:mb-6">
                 <h1 className="text-lg md:text-2xl font-bold text-gray-900 pr-2 md:pr-4 flex-1">{item.name}</h1>
