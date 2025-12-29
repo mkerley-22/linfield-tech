@@ -13,6 +13,22 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  /* Prevent scrolling beyond viewport on mobile */
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Fix mobile viewport height issues with keyboard */
+@supports (height: 100dvh) {
+  html {
+    height: 100dvh;
+  }
+}
+
+/* Prevent body from scrolling past bounds */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 @layer utilities {

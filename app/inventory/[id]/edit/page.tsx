@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Link from 'next/link'
 import { ArrowLeft, Package } from 'lucide-react'
@@ -10,10 +10,79 @@ import { Button } from '@/components/ui/Button'
 export default function EditInventoryPage({ params }: { params: { id: string } }) {
   const [item, setItem] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const mainRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     loadItem(params.id)
   }, [params.id])
+
+  // Fix mobile keyboard scroll issue
+  useEffect(() => {
+    let lastViewportHeight = window.innerHeight
+    let resizeTimeout: NodeJS.Timeout
+
+    const handleResize = () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        const currentViewportHeight = window.innerHeight
+        // If viewport height increased (keyboard closed), fix scroll position
+        if (currentViewportHeight > lastViewportHeight) {
+          const scrollY = window.scrollY
+          const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+          
+          // If scrolled beyond bounds, clamp to valid range
+          if (scrollY > maxScroll || scrollY < 0) {
+            window.scrollTo({ 
+              top: Math.max(0, Math.min(scrollY, maxScroll)), 
+              behavior: 'instant' 
+            })
+          }
+        }
+        lastViewportHeight = currentViewportHeight
+      }, 150)
+    }
+
+    const handleBlur = (e: FocusEvent) => {
+      // When input loses focus (keyboard closes), fix scroll position
+      if (e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        setTimeout(() => {
+          const scrollY = window.scrollY
+          const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+          
+          // Clamp scroll position to valid range
+          if (scrollY > maxScroll || scrollY < 0) {
+            window.scrollTo({ 
+              top: Math.max(0, Math.min(scrollY, maxScroll)), 
+              behavior: 'instant' 
+            })
+          }
+        }, 200)
+      }
+    }
+
+    const handleScroll = () => {
+      // Prevent scrolling beyond document bounds
+      const scrollY = window.scrollY
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+      
+      if (scrollY > maxScroll) {
+        window.scrollTo({ top: maxScroll, behavior: 'instant' })
+      } else if (scrollY < 0) {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    document.addEventListener('focusout', handleBlur)
+
+    return () => {
+      clearTimeout(resizeTimeout)
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('scroll', handleScroll)
+      document.removeEventListener('focusout', handleBlur)
+    }
+  }, [])
 
   const loadItem = async (id: string) => {
     setIsLoading(true)
@@ -68,7 +137,7 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
+      <main ref={mainRef} className="flex-1 overflow-y-auto" style={{ maxHeight: '100vh', overflowY: 'auto' }}>
         <div className="max-w-4xl mx-auto p-4 lg:p-8 pt-24 lg:pt-8">
           <Link
             href="/inventory"
