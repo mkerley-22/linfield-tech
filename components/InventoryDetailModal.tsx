@@ -169,6 +169,29 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
 
+            {/* Options Menu */}
+            {showOptionsMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowOptionsMenu(false)}
+                />
+                <div className="absolute left-2 top-12 md:left-4 md:top-12 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowDeleteConfirm(true)
+                      setShowOptionsMenu(false)
+                    }}
+                    className="w-full px-4 py-2 min-h-[44px] md:min-h-0 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+
             {/* Content Section - Always visible */}
             <div className="px-6 pb-20 md:pb-6 md:px-10 flex flex-col bg-white flex-shrink-0 overflow-y-auto">
               {/* Brand Name - Blue text */}
