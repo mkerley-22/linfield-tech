@@ -129,7 +129,14 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             {/* Image Section - Limited height on mobile to ensure buttons are visible */}
             {item.imageUrl && (
               <div className="relative max-h-[40vh] md:flex-1 md:min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
-                {/* Close Button */}
+                {/* Top-left: Menu Button */}
+                <button
+                  onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                  className="absolute top-2 left-2 md:top-4 md:left-4 w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10 flex items-center justify-center"
+                >
+                  <MoreVertical className="w-5 h-5 md:w-5 md:h-5 text-gray-700" />
+                </button>
+                {/* Top-right: Close Button */}
                 <button
                   onClick={onClose}
                   className="absolute top-2 right-2 md:top-4 md:right-4 w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10 flex items-center justify-center"
@@ -145,7 +152,14 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             )}
             {!item.imageUrl && (
               <div className="relative max-h-[40vh] md:flex-1 md:min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
-                {/* Close Button */}
+                {/* Top-left: Menu Button */}
+                <button
+                  onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                  className="absolute top-2 left-2 md:top-4 md:left-4 w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10 flex items-center justify-center"
+                >
+                  <MoreVertical className="w-5 h-5 md:w-5 md:h-5 text-gray-700" />
+                </button>
+                {/* Top-right: Close Button */}
                 <button
                   onClick={onClose}
                   className="absolute top-2 right-2 md:top-4 md:right-4 w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10 flex items-center justify-center"
@@ -157,7 +171,13 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
 
             {/* Content Section - Always visible */}
             <div className="px-6 pb-20 md:pb-6 md:px-10 flex flex-col bg-white flex-shrink-0 overflow-y-auto">
-              {/* Product Name - Below image */}
+              {/* Brand Name - Blue text */}
+              {item.manufacturer && (
+                <div className="mb-1">
+                  <p className="text-sm md:text-base text-blue-600 font-medium">{item.manufacturer}</p>
+                </div>
+              )}
+              {/* Product Name - Below brand */}
               <div className="mb-4 md:mb-6">
                 <h1 className="text-xl md:text-2xl font-bold text-gray-900">{item.name}</h1>
               </div>
@@ -187,24 +207,24 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
                 </div>
               </div>
 
-              {/* Metadata Section - Manufacturer and Location only */}
-              <div className="grid grid-cols-2 gap-4 md:gap-6 pt-3 md:pt-6 border-t border-gray-200">
+              {/* Metadata Section - Manufacturer and Location in rows */}
+              <div className="flex flex-col gap-3 md:gap-4 pt-3 md:pt-6 border-t border-gray-200">
                 {item.manufacturer && (
-                  <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                      <Building2 className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-                      <p className="text-[10px] md:text-xs text-gray-500">Manufacturer</p>
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <Building2 className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-[10px] md:text-xs text-gray-500 mb-0.5">Manufacturer</p>
+                      <p className="text-sm md:text-base font-semibold text-gray-900">{item.manufacturer}</p>
                     </div>
-                    <p className="text-sm md:text-base font-semibold text-gray-900 line-clamp-2">{item.manufacturer}</p>
                   </div>
                 )}
                 {item.location && (
-                  <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2">
-                      <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-                      <p className="text-[10px] md:text-xs text-gray-500">Location</p>
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <MapPin className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-[10px] md:text-xs text-gray-500 mb-0.5">Location</p>
+                      <p className="text-sm md:text-base font-semibold text-gray-900">{item.location}</p>
                     </div>
-                    <p className="text-sm md:text-base font-semibold text-gray-900 line-clamp-2">{item.location}</p>
                   </div>
                 )}
               </div>
