@@ -53,6 +53,8 @@ export default function InventoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const touchHandledRef = useRef<{ [key: string]: boolean }>({})
+  const touchStartRef = useRef<{ [key: string]: { x: number; y: number } | null }>({})
+  const touchMovedRef = useRef<{ [key: string]: boolean }>({})
 
   useEffect(() => {
     loadTags()
@@ -466,14 +468,35 @@ export default function InventoryPage() {
                 return (
                   <div
                     key={item.id}
+                    onTouchStart={(e) => {
+                      // Track touch start position to detect scrolling
+                      const touch = e.touches[0]
+                      touchStartRef.current[item.id] = { x: touch.clientX, y: touch.clientY }
+                      touchMovedRef.current[item.id] = false
+                    }}
+                    onTouchMove={(e) => {
+                      // Mark as moved if touch moved more than 10px (indicating scroll)
+                      if (touchStartRef.current[item.id]) {
+                        const touch = e.touches[0]
+                        const start = touchStartRef.current[item.id]
+                        const deltaX = Math.abs(touch.clientX - start.x)
+                        const deltaY = Math.abs(touch.clientY - start.y)
+                        if (deltaX > 10 || deltaY > 10) {
+                          touchMovedRef.current[item.id] = true
+                        }
+                      }
+                    }}
                     onTouchEnd={(e) => {
-                      // Handle touch on mobile - fire immediately
+                      // Only open modal if it was a tap (not a scroll)
                       const target = e.target as HTMLElement
-                      if (!target.closest('button, a')) {
+                      if (!target.closest('button, a') && !touchMovedRef.current[item.id]) {
                         e.preventDefault()
                         e.stopPropagation()
                         handleViewDetails(e as any, item.id, true)
                       }
+                      // Clean up
+                      touchStartRef.current[item.id] = null
+                      touchMovedRef.current[item.id] = false
                     }}
                     onClick={(e) => {
                       // Desktop only - mobile uses touch events
@@ -582,14 +605,41 @@ export default function InventoryPage() {
                       <div 
                         className="mt-auto" 
                         onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
                         onTouchEnd={(e) => e.stopPropagation()}
                       >
                         <button
-                          onTouchEnd={(e) => {
-                            // Handle touch immediately on mobile
-                            e.preventDefault()
+                          onTouchStart={(e) => {
+                            // Track touch start for button specifically
+                            const touch = e.touches[0]
+                            touchStartRef.current[`${item.id}-button`] = { x: touch.clientX, y: touch.clientY }
+                            touchMovedRef.current[`${item.id}-button`] = false
                             e.stopPropagation()
-                            handleViewDetails(e as any, item.id, true)
+                          }}
+                          onTouchMove={(e) => {
+                            // Mark as moved if touch moved more than 10px
+                            if (touchStartRef.current[`${item.id}-button`]) {
+                              const touch = e.touches[0]
+                              const start = touchStartRef.current[`${item.id}-button`]
+                              const deltaX = Math.abs(touch.clientX - start.x)
+                              const deltaY = Math.abs(touch.clientY - start.y)
+                              if (deltaX > 10 || deltaY > 10) {
+                                touchMovedRef.current[`${item.id}-button`] = true
+                              }
+                            }
+                            e.stopPropagation()
+                          }}
+                          onTouchEnd={(e) => {
+                            // Only open modal if it was a tap (not a scroll)
+                            if (!touchMovedRef.current[`${item.id}-button`]) {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleViewDetails(e as any, item.id, true)
+                            }
+                            // Clean up
+                            touchStartRef.current[`${item.id}-button`] = null
+                            touchMovedRef.current[`${item.id}-button`] = false
                           }}
                           onClick={(e) => {
                             // Desktop fallback - skip if touch was handled
