@@ -126,15 +126,15 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
           </div>
         ) : item ? (
           <>
-            {/* Image Section - Fills available space */}
+            {/* Image Section - Limited height on mobile to ensure buttons are visible */}
             {item.imageUrl && (
-              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden" style={{ marginBottom: '-24px' }}>
+              <div className="relative max-h-[40vh] md:flex-1 md:min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
                 {/* Close Button */}
                 <button
                   onClick={onClose}
-                  className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
+                  className="absolute top-2 right-2 md:top-4 md:right-4 w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10 flex items-center justify-center"
                 >
-                  <X className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                  <X className="w-5 h-5 md:w-5 md:h-5 text-gray-700" />
                 </button>
                 <img
                   src={item.imageUrl}
@@ -144,7 +144,7 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
             {!item.imageUrl && (
-              <div className="relative flex-1 min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden" style={{ marginBottom: '-24px' }}>
+              <div className="relative max-h-[40vh] md:flex-1 md:min-h-0 bg-gray-100 md:aspect-square md:flex-none md:h-auto md:rounded-t-lg overflow-hidden">
                 {/* Close Button */}
                 <button
                   onClick={onClose}
@@ -155,8 +155,8 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
               </div>
             )}
 
-            {/* Content Section - Fixed at bottom */}
-            <div className="px-6 pb-6 md:px-10 md:pb-10 flex flex-col bg-white flex-shrink-0">
+            {/* Content Section - Always visible */}
+            <div className="px-6 pb-6 md:px-10 md:pb-10 flex flex-col bg-white flex-shrink-0 overflow-y-auto">
               {/* Title and Actions */}
               <div className="flex items-start justify-between mb-3 md:mb-6">
                 <h1 className="text-lg md:text-2xl font-bold text-gray-900 pr-2 md:pr-4 flex-1">{item.name}</h1>
