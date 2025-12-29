@@ -148,9 +148,9 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
                 {/* Close Button */}
                 <button
                   onClick={onClose}
-                  className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10"
+                  className="absolute top-2 right-2 md:top-4 md:right-4 w-11 h-11 md:w-auto md:h-auto p-1.5 md:p-2 bg-white hover:bg-gray-100 rounded-full shadow-md transition-colors z-10 flex items-center justify-center"
                 >
-                  <X className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                  <X className="w-5 h-5 md:w-5 md:h-5 text-gray-700" />
                 </button>
               </div>
             )}
