@@ -158,8 +158,8 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
             {/* Content Section - Always visible */}
             <div className="px-6 pb-6 md:px-10 md:pb-10 flex flex-col bg-white flex-shrink-0 overflow-y-auto">
               {/* Title and Actions */}
-              <div className="flex items-start justify-between mb-3 md:mb-6">
-                <h1 className="text-lg md:text-2xl font-bold text-gray-900 pr-2 md:pr-4 flex-1">{item.name}</h1>
+              <div className="flex items-start justify-between mb-3 md:mb-6 gap-2">
+                <h1 className="text-lg md:text-2xl font-bold text-gray-900 flex-1 min-w-0 break-words">{item.name}</h1>
                 <div className="flex items-center gap-2 md:gap-2 flex-shrink-0">
                   <Button
                     variant="secondary"
