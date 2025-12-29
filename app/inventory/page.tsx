@@ -203,7 +203,7 @@ export default function InventoryPage() {
     setDeleteConfirm({ show: false, itemId: null, itemName: '' })
   }
 
-  const handleViewDetails = (e: React.MouseEvent, itemId: string) => {
+  const handleViewDetails = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
     e.preventDefault()
     e.stopPropagation()
     setSelectedItemId(itemId)
@@ -453,7 +453,15 @@ export default function InventoryPage() {
                 return (
                   <div
                     key={item.id}
-                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden"
+                    onClick={(e) => {
+                      // On mobile, make entire card clickable (but not if clicking on interactive elements)
+                      if (window.innerWidth < 768 && !(e.target as HTMLElement).closest('button, a')) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleViewDetails(e, item.id)
+                      }
+                    }}
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden cursor-pointer md:cursor-default"
                   >
                     {/* Image Section */}
                     <div className="relative bg-gray-200 aspect-square flex items-center justify-center rounded-t-2xl overflow-hidden">
@@ -548,10 +556,14 @@ export default function InventoryPage() {
                       </h3>
                       
                       {/* View Details Button */}
-                      <div className="mt-auto">
+                      <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={(e) => handleViewDetails(e, item.id)}
-                          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 min-h-[44px] md:min-h-0 rounded-lg transition-colors text-center"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleViewDetails(e, item.id)
+                          }}
+                          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 min-h-[44px] md:min-h-0 rounded-lg transition-colors text-center touch-manipulation active:bg-gray-700"
                         >
                           View Details
                         </button>
