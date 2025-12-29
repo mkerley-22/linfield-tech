@@ -322,9 +322,6 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                 URL.revokeObjectURL(pendingImagePreview)
                 setPendingImagePreview('')
               }
-              
-              // Analyze image with AI after upload
-              await analyzeImageWithAI(imageData.imageUrl)
             }
           } catch (error) {
             console.error('Failed to upload pending image:', error)
