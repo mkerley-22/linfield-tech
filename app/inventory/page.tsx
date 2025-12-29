@@ -52,6 +52,7 @@ export default function InventoryPage() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const touchHandledRef = useRef<{ [key: string]: boolean }>({})
 
   useEffect(() => {
     loadTags()
@@ -203,7 +204,19 @@ export default function InventoryPage() {
     setDeleteConfirm({ show: false, itemId: null, itemName: '' })
   }
 
-  const handleViewDetails = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
+  const handleViewDetails = (e: React.MouseEvent | React.TouchEvent, itemId: string, isTouch = false) => {
+    // Prevent double-firing
+    if (isTouch && touchHandledRef.current[itemId]) {
+      return
+    }
+    if (isTouch) {
+      touchHandledRef.current[itemId] = true
+      // Clear after a short delay
+      setTimeout(() => {
+        touchHandledRef.current[itemId] = false
+      }, 300)
+    }
+    
     e.preventDefault()
     e.stopPropagation()
     setSelectedItemId(itemId)
@@ -453,15 +466,25 @@ export default function InventoryPage() {
                 return (
                   <div
                     key={item.id}
-                    onClick={(e) => {
-                      // On mobile, make entire card clickable (but not if clicking on interactive elements)
-                      if (window.innerWidth < 768 && !(e.target as HTMLElement).closest('button, a')) {
+                    onTouchEnd={(e) => {
+                      // Handle touch on mobile - fire immediately
+                      const target = e.target as HTMLElement
+                      if (!target.closest('button, a')) {
                         e.preventDefault()
                         e.stopPropagation()
-                        handleViewDetails(e, item.id)
+                        handleViewDetails(e as any, item.id, true)
                       }
                     }}
-                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden cursor-pointer md:cursor-default"
+                    onClick={(e) => {
+                      // Desktop only - mobile uses touch events
+                      // Also skip if touch was already handled
+                      if (window.innerWidth >= 768 && !touchHandledRef.current[item.id] && !(e.target as HTMLElement).closest('button, a')) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleViewDetails(e, item.id, false)
+                      }
+                    }}
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all relative flex flex-col overflow-hidden cursor-pointer md:cursor-default touch-manipulation"
                   >
                     {/* Image Section */}
                     <div className="relative bg-gray-200 aspect-square flex items-center justify-center rounded-t-2xl overflow-hidden">
@@ -556,12 +579,25 @@ export default function InventoryPage() {
                       </h3>
                       
                       {/* View Details Button */}
-                      <div className="mt-auto" onClick={(e) => e.stopPropagation()}>
+                      <div 
+                        className="mt-auto" 
+                        onClick={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                      >
                         <button
-                          onClick={(e) => {
+                          onTouchEnd={(e) => {
+                            // Handle touch immediately on mobile
                             e.preventDefault()
                             e.stopPropagation()
-                            handleViewDetails(e, item.id)
+                            handleViewDetails(e as any, item.id, true)
+                          }}
+                          onClick={(e) => {
+                            // Desktop fallback - skip if touch was handled
+                            if (!touchHandledRef.current[item.id]) {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleViewDetails(e, item.id, false)
+                            }
                           }}
                           className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 min-h-[44px] md:min-h-0 rounded-lg transition-colors text-center touch-manipulation active:bg-gray-700"
                         >
