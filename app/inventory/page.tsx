@@ -329,7 +329,7 @@ export default function InventoryPage() {
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setSelectedTag('')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium transition-colors ${
                     selectedTag === ''
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -341,7 +341,7 @@ export default function InventoryPage() {
                   <button
                     key={tag.id}
                     onClick={() => setSelectedTag(selectedTag === tag.id ? '' : tag.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium transition-colors ${
                       selectedTag === tag.id
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -499,10 +499,10 @@ export default function InventoryPage() {
                             e.stopPropagation()
                             handleMenuClick(e, item.id)
                           }}
-                          className="p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
+                          className="w-11 h-11 md:w-auto md:h-auto p-1.5 bg-white rounded-full shadow-sm hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center"
                           aria-label="More options"
                         >
-                          <MoreVertical className="w-4 h-4 text-gray-500" />
+                          <MoreVertical className="w-5 h-5 md:w-4 md:h-4 text-gray-500" />
                         </button>
                         {openMenuId === item.id && (
                           <div className="absolute right-0 top-10 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
@@ -512,7 +512,7 @@ export default function InventoryPage() {
                                 e.stopPropagation()
                                 handleEdit(e, item.id)
                               }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              className="w-full px-4 py-2 min-h-[44px] md:min-h-0 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                             >
                               <Edit className="w-4 h-4" />
                               Edit
@@ -523,7 +523,7 @@ export default function InventoryPage() {
                                 e.stopPropagation()
                                 handleDeleteClick(e, item)
                               }}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full px-4 py-2 min-h-[44px] md:min-h-0 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                             >
                               <Trash2 className="w-4 h-4" />
                               Delete
@@ -551,7 +551,7 @@ export default function InventoryPage() {
                       <div className="mt-auto">
                         <button
                           onClick={(e) => handleViewDetails(e, item.id)}
-                          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center"
+                          className="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-4 min-h-[44px] md:min-h-0 rounded-lg transition-colors text-center"
                         >
                           View Details
                         </button>

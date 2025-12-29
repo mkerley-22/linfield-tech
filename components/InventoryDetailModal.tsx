@@ -284,13 +284,14 @@ export default function InventoryDetailModal({ itemId, isOpen, onClose, onDelete
                 <Button
                   variant="secondary"
                   onClick={() => setShowDeleteConfirm(false)}
+                  className="min-h-[44px] md:min-h-0"
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
                   onClick={handleDelete}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 min-h-[44px] md:min-h-0"
                 >
                   Delete
                 </Button>
