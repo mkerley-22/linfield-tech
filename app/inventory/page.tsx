@@ -383,7 +383,7 @@ export default function InventoryPage() {
               )}
               <button
                 onClick={() => setSortOrder(sortOrder === 'alphabetical' ? 'default' : 'alphabetical')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium transition-colors ${
                   sortOrder === 'alphabetical'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -396,7 +396,7 @@ export default function InventoryPage() {
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('card')}
-                className={`p-2 rounded transition-colors ${
+                className={`w-11 h-11 md:w-auto md:h-auto p-2 rounded transition-colors flex items-center justify-center ${
                   viewMode === 'card'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -407,7 +407,7 @@ export default function InventoryPage() {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded transition-colors ${
+                className={`w-11 h-11 md:w-auto md:h-auto p-2 rounded transition-colors flex items-center justify-center ${
                   viewMode === 'list'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -637,7 +637,7 @@ export default function InventoryPage() {
                       <div className="absolute top-4 right-4 z-10" ref={(el) => { menuRefs.current[item.id] = el }}>
                         <button
                           onClick={(e) => handleMenuClick(e, item.id)}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors opacity-0 group-hover:opacity-100"
+                          className="w-11 h-11 md:w-auto md:h-auto p-1 hover:bg-gray-200 rounded transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center"
                           aria-label="More options"
                         >
                           <MoreVertical className="w-5 h-5 text-gray-500" />
@@ -646,14 +646,14 @@ export default function InventoryPage() {
                           <div className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
                             <button
                               onClick={(e) => handleEdit(e, item.id)}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              className="w-full px-4 py-2 min-h-[44px] md:min-h-0 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                             >
                               <Edit className="w-4 h-4" />
                               Edit
                             </button>
                             <button
                               onClick={(e) => handleDeleteClick(e, item)}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full px-4 py-2 min-h-[44px] md:min-h-0 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                             >
                               <Trash2 className="w-4 h-4" />
                               Delete
@@ -678,7 +678,7 @@ export default function InventoryPage() {
               <h3 className="text-lg font-semibold text-gray-900">Delete Equipment</h3>
               <button
                 onClick={handleDeleteCancel}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-11 h-11 md:w-auto md:h-auto text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
