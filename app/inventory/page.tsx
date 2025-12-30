@@ -37,7 +37,7 @@ export default function InventoryPage() {
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
-  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'default'>('default')
+  const [sortOrder, setSortOrder] = useState<'default' | 'name-asc' | 'name-desc' | 'manufacturer-asc' | 'location-asc' | 'available-desc' | 'quantity-desc'>('default')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; itemId: string | null; itemName: string }>({
     show: false,
@@ -147,10 +147,44 @@ export default function InventoryPage() {
 
   // Sort items
   const getSortedItems = () => {
-    if (sortOrder === 'alphabetical') {
-      return [...items].sort((a, b) => a.name.localeCompare(b.name))
+    const sorted = [...items]
+    
+    switch (sortOrder) {
+      case 'name-asc':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name))
+      case 'name-desc':
+        return sorted.sort((a, b) => b.name.localeCompare(a.name))
+      case 'manufacturer-asc':
+        return sorted.sort((a, b) => {
+          const aManufacturer = (a.manufacturer || '').toLowerCase()
+          const bManufacturer = (b.manufacturer || '').toLowerCase()
+          if (aManufacturer === bManufacturer) {
+            return a.name.localeCompare(b.name) // Secondary sort by name
+          }
+          return aManufacturer.localeCompare(bManufacturer)
+        })
+      case 'location-asc':
+        return sorted.sort((a, b) => {
+          const aLocation = (a.location || '').toLowerCase()
+          const bLocation = (b.location || '').toLowerCase()
+          if (aLocation === bLocation) {
+            return a.name.localeCompare(b.name) // Secondary sort by name
+          }
+          return aLocation.localeCompare(bLocation)
+        })
+      case 'available-desc':
+        return sorted.sort((a, b) => {
+          const aAvailable = getAvailableQuantity(a)
+          const bAvailable = getAvailableQuantity(b)
+          return bAvailable - aAvailable // Most available first
+        })
+      case 'quantity-desc':
+        return sorted.sort((a, b) => {
+          return b.quantity - a.quantity // Highest quantity first
+        })
+      default:
+        return items
     }
-    return items
   }
 
   const handleMenuClick = (e: React.MouseEvent, itemId: string) => {
@@ -396,17 +430,25 @@ export default function InventoryPage() {
                   Delete {selectedItems.size} Selected
                 </Button>
               )}
-              <button
-                onClick={() => setSortOrder(sortOrder === 'alphabetical' ? 'default' : 'alphabetical')}
-                className={`flex items-center gap-2 px-3 py-2 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium transition-colors ${
-                  sortOrder === 'alphabetical'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <ArrowUpDown className="w-4 h-4" />
-                Sort A-Z
-              </button>
+              <div className="flex items-center gap-2">
+                <label htmlFor="sort-select" className="text-sm text-gray-600 whitespace-nowrap">
+                  Sort by:
+                </label>
+                <select
+                  id="sort-select"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+                  className="px-3 py-2 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer"
+                >
+                  <option value="default">Default</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="manufacturer-asc">Manufacturer (A-Z)</option>
+                  <option value="location-asc">Location (A-Z)</option>
+                  <option value="available-desc">Most Available</option>
+                  <option value="quantity-desc">Highest Quantity</option>
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
               <button
