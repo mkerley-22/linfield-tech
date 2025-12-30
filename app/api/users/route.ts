@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         role: true,
         createdAt: true,
         updatedAt: true,
+        lastLoginAt: true,
       },
     })
 

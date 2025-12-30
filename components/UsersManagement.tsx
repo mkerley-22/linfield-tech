@@ -13,6 +13,7 @@ interface UserData {
   role: 'admin' | 'editor' | 'viewer'
   createdAt: string
   updatedAt: string
+  lastLoginAt?: string | null
 }
 
 export default function UsersManagement() {
@@ -211,6 +212,9 @@ export default function UsersManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Created
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Login
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -219,7 +223,7 @@ export default function UsersManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     No users found
                   </td>
                 </tr>
@@ -262,6 +266,12 @@ export default function UsersManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {format(new Date(user.createdAt), 'MMM d, yyyy')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.lastLoginAt 
+                        ? format(new Date(user.lastLoginAt), 'MMM d, yyyy h:mm a')
+                        : <span className="text-gray-400">Never</span>
+                      }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">

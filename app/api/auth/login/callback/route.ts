@@ -94,12 +94,14 @@ export async function GET(request: NextRequest) {
         picture: string | null
         googleId: string | null | undefined
         updatedAt: Date
+        lastLoginAt: Date
         role?: string
       } = {
         name: userName,
         picture: userInfo.picture || null,
         googleId: userInfo.id || null,
         updatedAt: new Date(),
+        lastLoginAt: new Date(),
       }
       
       // ALWAYS ensure mkerley@linfield.com has admin role (force it)

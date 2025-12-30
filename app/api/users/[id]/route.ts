@@ -28,6 +28,7 @@ export async function GET(
         role: true,
         createdAt: true,
         updatedAt: true,
+        lastLoginAt: true,
       },
     })
 
@@ -122,6 +123,7 @@ export async function PUT(
         role: true,
         createdAt: true,
         updatedAt: true,
+        lastLoginAt: true,
       },
     })
 

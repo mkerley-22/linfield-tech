@@ -352,6 +352,7 @@ model User {
   role            String           @default("user")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime
+  lastLoginAt     DateTime?
   Checkout        Checkout[]
   Session         Session[]
   UserPreferences UserPreferences?
