@@ -63,6 +63,13 @@ export default function PublicCheckoutPage() {
     loadAvailableItems()
   }, [preselectedItemId])
 
+  // Scroll to top when entering review step (fixes mobile staying at bottom)
+  useEffect(() => {
+    if (currentStep === 'review') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [currentStep])
+
   const loadAvailableItems = async () => {
     setIsLoading(true)
     try {
@@ -269,7 +276,7 @@ export default function PublicCheckoutPage() {
       if (response.ok) {
         const data = await response.json()
         if (singleItemMode && data.request?.id) {
-          router.push(`/checkout/schedule/${data.request.id}?justSubmitted=1`)
+          router.push(`/checkout/confirm/${data.request.id}`)
           return
         }
         alert('Your checkout request has been submitted! You will receive a confirmation email shortly.')
