@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Package, Calendar, User, Mail, Phone, MessageSquare, Share2, CheckCircle, X, Search, ChevronRight, Check } from 'lucide-react'
+import { Package, Calendar, User, Mail, Phone, MessageSquare, Share2, CheckCircle, X, Search, ChevronRight, Check, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { format } from 'date-fns'
+import { format, startOfDay, addDays, isSameDay } from 'date-fns'
+import { DayPicker } from 'react-day-picker'
+import type { DateRange } from 'react-day-picker'
+import 'react-day-picker/dist/style.css'
 
 interface InventoryItem {
   id: string
@@ -44,9 +47,14 @@ export default function PublicCheckoutPage() {
   const [requesterEmail, setRequesterEmail] = useState('')
   const [requesterPhone, setRequesterPhone] = useState('')
   const [purpose, setPurpose] = useState('')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const today = useMemo(() => startOfDay(new Date()), [])
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => ({ from: today, to: today }))
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
   const [emailError, setEmailError] = useState('')
+
+  // Derive fromDate/toDate (YYYY-MM-DD) for API and validation
+  const fromDate = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''
+  const toDate = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : (dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '')
 
   // Single-item mode: arrived via QR or NFC (?item=ID) — only this item is shown and checkout is 2 steps
   const [singleItemMode, setSingleItemMode] = useState(false)
@@ -135,15 +143,29 @@ export default function PublicCheckoutPage() {
       alert('Please use a Linfield email address (@linfield.com)')
       return
     }
-    if (!fromDate || !toDate) {
-      alert('Please select both start and end dates')
-      return
-    }
-    if (new Date(toDate) < new Date(fromDate)) {
-      alert('End date must be after start date')
+    if (!fromDate || !toDate || !dateRange?.from) {
+      alert('Please select your request period')
       return
     }
     setCurrentStep(singleItemMode ? 'review' : 'select')
+  }
+
+  const applyPreset = (preset: 'today' | 'tomorrow' | 'this_week' | 'next_7_days') => {
+    const from = startOfDay(new Date())
+    switch (preset) {
+      case 'today':
+        setDateRange({ from, to: from })
+        break
+      case 'tomorrow': {
+        const t = addDays(from, 1)
+        setDateRange({ from: t, to: t })
+        break
+      }
+      case 'this_week':
+      case 'next_7_days':
+        setDateRange({ from, to: addDays(from, 6) })
+        break
+    }
   }
 
   const loadSuggestions = async (itemId: string) => {
@@ -254,8 +276,7 @@ export default function PublicCheckoutPage() {
         setRequesterEmail('')
         setRequesterPhone('')
         setPurpose('')
-        setFromDate('')
-        setToDate('')
+        setDateRange({ from: today, to: today })
         setCurrentStep('start')
       } else {
         const error = await response.json()
@@ -551,36 +572,67 @@ export default function PublicCheckoutPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="min-w-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Calendar className="w-4 h-4 inline mr-1" />
-                      From Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      required
-                      className="w-full min-w-0 px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Calendar className="w-4 h-4 inline mr-1" />
-                      To Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      min={fromDate || new Date().toISOString().split('T')[0]}
-                      required
-                      className="w-full min-w-0 px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    Request period *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setDatePickerOpen(true)}
+                    className="w-full min-h-[48px] px-4 py-3 text-base text-left bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation flex items-center justify-between gap-2"
+                  >
+                    <span className="truncate">
+                      {fromDate && toDate
+                        ? isSameDay(dateRange?.from ?? new Date(fromDate), dateRange?.to ?? new Date(toDate))
+                          ? format(dateRange?.from ?? new Date(fromDate), 'MMM d, yyyy')
+                          : `${format(dateRange?.from ?? new Date(fromDate), 'MMM d, yyyy')} – ${format(dateRange?.to ?? new Date(toDate), 'MMM d, yyyy')}`
+                        : 'Select dates'}
+                    </span>
+                    <CalendarDays className="w-5 h-5 flex-shrink-0 text-gray-400" aria-hidden />
+                  </button>
                 </div>
+
+                {datePickerOpen && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 sm:p-6" onClick={() => setDatePickerOpen(false)}>
+                    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Select dates</h3>
+                        <button type="button" onClick={() => setDatePickerOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg touch-manipulation" aria-label="Close">
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">Quick select</p>
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        <button type="button" onClick={() => { applyPreset('today'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
+                          Today only
+                        </button>
+                        <button type="button" onClick={() => { applyPreset('tomorrow'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
+                          Tomorrow
+                        </button>
+                        <button type="button" onClick={() => { applyPreset('this_week'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
+                          This week
+                        </button>
+                        <button type="button" onClick={() => { applyPreset('next_7_days'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
+                          Next 7 days
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">Or pick a range</p>
+                      <DayPicker
+                        mode="range"
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        defaultMonth={dateRange?.from ?? today}
+                        disabled={{ before: today }}
+                        numberOfMonths={1}
+                        className="mx-auto border-0 p-0 [--rdp-cell-size:44px] [--rdp-accent-color:theme(colors.blue.600)]"
+                      />
+                      <Button type="button" variant="primary" className="w-full mt-4 min-h-[48px] touch-manipulation" onClick={() => setDatePickerOpen(false)}>
+                        Done
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <Button
@@ -945,12 +997,11 @@ export default function PublicCheckoutPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Checkout Dates</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-900">
-                        <strong>From:</strong> {format(new Date(fromDate), 'MMM d, yyyy')} •{' '}
-                        <strong>To:</strong> {format(new Date(toDate), 'MMM d, yyyy')}
-                      </span>
+                    <div className="flex items-center gap-2 text-sm text-gray-900">
+                      <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      {fromDate === toDate
+                        ? format(new Date(fromDate), 'MMM d, yyyy')
+                        : <><strong>From:</strong> {format(new Date(fromDate), 'MMM d, yyyy')} • <strong>To:</strong> {format(new Date(toDate), 'MMM d, yyyy')}</>}
                     </div>
                   </div>
                 </div>
