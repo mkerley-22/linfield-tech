@@ -551,8 +551,8 @@ export default function PublicCheckoutPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="min-w-0">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Calendar className="w-4 h-4 inline mr-1" />
                       From Date *
@@ -563,10 +563,10 @@ export default function PublicCheckoutPage() {
                       onChange={(e) => setFromDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                       required
-                      className="w-full px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
+                      className="w-full min-w-0 px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Calendar className="w-4 h-4 inline mr-1" />
                       To Date *
@@ -577,7 +577,7 @@ export default function PublicCheckoutPage() {
                       onChange={(e) => setToDate(e.target.value)}
                       min={fromDate || new Date().toISOString().split('T')[0]}
                       required
-                      className="w-full px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
+                      className="w-full min-w-0 px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
                     />
                   </div>
                 </div>
