@@ -767,15 +767,11 @@ export default function CheckoutPage() {
                 }`}
               >
                 {tab.label}
-                {tab.count > 0 && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">
-                    {tab.count}
-                  </span>
-                )}
-                {tab.unreadMessages > 0 && (
-                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full relative">
-                    {tab.unreadMessages}
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                {(tab.count > 0 || tab.unreadMessages > 0) && (
+                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                    tab.unreadMessages > 0 ? 'bg-red-500 text-white' : 'bg-blue-100 text-blue-600'
+                  }`}>
+                    {tab.unreadMessages > 0 ? tab.unreadMessages : tab.count}
                   </span>
                 )}
               </button>
@@ -838,7 +834,7 @@ export default function CheckoutPage() {
                       .map((request) => (
                         <div
                           key={request.id}
-                          className={`bg-white rounded-lg border-2 p-6 cursor-pointer transition-all ${
+                          className={`bg-white rounded-lg border-2 p-4 sm:p-6 cursor-pointer transition-all overflow-hidden min-w-0 ${
                             selectedRequest?.id === request.id
                               ? 'border-blue-500 shadow-lg'
                               : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
@@ -848,17 +844,17 @@ export default function CheckoutPage() {
                             loadRequestDetail(request.id)
                           }}
                         >
-                          <div className="mb-3">
-                            <h3 className="font-semibold text-gray-900">{request.requesterName}</h3>
-                            <p className="text-sm text-gray-600">{request.requesterEmail}</p>
+                          <div className="mb-3 min-w-0">
+                            <h3 className="font-semibold text-gray-900 truncate">{request.requesterName}</h3>
+                            <p className="text-sm text-gray-600 truncate">{request.requesterEmail}</p>
                           </div>
 
-                          <div className="text-sm text-gray-600 mb-3">
-                            <p>
+                          <div className="text-sm text-gray-600 mb-3 min-w-0 space-y-1">
+                            <p className="break-words">
                               <strong>Items:</strong>{' '}
                               {parsedItems(request.items).length} item{parsedItems(request.items).length !== 1 ? 's' : ''}
                             </p>
-                            <p>
+                            <p className="break-words">
                               <strong>Submitted:</strong>{' '}
                               {format(new Date(request.createdAt), 'MMM d, yyyy h:mm a')}
                             </p>

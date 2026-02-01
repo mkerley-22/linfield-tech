@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { Calendar, Clock, MapPin, CheckCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { roundToQuarterHour } from '@/lib/time-utils'
@@ -9,7 +9,9 @@ import { roundToQuarterHour } from '@/lib/time-utils'
 export default function SchedulePickupPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const requestId = params?.id as string
+  const justSubmitted = searchParams.get('justSubmitted') === '1'
 
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
@@ -93,6 +95,12 @@ export default function SchedulePickupPage() {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {justSubmitted && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            <strong>Request submitted!</strong> We&apos;ll email you when your item is ready for pickup. Then fill out the form below to schedule your pickup time.
+          </div>
+        )}
 
         <p className="text-gray-600 mb-6">
           Please select a convenient date, time, and location for picking up your equipment.

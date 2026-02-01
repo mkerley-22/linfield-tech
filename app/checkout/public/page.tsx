@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Package, Calendar, User, Mail, Phone, MessageSquare, Share2, CheckCircle, X, Search, ChevronRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { format } from 'date-fns'
@@ -27,6 +27,7 @@ type Step = 'start' | 'select' | 'review'
 
 export default function PublicCheckoutPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const preselectedItemId = searchParams.get('item')
   const [currentStep, setCurrentStep] = useState<Step>('start')
   const [items, setItems] = useState<InventoryItem[]>([])
@@ -242,8 +243,12 @@ export default function PublicCheckoutPage() {
       })
 
       if (response.ok) {
+        const data = await response.json()
+        if (singleItemMode && data.request?.id) {
+          router.push(`/checkout/schedule/${data.request.id}?justSubmitted=1`)
+          return
+        }
         alert('Your checkout request has been submitted! You will receive a confirmation email shortly.')
-        // Reset form
         setSelectedItems(new Map())
         setRequesterName('')
         setRequesterEmail('')
