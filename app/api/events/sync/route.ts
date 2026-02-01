@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
     const allCalendars = await listCalendars(accessToken)
     // Only sync from "LCS Sound needs" (and calendars matching that name) so we don't pull from primary/whole account
     const calendars = allCalendars.filter(
-      (cal: { id?: string; summary?: string }) =>
-        (cal.summary || cal.id || '').toLowerCase().includes('lcs sound needs')
+      (cal) =>
+        ((cal.summary ?? cal.id) || '').toLowerCase().includes('lcs sound needs')
     )
     if (calendars.length === 0) {
       return NextResponse.json({
