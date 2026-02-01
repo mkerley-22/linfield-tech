@@ -147,7 +147,7 @@ export default function EditInventoryPage({ params }: { params: { id: string } }
             Back to Inventory
           </Link>
           <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">Edit Equipment</h1>
-          <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 lg:p-8">
             <InventoryEditor
               itemId={params.id}
               initialData={{

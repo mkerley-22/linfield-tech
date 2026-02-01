@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2, QrCode, BellOff } from 'lucide-react'
+import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2, QrCode } from 'lucide-react'
 import { Button } from './ui/Button'
 import LocationSelect from './LocationSelect'
 
@@ -644,46 +644,61 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   }
 
 
+  const sectionClass = 'rounded-xl border border-gray-200 bg-gray-50/50 p-4 md:p-5 space-y-4'
+  const inputClass = 'w-full px-4 py-3 md:py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-base min-h-[44px] md:min-h-0'
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5'
+
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Name *
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., LED Par Light"
-          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-        />
-      </div>
+    <div className="space-y-8">
+      {/* Section: Basic information */}
+      <section className={sectionClass}>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Basic information</h2>
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., LED Par Light"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the equipment..."
+              rows={4}
+              className="w-full px-4 py-3 md:py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 resize-none text-base min-h-[120px]"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Owner</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Receives an email when someone requests to check out this equipment.
+            </p>
+            <select value={ownerId} onChange={(e) => setOwnerId(e.target.value)} className={inputClass}>
+              <option value="">No owner</option>
+              {userOptions.map((u) => (
+                <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </section>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Description
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe the equipment..."
-          rows={4}
-          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 resize-none"
-        />
-      </div>
-
-      {/* Quantity, Location, and Usage Rows */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Inventory Locations
-        </label>
-        <p className="text-xs text-gray-500 mb-3">
+      {/* Section: Inventory & locations */}
+      <section className={sectionClass}>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">Inventory & locations</h2>
+        <p className="text-xs text-gray-500 mb-4">
           Add items by quantity, location, and usage. Total quantity is calculated automatically.
         </p>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {locationBreakdowns.map((breakdown, index) => (
-            <div key={index} className="flex items-end gap-2">
-              <div className="w-24">
+            <div key={index} className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2 p-3 rounded-lg bg-white border border-gray-200">
+              <div className="w-full sm:w-20 flex-shrink-0">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
                 <input
                   type="number"
@@ -693,17 +708,16 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                     const newQuantity = parseInt(e.target.value) || 1
                     updated[index].quantity = newQuantity
                     setLocationBreakdowns(updated)
-                    // Quantity will be updated by useEffect, but update immediately for UI responsiveness
                     const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
                     setQuantity(total || 1)
                   }}
                   onFocus={(e) => e.target.select()}
                   min="1"
                   max="999"
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
+                  className="w-full px-3 py-3 sm:py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-base sm:text-sm min-h-[44px] sm:min-h-0"
                 />
               </div>
-              <div className="flex-1">
+              <div className="w-full flex-1 min-w-0">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
                 <LocationSelect
                   value={breakdown.location}
@@ -715,7 +729,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   placeholder="Select or type location"
                 />
               </div>
-              <div className="flex-1">
+              <div className="w-full flex-1 min-w-0">
                 <label className="block text-xs font-medium text-gray-600 mb-1">Usage</label>
                 <input
                   type="text"
@@ -726,23 +740,21 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                     setLocationBreakdowns(updated)
                   }}
                   placeholder="e.g., For basketball games"
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-sm"
+                  className="w-full px-3 py-3 sm:py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 text-base sm:text-sm min-h-[44px] sm:min-h-0"
                 />
               </div>
-              {/* Show plus button on first row, delete button on additional rows */}
               {index === 0 ? (
                 <button
                   type="button"
                   onClick={() => {
-                    // Add a new empty row
                     const newBreakdown = { location: '', quantity: 1, usage: '' }
-                    const updated = [...locationBreakdowns, newBreakdown]
-                    setLocationBreakdowns(updated)
+                    setLocationBreakdowns([...locationBreakdowns, newBreakdown])
                   }}
-                  className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center transition-colors mb-0"
+                  className="w-full sm:w-10 h-12 sm:h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors shrink-0"
                   title="Add another location"
                 >
                   <Plus className="w-5 h-5" />
+                  <span className="sm:hidden">Add location</span>
                 </button>
               ) : (
                 <button
@@ -750,51 +762,52 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
                   onClick={() => {
                     const updated = locationBreakdowns.filter((_, i) => i !== index)
                     setLocationBreakdowns(updated)
-                    // Update total quantity
                     const total = updated.reduce((sum, b) => sum + (b.quantity || 0), 0)
                     setQuantity(total || 1)
                   }}
-                  className="w-10 h-10 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center justify-center transition-colors mb-0"
+                  className="w-full sm:w-10 h-12 sm:h-10 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center justify-center gap-2 transition-colors shrink-0"
                   title="Remove row"
                 >
                   <Trash2 className="w-4 h-4" />
+                  <span className="sm:hidden">Remove</span>
                 </button>
               )}
             </div>
           ))}
         </div>
         {locationBreakdowns.length > 0 && (
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-gray-600 mt-3">
             Total Quantity: <span className="font-semibold text-gray-900">
               {locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0)}
             </span>
           </p>
         )}
-      </div>
+      </section>
+
+      {/* Section: Checkout */}
+      <section className={sectionClass}>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Checkout</h2>
 
       {/* Checkout Toggle */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 min-h-[44px]">
         <input
           type="checkbox"
           id="checkoutEnabled"
           checked={checkoutEnabled}
           onChange={(e) => setCheckoutEnabled(e.target.checked)}
-          className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 accent-blue-600 cursor-pointer"
+          className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-2 focus:ring-blue-500 accent-blue-600 cursor-pointer flex-shrink-0"
           style={{ colorScheme: 'light' }}
         />
-        <label htmlFor="checkoutEnabled" className="text-sm font-medium text-gray-700 cursor-pointer">
+        <label htmlFor="checkoutEnabled" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
           Allow staff to checkout
         </label>
       </div>
 
-      {/* Available for Checkout */}
       {checkoutEnabled && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Available for Checkout
-          </label>
+          <label className={labelClass}>Available for Checkout</label>
           <p className="text-xs text-gray-500 mb-2">
-            Number of items available for checkout (leave empty to use total quantity: {locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity})
+            Leave empty to use total quantity ({locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity})
           </p>
           <input
             type="number"
@@ -814,39 +827,16 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             onFocus={(e) => e.target.select()}
             min="1"
             max={locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity}
-            placeholder={`Default: ${locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity} (all items)`}
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+            placeholder={`Default: ${locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity}`}
+            className={inputClass}
           />
         </div>
       )}
 
-      {/* Don't notify for checkouts (e.g. videography teacher's gear) */}
-      {checkoutEnabled && (
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="suppressCheckoutNotifications"
-            checked={suppressCheckoutNotifications}
-            onChange={(e) => setSuppressCheckoutNotifications(e.target.checked)}
-            className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 accent-blue-600 cursor-pointer"
-            style={{ colorScheme: 'light' }}
-          />
-          <label htmlFor="suppressCheckoutNotifications" className="text-sm font-medium text-gray-700 cursor-pointer flex items-center gap-1">
-            <BellOff className="w-4 h-4 text-gray-500" />
-            Don&apos;t show checkout requests for this item in my notifications
-          </label>
-        </div>
-      )}
-
-      {/* Category (for grouping and mute-by-category) */}
       {categories.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-          >
+          <label className={labelClass}>Category</label>
+          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
             <option value="">None</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
@@ -855,64 +845,40 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         </div>
       )}
 
-      {/* Owner: receives checkout request emails at their work email */}
-      {userOptions.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Owner</label>
-          <p className="text-xs text-gray-500 mb-2">
-            This person receives an email when someone requests to check out this equipment (their account email).
-          </p>
-          <select
-            value={ownerId}
-            onChange={(e) => setOwnerId(e.target.value)}
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-          >
-            <option value="">No owner</option>
-            {userOptions.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name} ({u.email})
-              </option>
-            ))}
-          </select>
-        </div>
+      {checkoutEnabled && !itemId && (
+        <p className="text-sm text-gray-500">Save the item once to get the QR code and NFC link below.</p>
       )}
 
-      {/* Quick checkout: NFC tag + QR code (only when item is saved and checkout enabled) */}
       {checkoutEnabled && itemId && (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-4">
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <QrCode className="w-4 h-4" />
             Quick checkout (QR & NFC)
           </h3>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">NFC Tag ID</label>
-            <p className="text-xs text-gray-500 mb-2">
-              Enter the NFC tag UID so students can tap the tag to check out this item. Use an NFC tool app to read the tag ID from the physical tag.
-            </p>
+            <label className={labelClass}>NFC Tag ID</label>
+            <p className="text-xs text-gray-500 mb-2">Students can tap the tag to check out. Use an NFC app to read the tag UID.</p>
             <input
               type="text"
               value={nfcTagId}
               onChange={(e) => setNfcTagId(e.target.value)}
               placeholder="e.g. 04:A1:B2:C3:D4:E5:F6"
-              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 font-mono text-sm"
+              className={`${inputClass} font-mono text-sm`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">QR code for this item</label>
-            <p className="text-xs text-gray-500 mb-2">
-              Students can scan this QR code to open quick checkout for this item.
-            </p>
+            <label className={labelClass}>QR code for this item</label>
             {typeof window !== 'undefined' && (
-              <div className="flex flex-wrap items-start gap-4">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-start gap-4">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${window.location.origin}/checkout/scan?item=${itemId}`)}`}
                   alt="QR code for quick checkout"
-                  className="rounded border border-gray-200"
+                  className="rounded border border-gray-200 w-28 h-28 object-contain"
                 />
-                <div className="text-sm text-gray-600">
-                  <p className="font-medium text-gray-900">Link:</p>
-                  <code className="block mt-1 break-all text-xs bg-white px-2 py-1 rounded border border-gray-200">
-                    {typeof window !== 'undefined' ? `${window.location.origin}/checkout/scan?item=${itemId}` : ''}
+                <div className="text-sm text-gray-600 min-w-0 flex-1">
+                  <p className="font-medium text-gray-900">Link</p>
+                  <code className="block mt-1 break-all text-xs bg-gray-100 px-2 py-2 rounded border border-gray-200">
+                    {`${window.location.origin}/checkout/scan?item=${itemId}`}
                   </code>
                 </div>
               </div>
@@ -920,54 +886,48 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
           </div>
         </div>
       )}
+      </section>
 
+      {/* Section: Product details */}
+      <section className={sectionClass}>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Product details</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Manufacturer
-          </label>
+          <label className={labelClass}>Manufacturer</label>
           <input
             type="text"
             value={manufacturer}
             onChange={(e) => setManufacturer(e.target.value)}
             placeholder="e.g., Chauvet, Shure"
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Model
-          </label>
+          <label className={labelClass}>Model</label>
           <input
             type="text"
             value={model}
             onChange={(e) => setModel(e.target.value)}
             placeholder="e.g., COLORado 1-Quad"
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+            className={inputClass}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Serial Numbers
-        </label>
-        <p className="text-xs text-gray-500 mb-3">
-          Add serial numbers for each individual item (e.g., if you have 6 speakers, add 6 serial numbers)
+        <label className={labelClass}>Serial numbers</label>
+        <p className="text-xs text-gray-500 mb-2">
+          Add one serial number per item (e.g., 6 speakers = 6 serial numbers).
         </p>
-        
         {serialNumbers.length > 0 && (
           <div className="space-y-2 mb-3">
             {serialNumbers.map((serial, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"
-              >
-                <span className="flex-1 font-mono text-sm text-gray-900">{serial}</span>
+              <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <span className="flex-1 font-mono text-sm text-gray-900 break-all">{serial}</span>
                 <button
                   type="button"
                   onClick={() => setSerialNumbers(serialNumbers.filter((_, i) => i !== index))}
-                  className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
                   title="Remove serial number"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -976,8 +936,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             ))}
           </div>
         )}
-
-        <div className="space-y-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newSerialNumber}
@@ -990,7 +949,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               }
             }}
             placeholder="Enter serial number and press Enter"
-            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+            className={`${inputClass} flex-1 min-w-0`}
           />
           <Button
             type="button"
@@ -1003,14 +962,18 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
               }
             }}
             disabled={!newSerialNumber.trim()}
-            className="w-full"
+            className="w-full sm:w-auto min-h-[44px] touch-manipulation"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
         </div>
       </div>
+      </section>
 
+      {/* Section: Media & documents */}
+      <section className={sectionClass}>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Media & documents</h2>
       {/* Product Image */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1353,20 +1316,21 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             variant="secondary"
             size="sm"
             onClick={() => setShowNewTag(!showNewTag)}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 min-h-[44px] touch-manipulation"
           >
             <Plus className="w-4 h-4" />
             New Tag
           </Button>
         )}
       </div>
+      </section>
 
-      <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200">
+      <div className="flex flex-col md:flex-row gap-3 pt-6 border-t border-gray-200 mt-6">
         <Button
           onClick={handleSave}
           disabled={saving || !name.trim()}
           variant="primary"
-          className="w-full md:flex-1"
+          className="w-full md:flex-1 min-h-[48px] touch-manipulation"
         >
           {saving ? (
             <>
@@ -1383,7 +1347,7 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
         <Button
           onClick={() => router.push('/inventory')}
           variant="secondary"
-          className="w-full md:w-auto"
+          className="w-full md:w-auto min-h-[48px] touch-manipulation"
         >
           <X className="w-4 h-4 mr-2" />
           Cancel

@@ -63,12 +63,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const calendars = await listCalendars(accessToken)
+    const allCalendars = await listCalendars(accessToken)
+    // Only sync from "LCS Sound needs" (and calendars matching that name) so we don't pull from primary/whole account
+    const calendars = allCalendars.filter(
+      (cal: { id?: string; summary?: string }) =>
+        (cal.summary || cal.id || '').toLowerCase().includes('lcs sound needs')
+    )
     if (calendars.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No calendars found',
+        message: 'No "LCS Sound needs" calendar found. Sync only runs for calendars with that name.',
         synced: 0,
+        results: [],
       })
     }
 
