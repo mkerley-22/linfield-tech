@@ -119,7 +119,8 @@ export async function POST(request: NextRequest) {
       }
       ownersById.get(key)!.itemNames.push(inv.name)
     }
-    for (const [, owner] of ownersById) {
+    const owners = Array.from(ownersById.values())
+    for (const owner of owners) {
       try {
         await sendNewCheckoutRequestToOwner(
           owner.email,
