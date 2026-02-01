@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
             InventoryItemTag: {
               include: { InventoryTag: true },
             },
+            InventoryDocument: true,
           },
         })
     )
@@ -41,6 +42,14 @@ export async function GET(request: NextRequest) {
 
     const checkedOutCount = item.Checkout.length
     const available = Math.max(0, item.quantity - checkedOutCount)
+    let documentationLinks: Array<{ url: string; title: string; type?: string }> = []
+    if (item.documentationLinks) {
+      try {
+        documentationLinks = JSON.parse(item.documentationLinks) as Array<{ url: string; title: string; type?: string }>
+      } catch {
+        documentationLinks = []
+      }
+    }
 
     return NextResponse.json({
       item: {
@@ -52,8 +61,16 @@ export async function GET(request: NextRequest) {
         imageUrl: item.imageUrl,
         manufacturer: item.manufacturer,
         model: item.model,
+        usageNotes: item.usageNotes ?? undefined,
         tags: item.InventoryItemTag.map((t) => ({
           tag: { name: t.InventoryTag.name, color: t.InventoryTag.color },
+        })),
+        documentationLinks,
+        documents: (item.InventoryDocument || []).map((d) => ({
+          id: d.id,
+          fileName: d.fileName,
+          filePath: d.filePath,
+          fileType: d.fileType,
         })),
       },
     })
