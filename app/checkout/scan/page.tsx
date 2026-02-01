@@ -177,8 +177,8 @@ export default function CheckoutScanPage() {
   // Single item loaded: show item and CTA to checkout
   if (item) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 max-w-md w-full">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 pb-8">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 max-w-md w-full">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Check out this item</h2>
           <div className="flex gap-4 mb-6">
             {item.imageUrl ? (
@@ -198,7 +198,7 @@ export default function CheckoutScanPage() {
               <p className="text-sm text-gray-500">Available: {item.available}</p>
             </div>
           </div>
-          <Button onClick={goToCheckout} variant="primary" className="w-full">
+          <Button onClick={goToCheckout} variant="primary" className="w-full min-h-[48px] text-base touch-manipulation">
             Continue to checkout
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>

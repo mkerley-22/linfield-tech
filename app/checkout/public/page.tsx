@@ -47,6 +47,9 @@ export default function PublicCheckoutPage() {
   const [toDate, setToDate] = useState('')
   const [emailError, setEmailError] = useState('')
 
+  // Single-item mode: arrived via QR or NFC (?item=ID) — only this item is shown and checkout is 2 steps
+  const [singleItemMode, setSingleItemMode] = useState(false)
+
   useEffect(() => {
     loadAvailableItems()
   }, [preselectedItemId])
@@ -54,18 +57,27 @@ export default function PublicCheckoutPage() {
   const loadAvailableItems = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/inventory/public')
-      if (response.ok) {
-        const data = await response.json()
-        const list = data.items || []
-        setItems(list)
-        // Pre-select item from QR/link: ?item=ID
-        if (preselectedItemId && list.length > 0) {
-          const found = list.find((i: InventoryItem) => i.id === preselectedItemId)
-          if (found && found.available > 0) {
-            setSelectedItems(new Map([[found.id, { inventoryId: found.id, quantity: 1 }]]))
-            setCurrentStep('select')
+      if (preselectedItemId) {
+        // QR/NFC flow: fetch only this item; user cannot browse other equipment
+        const response = await fetch(`/api/inventory/public?itemId=${encodeURIComponent(preselectedItemId)}`)
+        if (response.ok) {
+          const data = await response.json()
+          const one = data.item
+          if (one && one.available > 0) {
+            setItems([one])
+            setSelectedItems(new Map([[one.id, { inventoryId: one.id, quantity: 1 }]]))
+            setSingleItemMode(true)
+          } else {
+            setItems([])
           }
+        } else {
+          setItems([])
+        }
+      } else {
+        const response = await fetch('/api/inventory/public')
+        if (response.ok) {
+          const data = await response.json()
+          setItems(data.items || [])
         }
       }
     } catch (error) {
@@ -130,7 +142,7 @@ export default function PublicCheckoutPage() {
       alert('End date must be after start date')
       return
     }
-    setCurrentStep('select')
+    setCurrentStep(singleItemMode ? 'review' : 'select')
   }
 
   const loadSuggestions = async (itemId: string) => {
@@ -300,11 +312,16 @@ export default function PublicCheckoutPage() {
   }
 
   const Stepper = () => {
-    const steps = [
-      { key: 'start' as Step, label: 'Your Info', number: 1 },
-      { key: 'select' as Step, label: 'Select Equipment', number: 2 },
-      { key: 'review' as Step, label: 'Review & Submit', number: 3 },
-    ]
+    const steps = singleItemMode
+      ? [
+          { key: 'start' as Step, label: 'Your Info', number: 1 },
+          { key: 'review' as Step, label: 'Review & Submit', number: 2 },
+        ]
+      : [
+          { key: 'start' as Step, label: 'Your Info', number: 1 },
+          { key: 'select' as Step, label: 'Select Equipment', number: 2 },
+          { key: 'review' as Step, label: 'Review & Submit', number: 3 },
+        ]
     const currentStepNum = getStepNumber(currentStep)
 
     const getStepStatus = (stepNum: number) => {
@@ -314,9 +331,9 @@ export default function PublicCheckoutPage() {
     }
 
     return (
-      <div className="mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-start justify-between max-w-4xl mx-auto">
+      <div className="mb-4 sm:mb-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
+          <div className="flex items-start justify-between max-w-4xl mx-auto gap-2 sm:gap-4">
             {steps.map((step, index) => {
               const isCompleted = currentStepNum > step.number
               const isActive = currentStepNum === step.number
@@ -327,30 +344,30 @@ export default function PublicCheckoutPage() {
                 <div key={step.key} className="flex items-start flex-1">
                   <div className="flex flex-col items-start flex-1">
                     <span className="text-xs text-gray-500 mb-1 uppercase tracking-wide">STEP {step.number}</span>
-                    <div className="flex items-start gap-3 w-full">
-                      <div className="relative flex-shrink-0 mt-1">
+                    <div className="flex items-start gap-2 sm:gap-3 w-full">
+                      <div className="relative flex-shrink-0 mt-0.5 sm:mt-1">
                         {isCompleted ? (
-                          <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-white" />
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-600 flex items-center justify-center">
+                            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                           </div>
                         ) : isActive ? (
-                          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                            <div className="w-6 h-6 rounded-full bg-blue-800"></div>
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                            <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-blue-800"></div>
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-blue-400 font-semibold text-sm">{step.number}</span>
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-blue-400 font-semibold text-xs sm:text-sm">{step.number}</span>
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col flex-1">
-                        <span className="text-sm font-bold text-gray-900">{step.label}</span>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-xs sm:text-sm font-bold text-gray-900 truncate">{step.label}</span>
                         <span className={`text-xs font-medium ${status.color} mt-0.5`}>{status.text}</span>
                       </div>
                     </div>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="relative flex-1 mx-4" style={{ marginTop: '2.25rem' }}>
+                    <div className="relative flex-1 mx-2 sm:mx-4" style={{ marginTop: '1.5rem' }}>
                       {isCompleted ? (
                         <div className="h-0.5 bg-green-600"></div>
                       ) : isActive ? (
@@ -374,33 +391,60 @@ export default function PublicCheckoutPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pb-8">
         <div className="text-center">
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">Loading available equipment...</p>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (preselectedItemId && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pb-8">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 max-w-md w-full text-center">
+          <Package className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Item not available</h1>
+          <p className="text-gray-600 mb-6">
+            This item wasn&apos;t found or isn&apos;t available for checkout right now.
+          </p>
+          <a
+            href="/checkout/public"
+            className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Browse equipment
+          </a>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Equipment Checkout</h1>
-              <p className="text-gray-600 mt-1">Request equipment for your event or project</p>
+    <div className="min-h-screen bg-gray-50 pb-20 sm:pb-8">
+      {/* Header — compact on mobile, sticky */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">
+                {singleItemMode ? 'Check out this item' : 'Equipment Checkout'}
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base mt-0.5 truncate">
+                {singleItemMode ? items[0]?.name : 'Request equipment for your event or project'}
+              </p>
             </div>
-            <Button
-              onClick={handleShare}
-              variant="secondary"
-              size="sm"
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </Button>
+            {!singleItemMode && (
+              <Button
+                onClick={handleShare}
+                variant="secondary"
+                size="sm"
+                className="flex-shrink-0 min-h-[44px] min-w-[44px] touch-manipulation"
+              >
+                <Share2 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Share</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -410,10 +454,28 @@ export default function PublicCheckoutPage() {
 
         {currentStep === 'start' && (
           <div className="max-w-md mx-auto">
-            <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Start Checkout</h2>
-              <p className="text-gray-600 mb-6">
-                Please provide your information to begin the checkout process.
+            <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-8 shadow-sm">
+              {singleItemMode && items.length === 1 && (
+                <div className="flex gap-4 p-4 mb-6 rounded-lg bg-gray-50 border border-gray-200">
+                  {items[0].imageUrl ? (
+                    <img src={items[0].imageUrl} alt={items[0].name} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg flex-shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 truncate">{items[0].name}</p>
+                    {items[0].model && <p className="text-sm text-gray-500 truncate">{items[0].model}</p>}
+                    <p className="text-sm text-gray-600 mt-1">Qty: 1 · Available: {items[0].available}</p>
+                  </div>
+                </div>
+              )}
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">
+                {singleItemMode ? 'Your details' : 'Start Checkout'}
+              </h2>
+              <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
+                {singleItemMode ? 'Enter your info and dates to request this item.' : 'Please provide your information to begin the checkout process.'}
               </p>
               
               <div className="space-y-4">
@@ -428,7 +490,7 @@ export default function PublicCheckoutPage() {
                     onChange={(e) => setRequesterName(e.target.value)}
                     required
                     placeholder="Enter your full name"
-                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                    className="w-full px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
                   />
                 </div>
 
@@ -443,7 +505,7 @@ export default function PublicCheckoutPage() {
                     onChange={handleEmailChange}
                     required
                     placeholder="your.name@linfield.com"
-                    className={`w-full px-4 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 ${
+                    className={`w-full px-4 py-3 min-h-[48px] text-base bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation ${
                       emailError ? 'border-red-300' : 'border-gray-200'
                     }`}
                   />
@@ -466,7 +528,7 @@ export default function PublicCheckoutPage() {
                     onChange={handlePhoneChange}
                     placeholder="(555) 123-4567"
                     maxLength={14}
-                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                    className="w-full px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
                   />
                 </div>
 
@@ -480,7 +542,7 @@ export default function PublicCheckoutPage() {
                     onChange={(e) => setPurpose(e.target.value)}
                     rows={3}
                     placeholder="What will you be using this equipment for?"
-                    className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 resize-none"
+                    className="w-full px-4 py-3 text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 resize-none touch-manipulation"
                   />
                 </div>
 
@@ -496,7 +558,7 @@ export default function PublicCheckoutPage() {
                       onChange={(e) => setFromDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                       required
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                      className="w-full px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
                     />
                   </div>
                   <div>
@@ -510,7 +572,7 @@ export default function PublicCheckoutPage() {
                       onChange={(e) => setToDate(e.target.value)}
                       min={fromDate || new Date().toISOString().split('T')[0]}
                       required
-                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+                      className="w-full px-4 py-3 min-h-[48px] text-base bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 touch-manipulation"
                     />
                   </div>
                 </div>
@@ -519,17 +581,17 @@ export default function PublicCheckoutPage() {
               <Button
                 onClick={handleStartCheckout}
                 variant="primary"
-                className="w-full mt-6"
+                className="w-full mt-6 min-h-[48px] text-base touch-manipulation"
                 disabled={!requesterName.trim() || !requesterEmail.trim() || !!emailError || !fromDate || !toDate}
               >
-                Continue to Equipment Selection
+                {singleItemMode ? 'Continue to Review' : 'Continue to Equipment Selection'}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
         )}
 
-        {currentStep === 'select' && (
+        {currentStep === 'select' && !singleItemMode && (
           <>
             {/* Search and Filters */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
@@ -584,10 +646,10 @@ export default function PublicCheckoutPage() {
               </div>
             </div>
 
-            {/* Selected Items Summary */}
+            {/* Selected Items Summary — sticky on mobile for easy thumb reach */}
             {selectedItems.size > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 sm:mb-6 sticky bottom-4 z-10 sm:static shadow-lg sm:shadow-none">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <h3 className="font-semibold text-gray-900">
                       {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected
@@ -599,6 +661,7 @@ export default function PublicCheckoutPage() {
                   <Button
                     onClick={handleContinueToReview}
                     variant="primary"
+                    className="w-full sm:w-auto min-h-[48px] text-base touch-manipulation"
                   >
                     Continue to Review
                     <ChevronRight className="w-4 h-4 ml-2" />
@@ -627,14 +690,14 @@ export default function PublicCheckoutPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`bg-white rounded-lg border-2 transition-all ${
+                      className={`bg-white rounded-lg border-2 transition-all touch-manipulation ${
                         isSelected
                           ? 'border-blue-500 shadow-lg ring-2 ring-blue-200'
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                       }`}
                     >
-                      {/* Image */}
-                      <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+                      {/* Image — tap target for selection */}
+                      <div className="relative h-40 sm:h-48 bg-gray-100 rounded-t-lg overflow-hidden">
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
@@ -651,14 +714,16 @@ export default function PublicCheckoutPage() {
                           </div>
                         )}
                         <button
+                          type="button"
                           onClick={() => toggleItemSelection(item.id)}
-                          className={`absolute top-3 left-3 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
+                          className={`absolute top-3 left-3 min-w-[44px] min-h-[44px] w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all ${
                             isSelected
                               ? 'bg-blue-600 border-blue-600 text-white'
                               : 'bg-white border-gray-300 hover:border-blue-500'
                           }`}
+                          aria-label={isSelected ? 'Deselect' : 'Select'}
                         >
-                          {isSelected && <Check className="w-4 h-4" />}
+                          {isSelected && <Check className="w-5 h-5" />}
                         </button>
                       </div>
 
@@ -804,9 +869,9 @@ export default function PublicCheckoutPage() {
         )}
 
         {currentStep === 'review' && (
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Review Your Request</h2>
+          <div className="max-w-3xl mx-auto pb-8">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-8 shadow-sm">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Review Your Request</h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Contact Information */}
@@ -910,19 +975,19 @@ export default function PublicCheckoutPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-200">
                   <Button
                     type="button"
-                    onClick={() => setCurrentStep('select')}
+                    onClick={() => setCurrentStep(singleItemMode ? 'start' : 'select')}
                     variant="secondary"
-                    className="flex-1"
+                    className="flex-1 min-h-[48px] touch-manipulation"
                   >
-                    Back to Selection
+                    {singleItemMode ? 'Back' : 'Back to Selection'}
                   </Button>
                   <Button
                     type="submit"
                     variant="primary"
-                    className="flex-1"
+                    className="flex-1 min-h-[48px] text-base touch-manipulation"
                     disabled={submitting || selectedItems.size === 0}
                   >
                     {submitting ? 'Submitting...' : 'Submit Request'}
