@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2, QrCode } from 'lucide-react'
+import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2, QrCode, Download, Printer } from 'lucide-react'
 import { Button } from './ui/Button'
 import LocationSelect from './LocationSelect'
 
@@ -870,11 +870,66 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             <label className={labelClass}>QR code for this item</label>
             {typeof window !== 'undefined' && (
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-start gap-4">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${window.location.origin}/checkout/scan?item=${itemId}`)}`}
-                  alt="QR code for quick checkout"
-                  className="rounded border border-gray-200 w-28 h-28 object-contain"
-                />
+                <div className="flex flex-col gap-2">
+                  <img
+                    id="qr-code-image"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(`${window.location.origin}/checkout/scan?item=${itemId}`)}`}
+                    alt="QR code for quick checkout"
+                    className="rounded border border-gray-200 w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="min-h-[36px] touch-manipulation"
+                      onClick={async () => {
+                        const url = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(`${window.location.origin}/checkout/scan?item=${itemId}`)}`
+                        try {
+                          const res = await fetch(url)
+                          const blob = await res.blob()
+                          const a = document.createElement('a')
+                          a.href = URL.createObjectURL(blob)
+                          a.download = `qr-checkout-${(name || 'item').replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`
+                          a.click()
+                          URL.revokeObjectURL(a.href)
+                        } catch (e) {
+                          window.open(url, '_blank')
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="min-h-[36px] touch-manipulation"
+                      onClick={() => {
+                        const scanUrl = `${window.location.origin}/checkout/scan?item=${itemId}`
+                        const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(scanUrl)}`
+                        const w = window.open('', '_blank')
+                        if (!w) return
+                        w.document.write(`
+                          <!DOCTYPE html><html><head><title>QR Code - ${(name || 'Item').replace(/</g, '&lt;')}</title></head>
+                          <body style="font-family:sans-serif;text-align:center;padding:2rem;">
+                            <h1 style="margin-bottom:0.5rem;">${(name || 'Item').replace(/</g, '&lt;')}</h1>
+                            <p style="color:#666;margin-bottom:1.5rem;">Scan to check out</p>
+                            <img src="${qrImgUrl}" alt="QR Code" style="max-width:200px;height:auto;" />
+                            <p style="margin-top:1rem;font-size:12px;color:#999;">${scanUrl}</p>
+                          </body></html>
+                        `)
+                        w.document.close()
+                        w.focus()
+                        setTimeout(() => { w.print(); w.close() }, 250)
+                      }}
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print
+                    </Button>
+                  </div>
+                </div>
                 <div className="text-sm text-gray-600 min-w-0 flex-1">
                   <p className="font-medium text-gray-900">Link</p>
                   <code className="block mt-1 break-all text-xs bg-gray-100 px-2 py-2 rounded border border-gray-200">

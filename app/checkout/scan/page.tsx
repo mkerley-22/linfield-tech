@@ -34,11 +34,15 @@ export default function CheckoutScanPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/inventory/public`)
-      if (!res.ok) throw new Error('Failed to load items')
+      const res = await fetch(`/api/inventory/public?itemId=${encodeURIComponent(id)}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setError(err.error || 'Item not found or not available for checkout.')
+        setItem(null)
+        return
+      }
       const data = await res.json()
-      const found = (data.items || []).find((i: ScanItem) => i.id === id)
-      if (found) setItem(found)
+      if (data.item) setItem(data.item)
       else setError('Item not found or not available for checkout.')
     } catch (e: any) {
       setError(e.message || 'Failed to load item')
@@ -149,9 +153,6 @@ export default function CheckoutScanPage() {
               On Android, use Chrome and allow NFC when prompted. Or scan the item&apos;s QR code with your camera.
             </p>
           )}
-          <Link href="/checkout/public" className="text-blue-600 hover:underline text-sm">
-            Browse all equipment instead →
-          </Link>
         </div>
       </div>
     )
@@ -167,9 +168,6 @@ export default function CheckoutScanPage() {
           <p className="text-gray-600 mb-6">{error}</p>
           <Link href="/checkout/scan">
             <Button variant="secondary">Try again</Button>
-          </Link>
-          <Link href="/checkout/public" className="block mt-4 text-blue-600 hover:underline text-sm">
-            Browse all equipment
           </Link>
         </div>
       </div>
