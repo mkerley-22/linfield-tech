@@ -150,7 +150,7 @@ export default function PublicCheckoutPage() {
     setCurrentStep(singleItemMode ? 'review' : 'select')
   }
 
-  const applyPreset = (preset: 'today' | 'tomorrow' | 'this_week' | 'next_7_days') => {
+  const applyPreset = (preset: 'today' | 'tomorrow' | 'this_week' | 'two_weeks') => {
     const from = startOfDay(new Date())
     switch (preset) {
       case 'today':
@@ -162,8 +162,10 @@ export default function PublicCheckoutPage() {
         break
       }
       case 'this_week':
-      case 'next_7_days':
         setDateRange({ from, to: addDays(from, 6) })
+        break
+      case 'two_weeks':
+        setDateRange({ from, to: addDays(from, 13) })
         break
     }
   }
@@ -613,8 +615,8 @@ export default function PublicCheckoutPage() {
                         <button type="button" onClick={() => { applyPreset('this_week'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
                           This week
                         </button>
-                        <button type="button" onClick={() => { applyPreset('next_7_days'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
-                          Next 7 days
+                        <button type="button" onClick={() => { applyPreset('two_weeks'); setDatePickerOpen(false) }} className="px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 touch-manipulation">
+                          2 weeks
                         </button>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">Or pick a range</p>
