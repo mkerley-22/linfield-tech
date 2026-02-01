@@ -153,8 +153,9 @@ model Event {
   startTime      DateTime
   endTime        DateTime
   location       String?
-  calendarId     String?
+  calendarId     String?   // Google event id (for upsert)
   calendarName   String?
+  sourceCalendarId String? // Google calendar id (which calendar this came from); used to filter by user's selected calendar
   eventType      String           @default("meeting")
   categoryId     String?
   pageId         String?          @unique
@@ -173,6 +174,7 @@ model Event {
 
   @@index([pageId])
   @@index([calendarId])
+  @@index([sourceCalendarId])
   @@index([categoryId])
   @@index([startTime])
 }

@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
             attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map(a => a.email)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
+            sourceCalendarId: calendarId || null,
             updatedAt: new Date(),
           },
         })
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
             eventType: 'meeting',
             calendarId: googleEvent.id,
             calendarName: calendarId || 'primary',
+            sourceCalendarId: calendarId || null,
             isAllDay: !googleEvent.start?.dateTime,
             attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map(a => a.email)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,

@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
             calendarId: googleEvent.id,
             calendarName: calendar.summary || calendar.id,
+            sourceCalendarId: calendar.id || null,
           }
 
           if (existing) {

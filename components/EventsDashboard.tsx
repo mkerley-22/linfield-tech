@@ -1,13 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Calendar, Clock, MapPin, Plus, RefreshCw, Download, Edit, Search } from 'lucide-react'
+import { Calendar, Clock, MapPin, Plus, RefreshCw, Download, Edit, Search, List, LayoutGrid, CalendarDays } from 'lucide-react'
 import { Button } from './ui/Button'
-import { format } from 'date-fns'
+import { format, startOfWeek, getDay, startOfMonth, endOfMonth, startOfDay, endOfDay, addDays } from 'date-fns'
+import { enUS } from 'date-fns/locale'
 import { useIntegration } from '@/hooks/useIntegration'
 import EventModal from './EventModal'
 import Toggle from './ui/Toggle'
+import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar'
+import 'react-big-calendar/lib/css/react-big-calendar.css'
+import '@/app/events/events-calendar.css'
+
+const localizer = dateFnsLocalizer({
+  format,
+  startOfWeek,
+  getDay,
+  locales: { 'en-US': enUS },
+})
 
 interface Event {
   id: string
@@ -24,6 +35,28 @@ interface Event {
   recurrenceRule?: string
 }
 
+type ViewMode = 'list' | 'month' | 'week' | 'day' | 'agenda'
+
+function rangeStartForView(date: Date, view: ViewMode): Date {
+  switch (view) {
+    case 'month': return startOfMonth(date)
+    case 'week': return startOfWeek(date, { weekStartsOn: 0 })
+    case 'day': return startOfDay(date)
+    case 'agenda': return startOfWeek(date, { weekStartsOn: 0 })
+    default: return startOfMonth(date)
+  }
+}
+
+function rangeEndForView(date: Date, view: ViewMode): Date {
+  switch (view) {
+    case 'month': return endOfMonth(date)
+    case 'week': return addDays(startOfWeek(date, { weekStartsOn: 0 }), 6)
+    case 'day': return endOfDay(date)
+    case 'agenda': return addDays(startOfWeek(date, { weekStartsOn: 0 }), 13)
+    default: return endOfMonth(date)
+  }
+}
+
 export default function EventsDashboard() {
   const [events, setEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -34,19 +67,36 @@ export default function EventsDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showWeekOnly, setShowWeekOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [calendarDate, setCalendarDate] = useState(() => new Date())
+  const [calendarViewEvents, setCalendarViewEvents] = useState<Event[]>([])
+  const [calendarLoading, setCalendarLoading] = useState(false)
   const { enabled: calendarEnabled, isLoading: integrationLoading } = useIntegration('calendar')
+
+  useEffect(() => {
+    fetch('/api/user/preferences')
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data: { preferences?: { schoolDudeCalendarId?: string } }) => {
+        const id = data.preferences?.schoolDudeCalendarId
+        if (id) setSelectedCalendarId(id)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     loadEvents()
     if (calendarEnabled) {
       loadCalendars()
     }
-  }, [calendarEnabled])
+  }, [calendarEnabled, selectedCalendarId])
 
   const loadEvents = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/events?upcoming=true&limit=100')
+      const params = new URLSearchParams({ upcoming: 'true', limit: '100' })
+      if (selectedCalendarId) params.set('calendarId', selectedCalendarId)
+      const response = await fetch(`/api/events?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
         setEvents(data.events || [])
@@ -58,7 +108,7 @@ export default function EventsDashboard() {
     }
   }
 
-  const expandRecurringEvent = (event: Event, maxDate: Date): Event[] => {
+  const expandRecurringEvent = (event: Event, maxDate: Date, minDate?: Date): Event[] => {
     if (!event.isRecurring || !event.recurrenceRule) {
       return [event]
     }
@@ -91,7 +141,7 @@ export default function EventsDashboard() {
     let currentDate = new Date(baseStart)
     let instanceCount = 0
     const maxInstances = 200 // Limit to prevent infinite loops
-    const now = new Date()
+    const floor = minDate ?? new Date()
     
     // For weekly with specific days, iterate day by day
     if (freq === 'WEEKLY' && days) {
@@ -103,7 +153,7 @@ export default function EventsDashboard() {
         
         const currentDay = currentDate.getDay()
         
-        if (targetDays.includes(currentDay) && currentDate >= now) {
+        if (targetDays.includes(currentDay) && currentDate >= floor) {
           const instanceStart = new Date(currentDate)
           instanceStart.setHours(baseStart.getHours(), baseStart.getMinutes(), baseStart.getSeconds())
           const instanceEnd = new Date(instanceStart.getTime() + duration)
@@ -126,7 +176,7 @@ export default function EventsDashboard() {
         if (count && instanceCount >= count) break
         if (until && currentDate > until) break
         
-        if (currentDate >= now) {
+        if (currentDate >= floor) {
           const instanceStart = new Date(currentDate)
           instanceStart.setHours(baseStart.getHours(), baseStart.getMinutes(), baseStart.getSeconds())
           const instanceEnd = new Date(instanceStart.getTime() + duration)
@@ -184,14 +234,15 @@ export default function EventsDashboard() {
       const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
       
       filtered = filtered.filter(event => {
-        const eventDate = new Date(event.startTime)
-        return eventDate >= now && eventDate <= weekFromNow
+        const eventStart = new Date(event.startTime)
+        const eventEnd = new Date(event.endTime)
+        return eventEnd >= now && eventStart <= weekFromNow
       })
     } else {
-      // Only show future events
+      // Only show current or future events (hide events that have already ended)
       filtered = filtered.filter(event => {
-        const eventDate = new Date(event.startTime)
-        return eventDate >= now
+        const eventEnd = new Date(event.endTime)
+        return eventEnd >= now
       })
     }
     
@@ -221,6 +272,45 @@ export default function EventsDashboard() {
     setIsModalOpen(true)
   }
 
+  const calendarRangeStart = rangeStartForView(calendarDate, viewMode)
+  const calendarRangeEnd = rangeEndForView(calendarDate, viewMode)
+  const calendarEventsExpanded: Event[] = []
+  for (const event of calendarViewEvents) {
+    if (event.isRecurring && event.recurrenceRule) {
+      const instances = expandRecurringEvent(event, calendarRangeEnd, calendarRangeStart)
+      calendarEventsExpanded.push(...instances)
+    } else {
+      calendarEventsExpanded.push(event)
+    }
+  }
+  const bigCalendarEvents = calendarEventsExpanded
+    .filter((e) => {
+      const start = new Date(e.startTime)
+      const end = new Date(e.endTime)
+      return end >= calendarRangeStart && start <= calendarRangeEnd
+    })
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      start: new Date(e.startTime),
+      end: new Date(e.endTime),
+      allDay: e.isAllDay,
+      resource: e,
+    }))
+
+  const handleCalendarSelectEvent = (event: { resource?: unknown }) => {
+    const e = event?.resource as Event | undefined
+    if (e) {
+      setSelectedEvent(e)
+      setIsModalOpen(true)
+    }
+  }
+
+  const handleCalendarRangeChange = (range: Date[] | { start: Date; end: Date }) => {
+    const start = Array.isArray(range) ? range[0] : range.start
+    if (start) setCalendarDate(start)
+  }
+
   const loadCalendars = async () => {
     try {
       const response = await fetch('/api/events/import')
@@ -232,6 +322,35 @@ export default function EventsDashboard() {
       console.error('Failed to load calendars:', error)
     }
   }
+
+  const loadCalendarEvents = useCallback(async (rangeStart: Date, rangeEnd: Date) => {
+    setCalendarLoading(true)
+    try {
+      const params = new URLSearchParams({
+        timeMin: rangeStart.toISOString(),
+        timeMax: rangeEnd.toISOString(),
+        limit: '300',
+      })
+      if (selectedCalendarId) params.set('calendarId', selectedCalendarId)
+      const response = await fetch(`/api/events?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setCalendarViewEvents(data.events || [])
+      }
+    } catch (error) {
+      console.error('Failed to load calendar events:', error)
+    } finally {
+      setCalendarLoading(false)
+    }
+  }, [selectedCalendarId])
+
+  useEffect(() => {
+    if (viewMode !== 'list') {
+      const start = startOfDay(rangeStartForView(calendarDate, viewMode))
+      const end = endOfDay(rangeEndForView(calendarDate, viewMode))
+      loadCalendarEvents(start, end)
+    }
+  }, [viewMode, calendarDate, loadCalendarEvents])
 
   const handleImportEvents = async (calendarId: string = 'primary') => {
     setIsImporting(true)
@@ -397,47 +516,125 @@ export default function EventsDashboard() {
         </div>
       </div>
 
-      {/* Week Filter Toggle */}
-      <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-4">
-        <Toggle
-          enabled={showWeekOnly}
-          onChange={setShowWeekOnly}
-          label="Upcoming Week"
-        />
-        <span className="text-sm text-gray-600">
-          {searchQuery.trim() 
-            ? `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} found`
-            : showWeekOnly 
-              ? `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} in next 7 days`
-              : `${filteredEvents.length} upcoming event${filteredEvents.length !== 1 ? 's' : ''}`
-          }
-        </span>
+      {/* View Toggle: List | Month | Week | Day | Agenda */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex rounded-xl bg-gray-100 p-1 shadow-inner">
+          {(['list', 'month', 'week', 'day', 'agenda'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setViewMode(mode)}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                viewMode === mode
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {mode === 'list' && <List className="w-4 h-4" />}
+              {mode === 'month' && <LayoutGrid className="w-4 h-4" />}
+              {mode === 'week' && <CalendarDays className="w-4 h-4" />}
+              {mode === 'day' && <Calendar className="w-4 h-4" />}
+              {mode === 'agenda' && <CalendarDays className="w-4 h-4" />}
+              <span className="capitalize">{mode}</span>
+            </button>
+          ))}
+        </div>
+        {viewMode === 'list' && (
+          <div className="flex items-center gap-4">
+            <Toggle
+              enabled={showWeekOnly}
+              onChange={setShowWeekOnly}
+              label="Upcoming Week"
+            />
+            <span className="text-sm text-gray-600">
+              {searchQuery.trim() 
+                ? `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} found`
+                : showWeekOnly 
+                  ? `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} in next 7 days`
+                  : `${filteredEvents.length} upcoming event${filteredEvents.length !== 1 ? 's' : ''}`
+              }
+            </span>
+          </div>
+        )}
       </div>
 
-      {filteredEvents.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {searchQuery.trim() ? 'No events found' : 'No upcoming events'}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {searchQuery.trim() 
-              ? 'Try adjusting your search query'
-              : 'Import events from Google Calendar or create a new event'
-            }
-          </p>
-          {calendars.length > 0 && (
-            <Button
-              onClick={() => handleImportEvents()}
-              disabled={isImporting}
-              variant="primary"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Import from Google Calendar
-            </Button>
+      {/* Calendar view */}
+      {viewMode !== 'list' && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
+          {calendarLoading && (
+            <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center rounded-2xl">
+              <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+            </div>
           )}
+          <div className="min-h-[600px] p-4 sm:p-6 [&_.rbc-calendar]:font-sans [&_.rbc-header]:border-b [&_.rbc-header]:border-gray-200 [&_.rbc-header]:py-3 [&_.rbc-today]:bg-blue-50/50 [&_.rbc-off-range-bg]:bg-gray-50/50 [&_.rbc-event]:rounded-lg [&_.rbc-event]:border-0 [&_.rbc-event]:py-1 [&_.rbc-event]:px-2 [&_.rbc-toolbar]:gap-2 [&_.rbc-toolbar]:flex-wrap [&_.rbc-toolbar button]:rounded-lg [&_.rbc-toolbar button]:px-4 [&_.rbc-toolbar button]:py-2 [&_.rbc-toolbar button]:font-medium [&_.rbc-toolbar .rbc-active]:bg-blue-600 [&_.rbc-toolbar .rbc-active]:text-white">
+            <BigCalendar
+              localizer={localizer}
+              events={bigCalendarEvents}
+              view={viewMode as View}
+              date={calendarDate}
+              onNavigate={(date) => setCalendarDate(date)}
+              onView={(view) => setViewMode(view as ViewMode)}
+              onSelectEvent={handleCalendarSelectEvent}
+              onRangeChange={handleCalendarRangeChange}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ minHeight: 560 }}
+              eventPropGetter={(event) => {
+                const e = (event as { resource?: Event }).resource
+                const color = e?.category?.color ?? '#2563eb'
+                return {
+                  style: {
+                    backgroundColor: color,
+                    color: '#fff',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '0.8125rem',
+                  },
+                }
+              }}
+              messages={{
+                today: 'Today',
+                previous: 'Back',
+                next: 'Next',
+                month: 'Month',
+                week: 'Week',
+                day: 'Day',
+                agenda: 'Agenda',
+                date: 'Date',
+                time: 'Time',
+                event: 'Event',
+                noEventsInRange: 'No events in this range.',
+              }}
+            />
+          </div>
         </div>
-      ) : (
+      )}
+
+      {viewMode === 'list' && (
+        filteredEvents.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {searchQuery.trim() ? 'No events found' : 'No upcoming events'}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {searchQuery.trim() 
+                ? 'Try adjusting your search query'
+                : 'Import events from Google Calendar or create a new event'
+              }
+            </p>
+            {calendars.length > 0 && (
+              <Button
+                onClick={() => handleImportEvents()}
+                disabled={isImporting}
+                variant="primary"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Import from Google Calendar
+              </Button>
+            )}
+          </div>
+        ) : (
         <div className="space-y-3">
           {filteredEvents.map((event) => (
             <div
@@ -505,6 +702,7 @@ export default function EventsDashboard() {
             </div>
           ))}
         </div>
+        )
       )}
     </div>
   )

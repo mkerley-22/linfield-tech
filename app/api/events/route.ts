@@ -7,15 +7,31 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const categoryId = searchParams.get('categoryId')
+    const calendarId = searchParams.get('calendarId')
     const upcoming = searchParams.get('upcoming') === 'true'
+    const timeMin = searchParams.get('timeMin')
+    const timeMax = searchParams.get('timeMax')
     const limit = parseInt(searchParams.get('limit') || '50')
     
     const where: any = {}
     if (categoryId) {
       where.categoryId = categoryId
     }
+    if (calendarId && calendarId.trim()) {
+      where.sourceCalendarId = calendarId.trim()
+    }
     if (upcoming) {
-      where.startTime = { gte: new Date() }
+      const now = new Date()
+      where.startTime = { gte: now }
+      where.endTime = { gte: now }
+    }
+    if (timeMin || timeMax) {
+      const min = timeMin ? new Date(timeMin) : null
+      const max = timeMax ? new Date(timeMax) : null
+      if (min != null) where.endTime = { ...(where.endTime as object || {}), gt: min }
+      if (max != null) where.startTime = { ...(where.startTime as object || {}), lt: max }
+      if (min != null && !where.endTime) where.endTime = { gt: min }
+      if (max != null && !where.startTime) where.startTime = { lt: max }
     }
     
     const events = await prisma.event.findMany({

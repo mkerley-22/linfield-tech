@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       const maxTo = items.reduce((max, i) => (i.toDate > max ? i.toDate : max), items[0].toDate)
       if (maxTo !== tomorrowStr) continue
 
-      const inventoryIds = [...new Set(items.map((i) => i.inventoryId))]
+      const inventoryIds = Array.from(new Set(items.map((i) => i.inventoryId)))
       const inventory = await withRetry(() =>
         prisma.inventoryItem.findMany({
           where: { id: { in: inventoryIds } },

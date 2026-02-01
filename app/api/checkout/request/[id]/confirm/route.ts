@@ -45,7 +45,7 @@ export async function GET(
       })
     }
 
-    const inventoryIds = [...new Set(items.map((i) => i.inventoryId))]
+    const inventoryIds = Array.from(new Set(items.map((i) => i.inventoryId)))
     const inventory = await withRetry(() =>
       prisma.inventoryItem.findMany({
         where: { id: { in: inventoryIds } },
