@@ -224,6 +224,47 @@ export async function sendCheckoutRequestConfirmation(
   })
 }
 
+export async function sendNewCheckoutRequestToOwner(
+  ownerEmail: string,
+  ownerName: string,
+  requesterName: string,
+  requesterEmail: string,
+  requestId: string,
+  itemNames: string[]
+): Promise<boolean> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  const requestUrl = `${baseUrl}/checkout`
+  const itemList = itemNames.length > 0 ? itemNames.map((n) => `• ${n}`).join('<br>') : '• (items)'
+  const subject = 'New checkout request for your equipment'
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">New Checkout Request for Your Equipment</h2>
+        <p>Hello ${ownerName},</p>
+        <p>Someone has requested to check out equipment you own:</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>Requester:</strong> ${requesterName} &lt;${requesterEmail}&gt;</p>
+          <p style="margin: 10px 0 0 0;"><strong>Items requested:</strong></p>
+          <p style="margin: 5px 0 0 0;">${itemList}</p>
+        </div>
+        <p><a href="${requestUrl}" style="color: #2563eb; font-weight: 600;">View and respond to this request in the checkout system</a></p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px;">This is an automated message. Go to the checkout page to approve, deny, or message the requester.</p>
+      </body>
+    </html>
+  `
+  return sendEmail({
+    to: ownerEmail,
+    subject,
+    html,
+  })
+}
+
 export async function sendCheckoutRequestStatusUpdate(
   requesterEmail: string,
   requesterName: string,

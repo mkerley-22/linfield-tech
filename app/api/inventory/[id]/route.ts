@@ -12,6 +12,7 @@ export async function GET(
       () => prisma.inventoryItem.findUnique({
       where: { id: resolvedParams.id },
       include: {
+        Owner: { select: { id: true, name: true, email: true } },
         InventoryItemTag: {
           include: {
             InventoryTag: true,
@@ -90,7 +91,8 @@ export async function GET(
     delete (transformedItem as any).EventInventory
     delete (transformedItem as any).InventoryItemTag
     delete (transformedItem as any).InventoryDocument
-    
+    // Keep Owner as-is for frontend (id, name, email)
+
     return NextResponse.json({ item: transformedItem })
   } catch (error: any) {
     console.error('Get inventory item error:', error)
@@ -123,6 +125,10 @@ export async function PUT(
       tagIds = [],
       imageUrl,
       documentationLinks,
+      nfcTagId,
+      suppressCheckoutNotifications,
+      categoryId,
+      ownerId,
     } = body
     
     // Log locationBreakdowns for debugging
@@ -162,6 +168,10 @@ export async function PUT(
         checkoutEnabled: checkoutEnabled !== undefined ? checkoutEnabled : undefined,
         imageUrl: imageUrl !== undefined ? imageUrl : undefined,
         documentationLinks: documentationLinks !== undefined ? documentationLinks : undefined,
+        nfcTagId: nfcTagId !== undefined ? (nfcTagId === '' ? null : nfcTagId) : undefined,
+        suppressCheckoutNotifications: suppressCheckoutNotifications !== undefined ? suppressCheckoutNotifications : undefined,
+        categoryId: categoryId !== undefined ? (categoryId === '' ? null : categoryId) : undefined,
+        ownerId: ownerId !== undefined ? (ownerId === '' ? null : ownerId) : undefined,
         InventoryItemTag: {
           create: tagIds.map((tagId: string) => ({
             tagId,

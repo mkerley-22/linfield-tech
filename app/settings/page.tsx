@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
-import { Settings as SettingsIcon, Sparkles, Cloud, Zap, Calendar, Users, Globe } from 'lucide-react'
+import { Settings as SettingsIcon, Sparkles, Cloud, Zap, Calendar, Users, Globe, Package, BellOff } from 'lucide-react'
 import GoogleCalendarAuth from '@/components/GoogleCalendarAuth'
 import SchoolDudeIntegration from '@/components/SchoolDudeIntegration'
 import UsersManagement from '@/components/UsersManagement'
@@ -20,6 +20,10 @@ export default function SettingsPage() {
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
+  const [mutedCheckoutCategoryIds, setMutedCheckoutCategoryIds] = useState<string[]>([])
+  const [preferencesLoading, setPreferencesLoading] = useState(false)
+  const [preferencesSaving, setPreferencesSaving] = useState(false)
 
   useEffect(() => {
     // Check authentication and load user
@@ -54,12 +58,74 @@ export default function SettingsPage() {
   // Load settings after user is loaded
   useEffect(() => {
     if (user && !isLoading) {
-      // Load public site settings
       if (activeTab === 'public-site') {
         loadPublicSiteSettings()
       }
+      if (activeTab === 'integrations' && user?.role === 'admin') {
+        loadCategories()
+        loadUserPreferences()
+      }
     }
   }, [user, isLoading, activeTab])
+
+  const loadCategories = async () => {
+    try {
+      const res = await fetch('/api/categories')
+      if (res.ok) {
+        const data = await res.json()
+        const list = Array.isArray(data) ? data : (data.categories || [])
+        setCategories(list.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })))
+      }
+    } catch (e) {
+      console.error('Failed to load categories:', e)
+    }
+  }
+
+  const loadUserPreferences = async () => {
+    setPreferencesLoading(true)
+    try {
+      const res = await fetch('/api/user/preferences')
+      if (res.ok) {
+        const data = await res.json()
+        const prefs = data.preferences || {}
+        setMutedCheckoutCategoryIds(Array.isArray(prefs.mutedCheckoutCategoryIds) ? prefs.mutedCheckoutCategoryIds : [])
+      }
+    } catch (e) {
+      console.error('Failed to load preferences:', e)
+    } finally {
+      setPreferencesLoading(false)
+    }
+  }
+
+  const saveMutedCheckoutCategories = async (mutedIds: string[]) => {
+    setPreferencesSaving(true)
+    try {
+      const res = await fetch('/api/user/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mutedCheckoutCategoryIds: mutedIds }),
+      })
+      if (res.ok) {
+        setMutedCheckoutCategoryIds(mutedIds)
+        alert('Checkout notification preferences saved.')
+      } else {
+        alert('Failed to save preferences.')
+      }
+    } catch (e) {
+      console.error('Failed to save preferences:', e)
+      alert('Failed to save preferences.')
+    } finally {
+      setPreferencesSaving(false)
+    }
+  }
+
+  const toggleMutedCategory = (categoryId: string) => {
+    const next = mutedCheckoutCategoryIds.includes(categoryId)
+      ? mutedCheckoutCategoryIds.filter((id) => id !== categoryId)
+      : [...mutedCheckoutCategoryIds, categoryId]
+    setMutedCheckoutCategoryIds(next)
+    saveMutedCheckoutCategories(next)
+  }
 
   const loadPublicSiteSettings = async () => {
     setLoadingSettings(true)
@@ -197,6 +263,37 @@ export default function SettingsPage() {
 
           {activeTab === 'integrations' && isAdmin && (
             <div className="space-y-6">
+            {/* Checkout notifications: mute by category */}
+            <div className="bg-white rounded-lg border border-gray-200 p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <BellOff className="w-6 h-6 text-blue-600" />
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Checkout notifications</h2>
+                  <p className="text-sm text-gray-500">Don’t show checkout requests in my notification count for items in these categories (e.g. Videography teacher’s gear)</p>
+                </div>
+              </div>
+              {preferencesLoading ? (
+                <p className="text-sm text-gray-500">Loading...</p>
+              ) : categories.length === 0 ? (
+                <p className="text-sm text-gray-500">No categories yet. Create categories and assign them to inventory items, then you can mute notifications by category here.</p>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {categories.map((c) => (
+                    <label key={c.id} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 cursor-pointer hover:bg-gray-100">
+                      <input
+                        type="checkbox"
+                        checked={mutedCheckoutCategoryIds.includes(c.id)}
+                        onChange={() => toggleMutedCategory(c.id)}
+                        disabled={preferencesSaving}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 accent-blue-600"
+                      />
+                      <span className="text-sm font-medium text-gray-700">{c.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Google Calendar Integration */}
             <div className="bg-white rounded-lg border border-gray-200 p-8">
               <div className="flex items-center justify-between mb-6">

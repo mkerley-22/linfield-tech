@@ -25,6 +25,11 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   webpack: (config, { isServer }) => {
+    // Reduce file watcher load (avoids EMFILE: too many open files on macOS)
+    config.watchOptions = {
+      ignored: ['**/node_modules/**', '**/.git/**', '**/.next/**', '**/prisma/dev.db*'],
+      poll: 1000,
+    }
     // Make optional email packages external to avoid build errors if not installed
     if (isServer) {
       // For server-side, mark optional packages as external

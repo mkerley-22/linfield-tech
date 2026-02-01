@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
-import { sendCheckoutRequestConfirmation } from '@/lib/email'
+import { sendCheckoutRequestConfirmation, sendNewCheckoutRequestToOwner } from '@/lib/email'
 import { withRetry } from '@/lib/prisma-retry'
 
 export async function POST(request: NextRequest) {
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Send confirmation email
+    // Send confirmation email to requester
     try {
       await sendCheckoutRequestConfirmation(
         checkoutRequest.requesterEmail,
@@ -102,7 +102,36 @@ export async function POST(request: NextRequest) {
       )
     } catch (error) {
       console.error('Failed to send confirmation email:', error)
-      // Don't fail the request if email fails
+    }
+
+    // Email each owner whose equipment is in this request (by work email)
+    const inventoryIds = (items as Array<{ inventoryId: string }>).map((i) => i.inventoryId)
+    const itemsWithOwners = await prisma.inventoryItem.findMany({
+      where: { id: { in: inventoryIds }, ownerId: { not: null } },
+      include: { Owner: { select: { id: true, email: true, name: true } } },
+    })
+    const ownersById = new Map<string | null, { email: string; name: string; itemNames: string[] }>()
+    for (const inv of itemsWithOwners) {
+      if (!inv.Owner) continue
+      const key = inv.Owner.id
+      if (!ownersById.has(key)) {
+        ownersById.set(key, { email: inv.Owner.email, name: inv.Owner.name, itemNames: [] })
+      }
+      ownersById.get(key)!.itemNames.push(inv.name)
+    }
+    for (const [, owner] of ownersById) {
+      try {
+        await sendNewCheckoutRequestToOwner(
+          owner.email,
+          owner.name,
+          checkoutRequest.requesterName,
+          checkoutRequest.requesterEmail,
+          checkoutRequest.id,
+          owner.itemNames
+        )
+      } catch (error) {
+        console.error('Failed to send owner notification email:', error)
+      }
     }
 
     return NextResponse.json({

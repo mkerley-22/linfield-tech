@@ -22,22 +22,23 @@ model Attachment {
 }
 
 model Category {
-  id          String       @id
-  name        String       @unique
-  slug        String       @unique
-  description String?
-  color       String?      @default("#2563eb")
-  icon        String?
-  order       Int          @default(0)
-  parentId    String?      // Parent category for subcategories
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime
-  DriveFile  DriveFile[]
-  DriveFolder DriveFolder?
-  Event       Event[]
-  Page        Page[]
-  parent      Category?    @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Category[]   @relation("CategoryToCategory")
+  id            String         @id
+  name          String         @unique
+  slug          String         @unique
+  description   String?
+  color         String?        @default("#2563eb")
+  icon          String?
+  order         Int            @default(0)
+  parentId      String?        // Parent category for subcategories
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  DriveFile     DriveFile[]
+  DriveFolder   DriveFolder?
+  Event         Event[]
+  InventoryItem InventoryItem[]
+  Page          Page[]
+  parent        Category?      @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade)
+  children      Category[]     @relation("CategoryToCategory")
 
   @@index([name])
   @@index([slug])
@@ -218,31 +219,40 @@ model InventoryDocument {
 }
 
 model InventoryItem {
-  id                   String              @id @default(cuid())
-  name                 String
-  description          String?
-  quantity             Int                 @default(1)
-  manufacturer         String?
-  model                String?
-  serialNumbers        String?
-  location             String?
-  locationBreakdowns   String? // JSON: [{ location: string, quantity: number }]
-  usageNotes           String? // Notes about what items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
-  availableForCheckout Int? // Number available for checkout (defaults to quantity if null)
-  lastUsedAt           DateTime?
-  lastUsedBy           String?
-  imageUrl             String?
-  documentationLinks   String?
-  checkoutEnabled      Boolean             @default(false)
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  Checkout             Checkout[]
-  EventInventory       EventInventory[]
-  InventoryDocument    InventoryDocument[]
-  InventoryItemTag     InventoryItemTag[]
+  id                           String              @id @default(cuid())
+  name                         String
+  description                  String?
+  quantity                     Int                 @default(1)
+  manufacturer                 String?
+  model                        String?
+  serialNumbers                String?
+  location                     String?
+  locationBreakdowns           String? // JSON: [{ location: string, quantity: number }]
+  usageNotes                   String? // Notes about what items are used for (e.g., "For basketball games", "Talkback Mic for SQ7")
+  availableForCheckout         Int? // Number available for checkout (defaults to quantity if null)
+  lastUsedAt                   DateTime?
+  lastUsedBy                   String?
+  imageUrl                     String?
+  documentationLinks          String?
+  checkoutEnabled              Boolean             @default(false)
+  nfcTagId                     String?             @unique // NFC tag UID for tap-to-checkout
+  suppressCheckoutNotifications Boolean            @default(false) // Don't count in admin notification badge (e.g. videography teacher's gear)
+  categoryId                   String?            // Optional category (e.g. Videography) for grouping and mute-by-category
+  ownerId                      String?            // User who owns this equipment; they receive checkout request emails
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
+  Category                     Category?           @relation(fields: [categoryId], references: [id])
+  Owner                        User?               @relation("InventoryOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  Checkout                     Checkout[]
+  EventInventory               EventInventory[]
+  InventoryDocument            InventoryDocument[]
+  InventoryItemTag             InventoryItemTag[]
 
   @@index([lastUsedAt])
   @@index([name])
+  @@index([nfcTagId])
+  @@index([categoryId])
+  @@index([ownerId])
 }
 
 model InventoryItemTag {
@@ -354,6 +364,7 @@ model User {
   updatedAt       DateTime
   lastLoginAt     DateTime?
   Checkout        Checkout[]
+  OwnedInventory  InventoryItem[]   @relation("InventoryOwner")
   Session         Session[]
   UserPreferences UserPreferences?
 
@@ -362,13 +373,14 @@ model User {
 }
 
 model UserPreferences {
-  id                      String   @id @default(cuid())
-  userId                  String   @unique
-  schoolDudeCalendarId    String? // Selected calendar ID for School Dude integration
-  schoolDudeDaysInAdvance Int?     @default(365) // Days in advance for School Dude sync
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  User                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                        String   @id @default(cuid())
+  userId                    String   @unique
+  schoolDudeCalendarId      String?  // Selected calendar ID for School Dude integration
+  schoolDudeDaysInAdvance    Int?     @default(365) // Days in advance for School Dude sync
+  mutedCheckoutCategoryIds  String?  // JSON array of category IDs; checkout requests for items in these categories won't show in notification count
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  User                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

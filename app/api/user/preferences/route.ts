@@ -16,11 +16,24 @@ export async function GET(request: NextRequest) {
       })
     )
 
+    const prefs = preferences || {
+      schoolDudeCalendarId: 'primary',
+      schoolDudeDaysInAdvance: 365,
+      mutedCheckoutCategoryIds: null,
+    }
+    const mutedCheckoutCategoryIds = prefs.mutedCheckoutCategoryIds
+      ? (() => {
+          try {
+            const arr = typeof prefs.mutedCheckoutCategoryIds === 'string'
+              ? JSON.parse(prefs.mutedCheckoutCategoryIds) : prefs.mutedCheckoutCategoryIds
+            return Array.isArray(arr) ? arr : []
+          } catch {
+            return []
+          }
+        })()
+      : []
     return NextResponse.json({
-      preferences: preferences || {
-        schoolDudeCalendarId: 'primary',
-        schoolDudeDaysInAdvance: 365,
-      },
+      preferences: { ...prefs, mutedCheckoutCategoryIds },
     })
   } catch (error: any) {
     console.error('Get user preferences error:', error)
@@ -39,7 +52,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { schoolDudeCalendarId, schoolDudeDaysInAdvance } = body
+    const { schoolDudeCalendarId, schoolDudeDaysInAdvance, mutedCheckoutCategoryIds } = body
 
     const preferences = await withRetry(
       () => prisma.userPreferences.upsert({
@@ -47,12 +60,18 @@ export async function PUT(request: NextRequest) {
         update: {
           schoolDudeCalendarId: schoolDudeCalendarId !== undefined ? schoolDudeCalendarId : undefined,
           schoolDudeDaysInAdvance: schoolDudeDaysInAdvance !== undefined ? schoolDudeDaysInAdvance : undefined,
+          mutedCheckoutCategoryIds: mutedCheckoutCategoryIds !== undefined
+            ? (Array.isArray(mutedCheckoutCategoryIds) ? JSON.stringify(mutedCheckoutCategoryIds) : mutedCheckoutCategoryIds)
+            : undefined,
           updatedAt: new Date(),
         },
         create: {
           userId: user.id,
           schoolDudeCalendarId: schoolDudeCalendarId || 'primary',
           schoolDudeDaysInAdvance: schoolDudeDaysInAdvance || 365,
+          mutedCheckoutCategoryIds: Array.isArray(mutedCheckoutCategoryIds)
+            ? JSON.stringify(mutedCheckoutCategoryIds)
+            : null,
         },
       })
     )

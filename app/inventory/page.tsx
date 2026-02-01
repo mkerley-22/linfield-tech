@@ -24,6 +24,7 @@ interface InventoryItem {
   lastUsedAt?: string
   lastUsedBy?: string
   imageUrl?: string
+  Owner?: { id: string; name: string; email: string } | null
   InventoryItemTag: Array<{ InventoryTag: { id: string; name: string; color: string } }>
   Checkout: Array<{ status: string }>
 }
@@ -640,7 +641,12 @@ export default function InventoryPage() {
                       <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {item.name}
                       </h3>
-                      
+                      {item.Owner && (
+                        <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Owner: {item.Owner.name}
+                        </p>
+                      )}
                       {/* View Details Button */}
                       <div 
                         className="mt-auto" 
@@ -746,6 +752,11 @@ export default function InventoryPage() {
                               {item.location && (
                                 <span>
                                   <strong>Location:</strong> {item.location}
+                                </span>
+                              )}
+                              {item.Owner && (
+                                <span>
+                                  <strong>Owner:</strong> {item.Owner.name}
                                 </span>
                               )}
                               {item.description && (

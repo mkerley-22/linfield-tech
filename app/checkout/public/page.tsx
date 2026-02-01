@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Package, Calendar, User, Mail, Phone, MessageSquare, Share2, CheckCircle, X, Search, ChevronRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { format } from 'date-fns'
@@ -25,6 +26,8 @@ interface SelectedItem {
 type Step = 'start' | 'select' | 'review'
 
 export default function PublicCheckoutPage() {
+  const searchParams = useSearchParams()
+  const preselectedItemId = searchParams.get('item')
   const [currentStep, setCurrentStep] = useState<Step>('start')
   const [items, setItems] = useState<InventoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -46,7 +49,7 @@ export default function PublicCheckoutPage() {
 
   useEffect(() => {
     loadAvailableItems()
-  }, [])
+  }, [preselectedItemId])
 
   const loadAvailableItems = async () => {
     setIsLoading(true)
@@ -54,7 +57,16 @@ export default function PublicCheckoutPage() {
       const response = await fetch('/api/inventory/public')
       if (response.ok) {
         const data = await response.json()
-        setItems(data.items || [])
+        const list = data.items || []
+        setItems(list)
+        // Pre-select item from QR/link: ?item=ID
+        if (preselectedItemId && list.length > 0) {
+          const found = list.find((i: InventoryItem) => i.id === preselectedItemId)
+          if (found && found.available > 0) {
+            setSelectedItems(new Map([[found.id, { inventoryId: found.id, quantity: 1 }]]))
+            setCurrentStep('select')
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load items:', error)

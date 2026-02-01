@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { withRetry } from '@/lib/prisma-retry'
 
 export async function GET(request: NextRequest) {
+  // GET does not require auth for internal use; include Owner when present
   try {
     const searchParams = request.nextUrl.searchParams
     const tagId = searchParams.get('tag')
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
       () => prisma.inventoryItem.findMany({
         where,
         include: {
+          Owner: { select: { id: true, name: true, email: true } },
           InventoryItemTag: {
             include: {
               InventoryTag: true,
@@ -102,6 +104,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { getUser } = await import('@/lib/auth')
+    const user = await getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const {
       name,
@@ -115,6 +123,7 @@ export async function POST(request: NextRequest) {
       usageNotes,
       availableForCheckout,
       checkoutEnabled,
+      ownerId,
       tagIds = [],
       imageUrl,
       documentationLinks,
@@ -137,6 +146,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Default owner to current user when adding new inventory
+    const resolvedOwnerId = ownerId && ownerId.trim() ? ownerId.trim() : user.id
+
     const item = await prisma.inventoryItem.create({
       data: {
         name,
@@ -150,6 +162,7 @@ export async function POST(request: NextRequest) {
         usageNotes: usageNotes || null,
         availableForCheckout: availableForCheckout || null,
         checkoutEnabled: checkoutEnabled !== undefined ? checkoutEnabled : false,
+        ownerId: resolvedOwnerId || null,
         imageUrl: imageUrl || null,
         documentationLinks: documentationLinks || null,
         InventoryItemTag: {
@@ -159,6 +172,7 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
+        Owner: { select: { id: true, name: true, email: true } },
         InventoryItemTag: {
           include: {
             InventoryTag: true,

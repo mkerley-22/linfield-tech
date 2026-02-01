@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2 } from 'lucide-react'
+import { Save, X, Loader2, Upload, FileText, XCircle, Image as ImageIcon, ExternalLink, Plus, Trash2, QrCode, BellOff } from 'lucide-react'
 import { Button } from './ui/Button'
 import LocationSelect from './LocationSelect'
 
@@ -20,6 +20,10 @@ interface InventoryEditorProps {
     usageNotes?: string
     availableForCheckout?: number | null
     checkoutEnabled?: boolean
+    nfcTagId?: string | null
+    suppressCheckoutNotifications?: boolean
+    categoryId?: string | null
+    ownerId?: string | null
     tagIds?: string[]
     imageUrl?: string
     documentationLinks?: string
@@ -102,6 +106,13 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   const [newRowUsage, setNewRowUsage] = useState('') // Usage for new row input
   const [availableForCheckout, setAvailableForCheckout] = useState<number | null>(initialData?.availableForCheckout ?? null)
   const [checkoutEnabled, setCheckoutEnabled] = useState(initialData?.checkoutEnabled || false)
+  const [nfcTagId, setNfcTagId] = useState(initialData?.nfcTagId ?? '')
+  const [suppressCheckoutNotifications, setSuppressCheckoutNotifications] = useState(initialData?.suppressCheckoutNotifications ?? false)
+  const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? '')
+  const [ownerId, setOwnerId] = useState(initialData?.ownerId ?? '')
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
+  const [userOptions, setUserOptions] = useState<Array<{ id: string; name: string; email: string }>>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || [])
   const [tags, setTags] = useState<Array<{ id: string; name: string; color: string }>>([])
   const [saving, setSaving] = useState(false)
@@ -134,6 +145,57 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
   useEffect(() => {
     loadTags()
   }, [])
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await fetch('/api/categories')
+        if (res.ok) {
+          const data = await res.json()
+          const list = Array.isArray(data) ? data : (data.categories || [])
+          setCategories(list.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })))
+        }
+      } catch (e) {
+        console.error('Failed to load categories:', e)
+      }
+    }
+    loadCategories()
+  }, [])
+
+  useEffect(() => {
+    const loadUserOptions = async () => {
+      try {
+        const res = await fetch('/api/users/options')
+        if (res.ok) {
+          const data = await res.json()
+          setUserOptions(data.users || [])
+        }
+      } catch (e) {
+        console.error('Failed to load user options:', e)
+      }
+    }
+    loadUserOptions()
+  }, [])
+
+  // When creating new item, default owner to current user
+  useEffect(() => {
+    if (itemId) return
+    const loadMe = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.user?.id) {
+            setCurrentUserId(data.user.id)
+            setOwnerId((prev) => (prev === '' ? data.user.id : prev))
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load current user:', e)
+      }
+    }
+    loadMe()
+  }, [itemId])
 
   // Update total quantity whenever locationBreakdowns change
   useEffect(() => {
@@ -292,6 +354,10 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             : null, // Combine all usage notes from location breakdowns
           availableForCheckout: availableForCheckout || null,
           checkoutEnabled,
+          nfcTagId: nfcTagId.trim() || null,
+          suppressCheckoutNotifications,
+          categoryId: categoryId || null,
+          ownerId: ownerId || null,
           tagIds: selectedTags,
           imageUrl: imageUrl || null,
           documentationLinks: documentationLinks.length > 0 ? JSON.stringify(documentationLinks) : null,
@@ -751,6 +817,107 @@ export default function InventoryEditor({ itemId, initialData }: InventoryEditor
             placeholder={`Default: ${locationBreakdowns.length > 0 ? locationBreakdowns.reduce((sum, b) => sum + (b.quantity || 0), 0) : quantity} (all items)`}
             className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
           />
+        </div>
+      )}
+
+      {/* Don't notify for checkouts (e.g. videography teacher's gear) */}
+      {checkoutEnabled && (
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="suppressCheckoutNotifications"
+            checked={suppressCheckoutNotifications}
+            onChange={(e) => setSuppressCheckoutNotifications(e.target.checked)}
+            className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 accent-blue-600 cursor-pointer"
+            style={{ colorScheme: 'light' }}
+          />
+          <label htmlFor="suppressCheckoutNotifications" className="text-sm font-medium text-gray-700 cursor-pointer flex items-center gap-1">
+            <BellOff className="w-4 h-4 text-gray-500" />
+            Don&apos;t show checkout requests for this item in my notifications
+          </label>
+        </div>
+      )}
+
+      {/* Category (for grouping and mute-by-category) */}
+      {categories.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+          >
+            <option value="">None</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Owner: receives checkout request emails at their work email */}
+      {userOptions.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Owner</label>
+          <p className="text-xs text-gray-500 mb-2">
+            This person receives an email when someone requests to check out this equipment (their account email).
+          </p>
+          <select
+            value={ownerId}
+            onChange={(e) => setOwnerId(e.target.value)}
+            className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
+          >
+            <option value="">No owner</option>
+            {userOptions.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.email})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Quick checkout: NFC tag + QR code (only when item is saved and checkout enabled) */}
+      {checkoutEnabled && itemId && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <QrCode className="w-4 h-4" />
+            Quick checkout (QR & NFC)
+          </h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">NFC Tag ID</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Enter the NFC tag UID so students can tap the tag to check out this item. Use an NFC tool app to read the tag ID from the physical tag.
+            </p>
+            <input
+              type="text"
+              value={nfcTagId}
+              onChange={(e) => setNfcTagId(e.target.value)}
+              placeholder="e.g. 04:A1:B2:C3:D4:E5:F6"
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 font-mono text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">QR code for this item</label>
+            <p className="text-xs text-gray-500 mb-2">
+              Students can scan this QR code to open quick checkout for this item.
+            </p>
+            {typeof window !== 'undefined' && (
+              <div className="flex flex-wrap items-start gap-4">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${window.location.origin}/checkout/scan?item=${itemId}`)}`}
+                  alt="QR code for quick checkout"
+                  className="rounded border border-gray-200"
+                />
+                <div className="text-sm text-gray-600">
+                  <p className="font-medium text-gray-900">Link:</p>
+                  <code className="block mt-1 break-all text-xs bg-white px-2 py-1 rounded border border-gray-200">
+                    {typeof window !== 'undefined' ? `${window.location.origin}/checkout/scan?item=${itemId}` : ''}
+                  </code>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

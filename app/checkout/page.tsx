@@ -74,6 +74,7 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedRequest, setSelectedRequest] = useState<CheckoutRequest | null>(null)
   const [itemNames, setItemNames] = useState<Map<string, string>>(new Map())
+  const [itemOwners, setItemOwners] = useState<Map<string, { name: string }>>(new Map())
   const [newMessage, setNewMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
@@ -380,9 +381,10 @@ export default function CheckoutPage() {
           return newCounts
         })
         
-        // Fetch item names
+        // Fetch item names and owners
         const items = parsedItems(data.request.items)
         const nameMap = new Map<string, string>()
+        const ownerMap = new Map<string, { name: string }>()
         await Promise.all(
           items.map(async (item: any) => {
             try {
@@ -390,6 +392,9 @@ export default function CheckoutPage() {
               if (itemResponse.ok) {
                 const itemData = await itemResponse.json()
                 nameMap.set(item.inventoryId, itemData.item?.name || `Item ${item.inventoryId}`)
+                if (itemData.item?.Owner?.name) {
+                  ownerMap.set(item.inventoryId, { name: itemData.item.Owner.name })
+                }
               } else {
                 nameMap.set(item.inventoryId, `Item ${item.inventoryId}`)
               }
@@ -400,6 +405,7 @@ export default function CheckoutPage() {
           })
         )
         setItemNames(nameMap)
+        setItemOwners(ownerMap)
       }
     } catch (error) {
       console.error('Failed to load request detail:', error)
@@ -657,15 +663,23 @@ export default function CheckoutPage() {
           <div className="mb-6 lg:mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
               <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">Equipment Checkout</h1>
-              <Button
-                onClick={handleSharePublicPage}
-                variant="secondary"
-                size="sm"
-                className="w-full sm:w-auto"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Public Page
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={handleSharePublicPage}
+                  variant="secondary"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Public Page
+                </Button>
+                <Link
+                  href="/checkout/scan"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Quick checkout (QR / NFC)
+                </Link>
+              </div>
             </div>
             <p className="text-sm lg:text-base text-gray-600">View and manage equipment checkouts and requests</p>
           </div>
@@ -1059,6 +1073,7 @@ export default function CheckoutPage() {
                         <div className="space-y-3">
                           {parsedItems(selectedRequest.items).map((item: any, idx: number) => {
                             const itemName = itemNames.get(item.inventoryId) || `Item ${item.inventoryId}`
+                            const owner = itemOwners.get(item.inventoryId)
                             return (
                               <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                                 <p className="font-medium text-gray-900">{itemName}</p>
@@ -1068,6 +1083,12 @@ export default function CheckoutPage() {
                                     ? `${format(new Date(item.fromDate), 'MMM d')} - ${format(new Date(item.toDate), 'MMM d, yyyy')}`
                                     : 'Dates not set'}
                                 </p>
+                                {owner && (
+                                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    <User className="w-3 h-3" />
+                                    Owner: {owner.name}
+                                  </p>
+                                )}
                               </div>
                             )
                           })}
