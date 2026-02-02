@@ -23,35 +23,59 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const body = await request.json()
+    let body: { calendarId?: string; categoryId?: string; timeMin?: string; timeMax?: string } = {}
+    try {
+      body = await request.json()
+    } catch {
+      // Empty or invalid JSON body is ok; we'll use defaults
+    }
     const { calendarId, categoryId, timeMin, timeMax } = body
     
     const accessToken = await getOrRefreshCalendarToken()
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: 'Google Calendar not connected. Connect in Settings.' },
+        { status: 401 }
+      )
+    }
     
     // Get events from Google Calendar
     const startDate = timeMin ? new Date(timeMin) : new Date()
     const endDate = timeMax ? new Date(timeMax) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
+    const calId = calendarId || 'primary'
     
-    const googleEvents = await listCalendarEvents(calendarId || 'primary', startDate, endDate, accessToken)
+    let googleEvents: Array<{ id?: string; summary?: string; description?: string; start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string }; location?: string; attendees?: Array<{ email?: string }>; recurrence?: string[] }>
+    try {
+      googleEvents = await listCalendarEvents(calId, startDate, endDate, accessToken)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to fetch calendar'
+      console.error('Import listCalendarEvents error:', err)
+      return NextResponse.json(
+        { error: msg.includes('404') ? 'Calendar not found. Check the calendar ID.' : msg },
+        { status: 400 }
+      )
+    }
+    
+    if (!Array.isArray(googleEvents)) {
+      googleEvents = []
+    }
     
     const importedEvents = []
+    const isExplicitCalendar = calId && calId !== 'primary'
     
     for (const googleEvent of googleEvents) {
       if (!googleEvent.id || !googleEvent.summary) continue
       
-      // Filter for tech events - only import tech-related events for everyone
-      // Events are shared/visible to all users, not per-person
-      const isTechEvent = 
-        googleEvent.summary.toLowerCase().includes('tech') ||
-        googleEvent.summary.toLowerCase().includes('it') ||
-        googleEvent.summary.toLowerCase().includes('technology') ||
-        googleEvent.description?.toLowerCase().includes('tech') ||
-        googleEvent.description?.toLowerCase().includes('it') ||
-        calendarId?.toLowerCase().includes('tech') ||
-        calendarId?.toLowerCase().includes('school dude')
-      
-      // Only import tech-related events - skip personal/non-tech events
-      if (!isTechEvent) continue
+      // When user selected a specific calendar (e.g. LCS Sound needs), import all events from it.
+      // When using 'primary', only import tech-related events to avoid personal clutter.
+      if (!isExplicitCalendar) {
+        const isTechEvent =
+          googleEvent.summary.toLowerCase().includes('tech') ||
+          googleEvent.summary.toLowerCase().includes('it') ||
+          googleEvent.summary.toLowerCase().includes('technology') ||
+          (googleEvent.description && (googleEvent.description.toLowerCase().includes('tech') || googleEvent.description.toLowerCase().includes('it')))
+        if (!isTechEvent) continue
+      }
       
       // Check if already imported
       const existing = await prisma.event.findFirst({
@@ -75,10 +99,10 @@ export async function POST(request: NextRequest) {
             location: googleEvent.location || null,
             categoryId: categoryId || existing.categoryId,
             isAllDay: !googleEvent.start?.dateTime,
-            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map(a => a.email)) : null,
+            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map((a: { email?: string }) => a?.email).filter(Boolean)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
-            sourceCalendarId: calendarId || null,
+            sourceCalendarId: calId,
             updatedAt: new Date(),
           },
         })
@@ -101,10 +125,10 @@ export async function POST(request: NextRequest) {
             categoryId: categoryId || null,
             eventType: 'meeting',
             calendarId: googleEvent.id,
-            calendarName: calendarId || 'primary',
-            sourceCalendarId: calendarId || null,
+            calendarName: calId,
+            sourceCalendarId: calId,
             isAllDay: !googleEvent.start?.dateTime,
-            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map(a => a.email)) : null,
+            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map((a: { email?: string }) => a?.email).filter(Boolean)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
             updatedAt: new Date(),

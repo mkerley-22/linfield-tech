@@ -352,27 +352,37 @@ export default function EventsDashboard() {
     }
   }, [viewMode, calendarDate, loadCalendarEvents])
 
-  const handleImportEvents = async (calendarId: string = 'primary') => {
+  const handleImportEvents = async (calendarIdOverride?: string) => {
+    const calId = calendarIdOverride ?? selectedCalendarId ?? 'primary'
     setIsImporting(true)
     try {
       const response = await fetch('/api/events/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          calendarId,
+          calendarId: calId,
           timeMin: new Date().toISOString(),
           timeMax: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to import events')
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        const msg = typeof data?.error === 'string' ? data.error : 'Failed to import events'
+        throw new Error(msg)
+      }
 
-      const data = await response.json()
       await loadEvents()
-      alert(`Imported ${data.imported} events from Google Calendar`)
+      if (viewMode !== 'list') {
+        const start = rangeStartForView(calendarDate, viewMode)
+        const end = rangeEndForView(calendarDate, viewMode)
+        loadCalendarEvents(startOfDay(start), endOfDay(end))
+      }
+      alert(`Imported ${data.imported ?? 0} events from Google Calendar`)
     } catch (error) {
       console.error('Failed to import events:', error)
-      alert('Failed to import events. Please make sure Google is connected.')
+      const msg = error instanceof Error ? error.message : 'Failed to import events. Please make sure Google is connected.'
+      alert(msg)
     } finally {
       setIsImporting(false)
     }
