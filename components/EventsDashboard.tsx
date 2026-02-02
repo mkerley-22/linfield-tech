@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Calendar, Clock, MapPin, Plus, RefreshCw, Download, Edit, Search, List, LayoutGrid, CalendarDays } from 'lucide-react'
+import { Calendar, MapPin, Plus, RefreshCw, Download, Edit, Search, LayoutGrid, CalendarDays } from 'lucide-react'
 import { Button } from './ui/Button'
 import { format, startOfWeek, getDay, startOfMonth, endOfMonth, startOfDay, endOfDay, addDays } from 'date-fns'
 import { enUS } from 'date-fns/locale'
 import { useIntegration } from '@/hooks/useIntegration'
 import EventModal from './EventModal'
-import Toggle from './ui/Toggle'
 import { Calendar as BigCalendar, dateFnsLocalizer, View } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '@/app/events/events-calendar.css'
@@ -35,7 +34,7 @@ interface Event {
   recurrenceRule?: string
 }
 
-type ViewMode = 'list' | 'month' | 'week' | 'day' | 'agenda'
+type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
 function rangeStartForView(date: Date, view: ViewMode): Date {
   switch (view) {
@@ -57,6 +56,26 @@ function rangeEndForView(date: Date, view: ViewMode): Date {
   }
 }
 
+/** Toolbar with only Today / Back / Next and label (no Month/Week/Day/Agenda – those are in the tabs above). */
+function CalendarToolbar(props: {
+  label: string
+  onNavigate: (action: string) => void
+  localizer: { messages: Record<string, string> }
+}) {
+  const { label, onNavigate, localizer } = props
+  const msg = localizer?.messages ?? {}
+  return (
+    <div className="rbc-toolbar">
+      <span className="rbc-btn-group">
+        <button type="button" onClick={() => onNavigate('TODAY')}>{msg.today ?? 'Today'}</button>
+        <button type="button" onClick={() => onNavigate('PREV')}>{msg.previous ?? 'Back'}</button>
+        <button type="button" onClick={() => onNavigate('NEXT')}>{msg.next ?? 'Next'}</button>
+      </span>
+      <span className="rbc-toolbar-label">{label}</span>
+    </div>
+  )
+}
+
 export default function EventsDashboard() {
   const [events, setEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -68,7 +87,7 @@ export default function EventsDashboard() {
   const [showWeekOnly, setShowWeekOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [calendarDate, setCalendarDate] = useState(() => new Date())
   const [calendarViewEvents, setCalendarViewEvents] = useState<Event[]>([])
   const [calendarLoading, setCalendarLoading] = useState(false)
@@ -353,11 +372,9 @@ export default function EventsDashboard() {
   }, [selectedCalendarId])
 
   useEffect(() => {
-    if (viewMode !== 'list') {
-      const start = startOfDay(rangeStartForView(calendarDate, viewMode))
-      const end = endOfDay(rangeEndForView(calendarDate, viewMode))
-      loadCalendarEvents(start, end)
-    }
+    const start = startOfDay(rangeStartForView(calendarDate, viewMode))
+    const end = endOfDay(rangeEndForView(calendarDate, viewMode))
+    loadCalendarEvents(start, end)
   }, [viewMode, calendarDate, loadCalendarEvents])
 
   const handleImportEvents = async (calendarIdOverride?: string) => {
@@ -381,11 +398,9 @@ export default function EventsDashboard() {
       }
 
       await loadEvents(selectedCalendarId)
-      if (viewMode !== 'list') {
-        const start = rangeStartForView(calendarDate, viewMode)
-        const end = rangeEndForView(calendarDate, viewMode)
-        loadCalendarEvents(startOfDay(start), endOfDay(end))
-      }
+      const start = rangeStartForView(calendarDate, viewMode)
+      const end = rangeEndForView(calendarDate, viewMode)
+      loadCalendarEvents(startOfDay(start), endOfDay(end))
       alert(`Imported ${data.imported ?? 0} events from Google Calendar`)
     } catch (error) {
       console.error('Failed to import events:', error)
@@ -534,10 +549,10 @@ export default function EventsDashboard() {
         </div>
       </div>
 
-      {/* View Toggle: List | Month | Week | Day | Agenda */}
+      {/* View Toggle: Month | Week | Day | Agenda (no List) */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex rounded-xl bg-gray-100 p-1 shadow-inner">
-          {(['list', 'month', 'week', 'day', 'agenda'] as const).map((mode) => (
+          {(['month', 'week', 'day', 'agenda'] as const).map((mode) => (
             <button
               key={mode}
               type="button"
@@ -548,7 +563,6 @@ export default function EventsDashboard() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              {mode === 'list' && <List className="w-4 h-4" />}
               {mode === 'month' && <LayoutGrid className="w-4 h-4" />}
               {mode === 'week' && <CalendarDays className="w-4 h-4" />}
               {mode === 'day' && <Calendar className="w-4 h-4" />}
@@ -557,28 +571,10 @@ export default function EventsDashboard() {
             </button>
           ))}
         </div>
-        {viewMode === 'list' && (
-          <div className="flex items-center gap-4">
-            <Toggle
-              enabled={showWeekOnly}
-              onChange={setShowWeekOnly}
-              label="Upcoming Week"
-            />
-            <span className="text-sm text-gray-600">
-              {searchQuery.trim() 
-                ? `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} found`
-                : showWeekOnly 
-                  ? `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} in next 7 days`
-                  : `${filteredEvents.length} upcoming event${filteredEvents.length !== 1 ? 's' : ''}`
-              }
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Calendar view */}
-      {viewMode !== 'list' && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
           {calendarLoading && (
             <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center rounded-2xl">
               <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
@@ -590,8 +586,9 @@ export default function EventsDashboard() {
               events={bigCalendarEvents}
               view={viewMode as View}
               date={calendarDate}
-              onNavigate={(date) => setCalendarDate(date)}
+              onNavigate={(newDate) => setCalendarDate(newDate)}
               onView={(view) => setViewMode(view as ViewMode)}
+              components={{ toolbar: CalendarToolbar }}
               onSelectEvent={handleCalendarSelectEvent}
               onRangeChange={handleCalendarRangeChange}
               startAccessor="start"
@@ -626,102 +623,6 @@ export default function EventsDashboard() {
             />
           </div>
         </div>
-      )}
-
-      {viewMode === 'list' && (
-        filteredEvents.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchQuery.trim() ? 'No events found' : 'No upcoming events'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchQuery.trim() 
-                ? 'Try adjusting your search query'
-                : 'Import events from Google Calendar or create a new event'
-              }
-            </p>
-            {calendars.length > 0 && (
-              <Button
-                onClick={() => handleImportEvents()}
-                disabled={isImporting}
-                variant="primary"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Import from Google Calendar
-              </Button>
-            )}
-          </div>
-        ) : (
-        <div className="space-y-3">
-          {filteredEvents.map((event) => (
-            <div
-              key={event.id}
-              className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleEventClick(event)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                    {event.category && (
-                      <span
-                        className="px-2 py-0.5 text-xs rounded-full font-medium"
-                        style={{
-                          backgroundColor: `${event.category.color}20`,
-                          color: event.category.color,
-                        }}
-                      >
-                        {event.category.name}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>
-                        {event.isAllDay
-                          ? format(new Date(event.startTime), 'MMM d, yyyy')
-                          : format(new Date(event.startTime), 'MMM d, yyyy h:mm a')}
-                      </span>
-                    </div>
-                    {event.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{event.location}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {event.description && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="flex gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
-                  <Link href={`/events/${event.id}/edit`}>
-                    <Button variant="secondary" size="sm">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                  </Link>
-                  {event.page && (
-                    <Link href={`/pages/${event.page.slug}`}>
-                      <Button variant="secondary" size="sm">
-                        View Page
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        )
-      )}
     </div>
   )
 }

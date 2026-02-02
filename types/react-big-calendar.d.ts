@@ -8,7 +8,7 @@ declare module 'react-big-calendar' {
     events: object[]
     view?: View
     date?: Date
-    onNavigate?: (date: Date) => void
+    onNavigate?: (date: Date, view?: View, action?: string) => void
     onView?: (view: View) => void
     onSelectEvent?: (event: { resource?: unknown }) => void
     onRangeChange?: (range: Date[] | { start: Date; end: Date }) => void
@@ -17,6 +17,7 @@ declare module 'react-big-calendar' {
     style?: React.CSSProperties
     eventPropGetter?: (event: object) => { style?: React.CSSProperties }
     messages?: Record<string, string>
+    components?: { toolbar?: React.ComponentType<{ label: string; onNavigate: (action: string) => void; localizer: { messages: Record<string, string> } }> }
   }
 
   export const Calendar: ComponentType<BigCalendarProps>

@@ -38,6 +38,7 @@
   font-size: 0.875rem;
   color: #374151;
   border-bottom: 1px solid #e5e7eb;
+  text-align: center;
 }
 
 .rbc-month-view,
@@ -80,11 +81,18 @@
   padding: 4px 8px;
   font-size: 0.875rem;
   color: #6b7280;
+  text-align: center;
 }
 
 .rbc-date-cell.rbc-now {
   font-weight: 600;
   color: #2563eb;
+}
+
+/* Center day headers in week/day view */
+.rbc-time-header-cell,
+.rbc-time-header-content .rbc-header {
+  text-align: center;
 }
 
 .rbc-time-slot {
