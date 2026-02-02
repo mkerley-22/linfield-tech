@@ -17,7 +17,16 @@ declare module 'react-big-calendar' {
     style?: React.CSSProperties
     eventPropGetter?: (event: object) => { style?: React.CSSProperties }
     messages?: Record<string, string>
-    components?: { toolbar?: React.ComponentType<{ label: string; onNavigate: (action: string) => void; localizer: { messages: Record<string, string> } }> }
+    components?: {
+      toolbar?: React.ComponentType<{
+        label: string
+        view: View
+        views: View[]
+        onNavigate: (action: string) => void
+        onView: (view: View) => void
+        localizer: { messages: Record<string, string> }
+      }>
+    }
   }
 
   export const Calendar: ComponentType<BigCalendarProps>
