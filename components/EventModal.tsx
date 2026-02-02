@@ -430,7 +430,7 @@ export default function EventModal({ event, isOpen, onClose }: EventModalProps) 
         <div className="flex items-center justify-between p-6 border-t border-gray-200">
           <a
             href={`/events/${event.id}/edit`}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+            className="flex items-center justify-center min-h-[44px] px-4 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
           >
             Edit Event
           </a>

@@ -51,7 +51,7 @@ export default function NewDropdown() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 min-h-[44px] px-4 text-gray-700 hover:bg-gray-50 transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 <Icon className="w-4 h-4" />

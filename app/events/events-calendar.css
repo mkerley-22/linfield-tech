@@ -11,9 +11,11 @@
   margin-bottom: 1rem;
 }
 
-.rbc-toolbar button {
+/* Default toolbar buttons (when not using custom dark toolbar) */
+.rbc-toolbar:not(.rbc-toolbar-custom) button {
+  min-height: 44px;
+  padding: 0 1rem;
   border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
   font-weight: 500;
   border: 1px solid #e5e7eb;
   background: #fff;
@@ -21,12 +23,12 @@
   transition: all 0.15s ease;
 }
 
-.rbc-toolbar button:hover {
+.rbc-toolbar:not(.rbc-toolbar-custom) button:hover {
   background: #f9fafb;
   border-color: #d1d5db;
 }
 
-.rbc-toolbar button.rbc-active {
+.rbc-toolbar:not(.rbc-toolbar-custom) button.rbc-active {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;

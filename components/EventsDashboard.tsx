@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Calendar, MapPin, Plus, RefreshCw, Download, Edit, Search, LayoutGrid, CalendarDays } from 'lucide-react'
+import { Calendar, MapPin, Plus, RefreshCw, Download, Edit, Search, LayoutGrid, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from './ui/Button'
 import { format, startOfWeek, getDay, startOfMonth, endOfMonth, startOfDay, endOfDay, addDays } from 'date-fns'
 import { enUS } from 'date-fns/locale'
@@ -56,22 +56,68 @@ function rangeEndForView(date: Date, view: ViewMode): Date {
   }
 }
 
-/** Toolbar with only Today / Back / Next and label (no Month/Week/Day/Agenda – those are in the tabs above). */
+/** Toolbar: Today (pill) + arrows, label, view tabs on right. Styled to match dark nav reference. */
 function CalendarToolbar(props: {
   label: string
+  view: string
+  views: string[] | ViewMode[]
   onNavigate: (action: string) => void
+  onView: (view: ViewMode) => void
   localizer: { messages: Record<string, string> }
 }) {
-  const { label, onNavigate, localizer } = props
+  const { label, view, views, onNavigate, onView, localizer } = props
   const msg = localizer?.messages ?? {}
+  const viewList: ViewMode[] = Array.isArray(views) && views.length > 0 ? views as ViewMode[] : ['month', 'week', 'day', 'agenda']
   return (
-    <div className="rbc-toolbar">
-      <span className="rbc-btn-group">
-        <button type="button" onClick={() => onNavigate('TODAY')}>{msg.today ?? 'Today'}</button>
-        <button type="button" onClick={() => onNavigate('PREV')}>{msg.previous ?? 'Back'}</button>
-        <button type="button" onClick={() => onNavigate('NEXT')}>{msg.next ?? 'Next'}</button>
+    <div className="rbc-toolbar rbc-toolbar-custom flex flex-wrap items-center justify-between gap-3 py-3 px-4 bg-gray-800 rounded-t-2xl text-gray-200">
+      <div className="flex items-center gap-1 sm:gap-2">
+        <button
+          type="button"
+          onClick={() => onNavigate('TODAY')}
+          className="min-h-[44px] px-4 rounded-full text-sm font-medium bg-gray-700 border border-gray-600 text-gray-200 hover:bg-gray-600 hover:border-gray-500 transition-colors"
+        >
+          {msg.today ?? 'Today'}
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate('PREV')}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          aria-label={msg.previous ?? 'Previous'}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate('NEXT')}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          aria-label={msg.next ?? 'Next'}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+      <span className="rbc-toolbar-label flex-1 min-w-0 text-base font-semibold text-white text-center">
+        {label}
       </span>
-      <span className="rbc-toolbar-label">{label}</span>
+      <div className="flex rounded-xl bg-gray-700/80 p-1 shadow-inner">
+        {viewList.map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => onView(mode)}
+            className={`flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg px-3 sm:px-4 text-sm font-medium transition-all duration-200 ${
+              view === mode
+                ? 'bg-gray-600 text-white shadow-sm'
+                : 'text-gray-300 hover:text-white hover:bg-gray-600/60'
+            }`}
+          >
+            {mode === 'month' && <LayoutGrid className="w-4 h-4 shrink-0" />}
+            {mode === 'week' && <CalendarDays className="w-4 h-4 shrink-0" />}
+            {mode === 'day' && <Calendar className="w-4 h-4 shrink-0" />}
+            {mode === 'agenda' && <CalendarDays className="w-4 h-4 shrink-0" />}
+            <span className="capitalize sm:inline hidden">{mode}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -491,7 +537,7 @@ export default function EventsDashboard() {
               <button
                 onClick={handleSyncEvents}
                 disabled={isSyncing}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Sync all events"
               >
                 {isSyncing ? (
@@ -509,7 +555,7 @@ export default function EventsDashboard() {
               <button
                 onClick={() => handleImportEvents()}
                 disabled={isImporting}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Import from Google Calendar"
               >
                 {isImporting ? (
@@ -527,8 +573,8 @@ export default function EventsDashboard() {
             </>
           )}
           <Link href="/events/new">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">
-              <Plus className="w-3.5 h-3.5" />
+            <button className="flex items-center justify-center gap-1.5 min-h-[44px] px-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors">
+              <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New</span>
             </button>
           </Link>
@@ -549,31 +595,7 @@ export default function EventsDashboard() {
         </div>
       </div>
 
-      {/* View Toggle: Month | Week | Day | Agenda (no List) */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex rounded-xl bg-gray-100 p-1 shadow-inner">
-          {(['month', 'week', 'day', 'agenda'] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setViewMode(mode)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
-                viewMode === mode
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {mode === 'month' && <LayoutGrid className="w-4 h-4" />}
-              {mode === 'week' && <CalendarDays className="w-4 h-4" />}
-              {mode === 'day' && <Calendar className="w-4 h-4" />}
-              {mode === 'agenda' && <CalendarDays className="w-4 h-4" />}
-              <span className="capitalize">{mode}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Calendar view */}
+      {/* Calendar view (toolbar with Today/arrows + view tabs is inside the calendar) */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
           {calendarLoading && (
             <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center rounded-2xl">

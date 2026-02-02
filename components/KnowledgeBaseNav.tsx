@@ -1031,13 +1031,13 @@ export default function KnowledgeBaseNav() {
                   setTagName('')
                   setTagColor('#2563eb')
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="flex items-center justify-center min-h-[44px] px-4 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveTag}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                className="flex items-center justify-center min-h-[44px] px-4 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 {editingTag ? 'Update' : 'Create'} Tag
               </button>
