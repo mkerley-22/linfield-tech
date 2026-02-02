@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const endDate = timeMax ? new Date(timeMax) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
     const calId = calendarId || 'primary'
     
-    let googleEvents: Array<{ id?: string; summary?: string; description?: string; start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string }; location?: string; attendees?: Array<{ email?: string }>; recurrence?: string[] }>
+    let googleEvents: Awaited<ReturnType<typeof listCalendarEvents>>
     try {
       googleEvents = await listCalendarEvents(calId, startDate, endDate, accessToken)
     } catch (err: unknown) {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
             location: googleEvent.location || null,
             categoryId: categoryId || existing.categoryId,
             isAllDay: !googleEvent.start?.dateTime,
-            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map((a: { email?: string }) => a?.email).filter(Boolean)) : null,
+            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map((a) => a?.email ?? undefined).filter(Boolean)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
             sourceCalendarId: calId,
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
             calendarName: calId,
             sourceCalendarId: calId,
             isAllDay: !googleEvent.start?.dateTime,
-            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map((a: { email?: string }) => a?.email).filter(Boolean)) : null,
+            attendees: googleEvent.attendees ? JSON.stringify(googleEvent.attendees.map((a) => a?.email ?? undefined).filter(Boolean)) : null,
             recurrenceRule: googleEvent.recurrence ? googleEvent.recurrence[0] : null,
             isRecurring: !!googleEvent.recurrence && googleEvent.recurrence.length > 0,
             updatedAt: new Date(),
