@@ -74,28 +74,11 @@ export default function EventsDashboard() {
   const [calendarLoading, setCalendarLoading] = useState(false)
   const { enabled: calendarEnabled, isLoading: integrationLoading } = useIntegration('calendar')
 
-  useEffect(() => {
-    fetch('/api/user/preferences')
-      .then((r) => (r.ok ? r.json() : {}))
-      .then((data: { preferences?: { schoolDudeCalendarId?: string } }) => {
-        const id = data.preferences?.schoolDudeCalendarId
-        if (id) setSelectedCalendarId(id)
-      })
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    loadEvents()
-    if (calendarEnabled) {
-      loadCalendars()
-    }
-  }, [calendarEnabled, selectedCalendarId])
-
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async (calendarIdFilter: string | null) => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({ upcoming: 'true', limit: '100' })
-      if (selectedCalendarId) params.set('calendarId', selectedCalendarId)
+      if (calendarIdFilter) params.set('calendarId', calendarIdFilter)
       const response = await fetch(`/api/events?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
@@ -106,7 +89,32 @@ export default function EventsDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        const res = await fetch('/api/user/preferences')
+        const data = res.ok ? await res.json() : {}
+        const id = data.preferences?.schoolDudeCalendarId ?? null
+        if (cancelled) return
+        setSelectedCalendarId(id || null)
+        await loadEvents(id || null)
+        if (calendarEnabled && !cancelled) {
+          const calRes = await fetch('/api/events/import')
+          if (calRes.ok) {
+            const calData = await calRes.json()
+            setCalendars(calData.calendars || [])
+          }
+        }
+      } catch {
+        if (!cancelled) loadEvents(null)
+      }
+    }
+    run()
+    return () => { cancelled = true }
+  }, [calendarEnabled, loadEvents])
 
   const expandRecurringEvent = (event: Event, maxDate: Date, minDate?: Date): Event[] => {
     if (!event.isRecurring || !event.recurrenceRule) {
@@ -372,7 +380,7 @@ export default function EventsDashboard() {
         throw new Error(msg)
       }
 
-      await loadEvents()
+      await loadEvents(selectedCalendarId)
       if (viewMode !== 'list') {
         const start = rangeStartForView(calendarDate, viewMode)
         const end = rangeEndForView(calendarDate, viewMode)
@@ -398,7 +406,7 @@ export default function EventsDashboard() {
       if (!response.ok) throw new Error('Failed to sync events')
 
       const data = await response.json()
-      await loadEvents()
+      await loadEvents(selectedCalendarId)
       alert(`Synced ${data.totalSynced} events from all calendars`)
     } catch (error) {
       console.error('Failed to sync events:', error)
