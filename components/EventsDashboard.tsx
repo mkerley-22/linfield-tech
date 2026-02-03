@@ -56,7 +56,7 @@ function rangeEndForView(date: Date, view: ViewMode): Date {
   }
 }
 
-/** Toolbar: Today (pill) + arrows, label, view tabs on right. Styled to match dark nav reference. */
+/** Toolbar: Today (pill) + arrows, label, view tabs on right. Light theme to match rest of app. */
 function CalendarToolbar(props: {
   label: string
   view: string
@@ -69,19 +69,19 @@ function CalendarToolbar(props: {
   const msg = localizer?.messages ?? {}
   const viewList: ViewMode[] = Array.isArray(views) && views.length > 0 ? views as ViewMode[] : ['month', 'week', 'day', 'agenda']
   return (
-    <div className="rbc-toolbar rbc-toolbar-custom flex flex-wrap items-center justify-between gap-3 py-3 px-4 bg-gray-800 rounded-t-2xl text-gray-200">
+    <div className="rbc-toolbar rbc-toolbar-custom flex flex-wrap items-center justify-between gap-3 py-3 px-4 bg-white border-b border-gray-200 rounded-t-2xl text-gray-900">
       <div className="flex items-center gap-1 sm:gap-2">
         <button
           type="button"
           onClick={() => onNavigate('TODAY')}
-          className="min-h-[44px] px-4 rounded-full text-sm font-medium bg-gray-700 border border-gray-600 text-gray-200 hover:bg-gray-600 hover:border-gray-500 transition-colors"
+          className="min-h-[44px] px-4 rounded-full text-sm font-medium bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300 transition-colors"
         >
           {msg.today ?? 'Today'}
         </button>
         <button
           type="button"
           onClick={() => onNavigate('PREV')}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           aria-label={msg.previous ?? 'Previous'}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -89,16 +89,16 @@ function CalendarToolbar(props: {
         <button
           type="button"
           onClick={() => onNavigate('NEXT')}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           aria-label={msg.next ?? 'Next'}
         >
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
-      <span className="rbc-toolbar-label flex-1 min-w-0 text-base font-semibold text-white text-center">
+      <span className="rbc-toolbar-label flex-1 min-w-0 text-base font-semibold text-gray-900 text-center">
         {label}
       </span>
-      <div className="flex rounded-xl bg-gray-700/80 p-1 shadow-inner">
+      <div className="flex rounded-xl bg-gray-100 p-1 shadow-inner">
         {viewList.map((mode) => (
           <button
             key={mode}
@@ -106,8 +106,8 @@ function CalendarToolbar(props: {
             onClick={() => onView(mode)}
             className={`flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg px-3 sm:px-4 text-sm font-medium transition-all duration-200 ${
               view === mode
-                ? 'bg-gray-600 text-white shadow-sm'
-                : 'text-gray-300 hover:text-white hover:bg-gray-600/60'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             {mode === 'month' && <LayoutGrid className="w-4 h-4 shrink-0" />}
